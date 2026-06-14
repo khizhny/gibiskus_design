@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тьютор і Я - панель адміністратора</title>
+    <meta
+      name="description"
+      content="Панель адміністратора для модерації оголошень, скарг, відгуків, повідомлень і контролю автоматичного зняття публікацій."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
+        <span class="brand-mark" aria-hidden="true">Т</span>
+        <span>Тьютор і Я</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="guide.html">Довідник</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" aria-label="Вибір мови">
+          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
+          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="ghost-button" href="admin.html">Увійти</a>
+        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="admin-section" id="adminPanel" aria-label="Панель адміністратора">
+        <aside class="admin-sidebar">
+          <a class="brand admin-brand" href="admin.html">
+            <span class="brand-mark" aria-hidden="true">Т</span>
+            <span>Тьютор і Я</span>
+          </a>
+          <p>Панель адміністратора</p>
+          <nav>
+            <button class="admin-nav is-active" type="button">Оголошення</button>
+            <button class="admin-nav" type="button">Скарги</button>
+            <button class="admin-nav" type="button">Відгуки й повідомлення</button>
+            <button class="admin-nav" type="button">Користувачі</button>
+          </nav>
+          <a class="ghost-button full" href="index.html">Вийти з панелі</a>
+        </aside>
+        <div class="admin-workspace">
+          <div class="admin-top">
+            <div>
+              <p class="section-note">Модерація</p>
+              <h1>Оголошення на перевірці</h1>
+            </div>
+            <label class="admin-search">
+              <span>Пошук</span>
+              <input type="search" id="adminSearch" placeholder="Ім'я, місто, скарга" />
+            </label>
+          </div>
+          <div class="admin-metrics">
+            <article>
+              <span>На перевірці</span>
+              <strong id="metricPending">0</strong>
+            </article>
+            <article>
+              <span>Завершуються за 3 дні</span>
+              <strong id="metricExpiring">0</strong>
+            </article>
+            <article>
+              <span>Скарги за тиждень</span>
+              <strong id="metricReports">0</strong>
+            </article>
+            <article>
+              <span>Зняті автоматично</span>
+              <strong id="metricArchived">0</strong>
+            </article>
+          </div>
+          <div class="admin-grid">
+            <section class="moderation-table" aria-label="Черга оголошень">
+              <div class="table-row table-head">
+                <span>Фахівець</span>
+                <span>Спеціалізація</span>
+                <span>Місто</span>
+                <span>Статус</span>
+                <span>До зняття</span>
+                <span>Дії</span>
+              </div>
+              <div id="moderationRows"></div>
+            </section>
+            <aside class="moderation-detail" id="moderationDetail"></aside>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

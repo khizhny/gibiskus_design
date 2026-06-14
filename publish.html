@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тьютор і Я - розмістити оголошення</title>
+    <meta
+      name="description"
+      content="Сторінка розміщення оголошення фахівця: анкета, документи, модерація та продовження публікації кожні 30 днів."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
+        <span class="brand-mark" aria-hidden="true">Т</span>
+        <span>Тьютор і Я</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="guide.html">Довідник</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" aria-label="Вибір мови">
+          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
+          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="ghost-button" href="admin.html">Увійти</a>
+        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="workflow-band" id="publish">
+        <div>
+          <p class="section-note">Для фахівців</p>
+          <h1>Оголошення діє 30 днів і продовжується вручну</h1>
+          <p>
+            Фахівець заповнює анкету, додає документи, отримує статус модерації та бачить таймер публікації.
+            Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.
+          </p>
+          <a class="secondary-button" href="specialists.html">Переглянути заявки родин</a>
+        </div>
+        <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця">
+          <label>
+            <span>Ім'я фахівця або назва центру</span>
+            <input type="text" name="name" placeholder="Наприклад, Анна Коваленко" required />
+          </label>
+          <label>
+            <span>Спеціалізація</span>
+            <select name="specialty" id="publishSpecialty"></select>
+          </label>
+          <label>
+            <span>Місто</span>
+            <input type="text" name="city" placeholder="Київ або онлайн" required />
+          </label>
+          <label>
+            <span>Короткий опис</span>
+            <textarea name="description" rows="3" placeholder="Досвід, методи роботи, формат занять" required></textarea>
+          </label>
+          <button class="primary-button" type="submit">Надіслати на модерацію</button>
+          <p class="form-status" id="publishStatus" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

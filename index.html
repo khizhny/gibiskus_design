@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тьютор і Я - каталог фахівців</title>
+    <meta
+      name="description"
+      content="Каталог перевірених фахівців для дітей з особливостями розвитку: пошук, відгуки, повідомлення та оголошення з терміном дії 30 днів."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
+        <span class="brand-mark" aria-hidden="true">Т</span>
+        <span>Тьютор і Я</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a class="is-active" href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="guide.html">Довідник</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" aria-label="Вибір мови">
+          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
+          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="ghost-button" href="admin.html">Увійти</a>
+        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="catalog">
+        <div class="hero-copy">
+          <h1>Каталог перевірених фахівців для дітей з особливостями розвитку</h1>
+          <p>
+            Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу
+            та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.
+          </p>
+          <form class="search-panel" id="searchForm" aria-label="Пошук фахівців">
+            <label>
+              <span>Місто</span>
+              <select id="cityFilter">
+                <option value="all">Будь-яке</option>
+                <option value="Київ">Київ</option>
+                <option value="Львів">Львів</option>
+                <option value="Одеса">Одеса</option>
+                <option value="Дніпро">Дніпро</option>
+                <option value="Онлайн">Онлайн</option>
+              </select>
+            </label>
+            <label>
+              <span>Спеціалізація</span>
+              <select id="specialtyFilter"></select>
+            </label>
+            <label>
+              <span>Формат</span>
+              <select id="formatFilter">
+                <option value="all">Будь-який</option>
+                <option value="Очно">Очно</option>
+                <option value="Онлайн">Онлайн</option>
+                <option value="Виїзд">Виїзд</option>
+              </select>
+            </label>
+            <button class="primary-button search-button" type="submit">Знайти</button>
+          </form>
+        </div>
+        <figure class="hero-media">
+          <img src="assets/hero-consultation.png" alt="Фахівчиня, мама і дитина займаються за столом" />
+        </figure>
+      </section>
+
+      <section class="catalog-layout" aria-label="Каталог оголошень">
+        <aside class="category-panel">
+          <div class="panel-heading">
+            <h2>Категорії</h2>
+            <a class="text-button" href="guide.html">Увесь список</a>
+          </div>
+          <div class="category-list" id="categoryList"></div>
+          <div class="expiry-card">
+            <div class="calendar-icon" aria-hidden="true">
+              <span></span>
+            </div>
+            <strong>30 днів</strong>
+            <p>Після публікації оголошення потрібно продовжити, інакше воно знімається з каталогу.</p>
+          </div>
+        </aside>
+
+        <section class="results-panel">
+          <div class="results-head">
+            <div>
+              <p class="section-note">Знайдено <span id="resultCount">0</span> фахівців</p>
+              <h2>Рекомендовані анкети</h2>
+            </div>
+            <div class="view-tools">
+              <button class="tool-button is-active" type="button" data-sort="recommended">Рекомендовані</button>
+              <button class="tool-button" type="button" data-sort="rating">Рейтинг</button>
+              <button class="tool-button" type="button" data-sort="expires">Невдовзі завершуються</button>
+            </div>
+          </div>
+          <div class="listing-list" id="listingList"></div>
+        </section>
+
+        <aside class="support-panel">
+          <div class="support-card">
+            <h2>Допомога з вибором</h2>
+            <p>Короткий маршрут підкаже, з кого почати: лікар, діагностика, корекційні заняття або супровід родини.</p>
+            <a class="secondary-button" href="guide.html">Зібрати маршрут</a>
+          </div>
+          <div class="support-card muted">
+            <h2>Модерація</h2>
+            <p>Усі нові оголошення, скарги, відгуки й листування доступні адміністратору в одній панелі.</p>
+            <a class="ghost-button full" href="admin.html">Панель адміністратора</a>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <div class="modal" id="specialistModal" aria-hidden="true">
+      <div class="modal-panel specialist-detail-panel" role="dialog" aria-modal="true" aria-labelledby="specialistDetailTitle">
+        <button class="icon-button close-button" type="button" data-close-specialist aria-label="Закрити">×</button>
+        <div id="specialistDetail"></div>
+      </div>
+    </div>
+
+    <div class="drawer" id="messageDrawer" aria-hidden="true">
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+        <button class="icon-button close-button" type="button" data-close-drawer aria-label="Закрити">×</button>
+        <p class="section-note">Повідомлення</p>
+        <h2 id="drawerTitle">Написати фахівцю</h2>
+        <div class="chat-thread" id="chatThread"></div>
+        <form id="messageForm" class="message-form">
+          <label>
+            <span>Повідомлення</span>
+            <textarea rows="4" placeholder="Коротко опишіть запит і зручний формат" required></textarea>
+          </label>
+          <button class="primary-button" type="submit">Надіслати</button>
+          <p class="form-status" id="messageStatus" role="status"></p>
+        </form>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

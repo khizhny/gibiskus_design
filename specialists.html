@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тьютор і Я - каталог заявок для фахівців</title>
+    <meta
+      name="description"
+      content="Окремий каталог заявок для фахівців: запити родин, фільтри, відповіді та розміщення анкети спеціаліста."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" data-i18n-aria-label="brandHome" aria-label="Тьютор і Я, на головну">
+        <span class="brand-mark" aria-hidden="true">Т</span>
+        <span data-i18n="brand">Тьютор і Я</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle data-i18n-aria-label="openMenu" aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html" data-i18n="navSeek">Шукаю фахівця</a>
+        <a class="is-active" href="specialists.html" data-i18n="navSpecialist">Я фахівець</a>
+        <a href="guide.html" data-i18n="navGuide">Довідник</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" data-i18n-aria-label="languageLabel" aria-label="Вибір мови">
+          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
+          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="ghost-button" href="admin.html" data-i18n="login">Увійти</a>
+        <a class="primary-button" href="publish.html" data-i18n="postProfile">Розмістити анкету</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="requests">
+        <div class="hero-copy">
+          <h1 data-i18n="heroTitle">Каталог заявок для фахівців</h1>
+          <p data-i18n="heroText">
+            Переглядайте запити родин, фільтруйте за містом, напрямом і форматом роботи та відповідайте на ті заявки,
+            які відповідають вашому досвіду.
+          </p>
+          <form class="search-panel" id="requestSearchForm" data-i18n-aria-label="requestSearch" aria-label="Пошук заявок">
+            <label>
+              <span data-i18n="city">Місто</span>
+              <select id="requestCityFilter"></select>
+            </label>
+            <label>
+              <span data-i18n="specialization">Напрям</span>
+              <select id="requestSpecialtyFilter"></select>
+            </label>
+            <label>
+              <span data-i18n="format">Формат</span>
+              <select id="requestFormatFilter"></select>
+            </label>
+            <button class="primary-button search-button" type="submit" data-i18n="search">Знайти</button>
+          </form>
+        </div>
+        <figure class="hero-media">
+          <img src="assets/hero-consultation.png" data-i18n-alt="heroAlt" alt="Фахівчиня, мама і дитина займаються за столом" />
+        </figure>
+      </section>
+
+      <section class="catalog-layout" aria-label="Каталог заявок" data-i18n-aria-label="requestsCatalog">
+        <aside class="category-panel">
+          <div class="panel-heading">
+            <h2 data-i18n="requestCategories">Напрями запитів</h2>
+            <button class="text-button" type="button" data-reset-filters data-i18n="showAll">Показати всі</button>
+          </div>
+          <div class="category-list" id="requestCategoryList"></div>
+          <div class="expiry-card">
+            <div class="calendar-icon" aria-hidden="true">
+              <span></span>
+            </div>
+            <strong data-i18n="thirtyDays">30 днів</strong>
+            <p data-i18n="requestExpiry">Заявка родини активна 30 днів. Після цього вона автоматично переходить в архів.</p>
+          </div>
+        </aside>
+
+        <section class="results-panel">
+          <div class="results-head">
+            <div>
+              <p class="section-note"><span data-i18n="found">Знайдено</span> <span id="requestCount">0</span> <span data-i18n="requestsFound">заявок</span></p>
+              <h2 data-i18n="activeRequests">Актуальні запити родин</h2>
+            </div>
+            <div class="view-tools">
+              <button class="tool-button is-active" type="button" data-request-sort="new" data-i18n="sortNew">Нові</button>
+              <button class="tool-button" type="button" data-request-sort="budget" data-i18n="sortBudget">Бюджет</button>
+              <button class="tool-button" type="button" data-request-sort="urgent" data-i18n="sortUrgent">Термінові</button>
+            </div>
+          </div>
+          <div class="listing-list" id="requestList"></div>
+        </section>
+
+        <aside class="support-panel">
+          <div class="support-card">
+            <h2 data-i18n="profileCardTitle">Профіль фахівця</h2>
+            <p data-i18n="profileCardText">Заповніть анкету, додайте документи й отримуйте релевантні заявки після модерації.</p>
+            <a class="secondary-button" href="publish.html" data-i18n="fillProfile">Заповнити анкету</a>
+          </div>
+          <div class="support-card muted">
+            <h2 data-i18n="safeChatTitle">Безпечна комунікація</h2>
+            <p data-i18n="safeChatText">Відповіді, скарги й відгуки проходять через модерацію, щоб зберігати довіру в сервісі.</p>
+          </div>
+        </aside>
+      </section>
+
+    </main>
+
+    <div class="drawer" id="responseDrawer" aria-hidden="true">
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="responseTitle">
+        <button class="icon-button close-button" type="button" data-close-response data-i18n-aria-label="close" aria-label="Закрити">×</button>
+        <p class="section-note" data-i18n="responseNote">Відповідь на заявку</p>
+        <h2 id="responseTitle" data-i18n="responseTitle">Написати родині</h2>
+        <div class="chat-thread" id="responseThread"></div>
+        <form id="responseForm" class="message-form">
+          <label>
+            <span data-i18n="message">Повідомлення</span>
+            <textarea rows="4" data-i18n-placeholder="responsePlaceholder" placeholder="Коротко опишіть досвід і перше доступне вікно" required></textarea>
+          </label>
+          <button class="primary-button" type="submit" data-i18n="send">Надіслати</button>
+          <p class="form-status" id="responseStatus" role="status"></p>
+        </form>
+      </div>
+    </div>
+
+    <script src="specialists.js"></script>
+  </body>
+</html>

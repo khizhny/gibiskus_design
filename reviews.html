@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тьютор і Я - відгуки батьків</title>
+    <meta
+      name="description"
+      content="Відгуки батьків про фахівців, система оцінювання та форма надсилання нового відгуку на модерацію."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
+        <span class="brand-mark" aria-hidden="true">Т</span>
+        <span>Тьютор і Я</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="guide.html">Довідник</a>
+        <a class="is-active" href="reviews.html">Відгуки</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switch" role="group" aria-label="Вибір мови">
+          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
+          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="ghost-button" href="admin.html">Увійти</a>
+        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="reviews-section" id="reviews">
+        <div class="rating-summary">
+          <p class="section-note">Відгуки батьків</p>
+          <strong>4,9</strong>
+          <span>середня оцінка за опублікованими відгуками</span>
+          <div class="rating-bars" aria-label="Розподіл оцінок">
+            <span style="--value: 92%"></span>
+            <span style="--value: 7%"></span>
+            <span style="--value: 1%"></span>
+          </div>
+        </div>
+        <div class="review-list">
+          <article>
+            <div class="review-top">
+              <strong>Марина, мама</strong>
+              <span>5,0</span>
+            </div>
+            <p>
+              Фахівчиня заздалегідь уточнила цілі, після заняття надіслала короткий план і вправи для дому.
+              Дуже цінно, що можна писати всередині сервісу.
+            </p>
+          </article>
+          <article>
+            <div class="review-top">
+              <strong>Олег, тато підлітка</strong>
+              <span>4,8</span>
+            </div>
+            <p>
+              Знайшли нейропсихолога з досвідом роботи зі школою. Відгуки допомогли зрозуміти стиль спілкування до першої зустрічі.
+            </p>
+          </article>
+        </div>
+        <form class="review-form" id="reviewForm" aria-label="Додати відгук">
+          <h3>Залишити відгук</h3>
+          <label>
+            <span>Оцінка</span>
+            <input type="number" min="1" max="5" step="0.1" value="5" name="rating" />
+          </label>
+          <label>
+            <span>Відгук</span>
+            <textarea rows="3" placeholder="Що було корисно родині" name="review"></textarea>
+          </label>
+          <button class="secondary-button" type="submit">Надіслати на перевірку</button>
+          <p class="form-status" id="reviewStatus" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
