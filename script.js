@@ -3,13 +3,11 @@ const expirationDays = 30;
 const pageMeta = {
   uk: {
     title: "Тьютор і Я - каталог фахівців для дітей з особливостями розвитку",
-    description:
-      "Прототип каталогу фахівців, відгуків, повідомлень і адмін-модерації оголошень для родин дітей з особливостями розвитку."
+    description: "Сайт пошуку спеціалістів для дітей з ООП"
   },
   en: {
     title: "Tutor and Me - directory of specialists for children with developmental differences",
-    description:
-      "Prototype of a specialist directory with reviews, messaging, listing moderation, and admin tools for families of children with developmental differences."
+    description: "Specialist search site for children with special educational needs"
   }
 };
 
@@ -19,8 +17,17 @@ const ukToEn = {
   "Тьютор і Я - відгуки батьків": "Tutor and Me - parent reviews",
   "Тьютор і Я - розмістити оголошення": "Tutor and Me - post a listing",
   "Тьютор і Я - панель адміністратора": "Tutor and Me - admin panel",
-  "Каталог перевірених фахівців для дітей з особливостями розвитку":
-    "Directory of verified specialists for children with developmental differences",
+  "Оголошення діє 30, 60 або 90 днів": "A listing is active for 30, 60, or 90 days",
+  "Фахівець заповнює анкету, додає документи, обирає формат занять і строк автовидалення оголошення.\n            Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
+    "A specialist fills in a profile, adds documents, selects session formats, and chooses the listing auto-removal term. Parents message through the built-in chat, and reviews appear after moderation.",
+  "Фахівець заповнює анкету, додає документи, обирає формат занять і строк автовидалення оголошення.":
+    "A specialist fills in a profile, adds documents, selects session formats, and chooses the listing auto-removal term.",
+  "Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
+    "Parents message through the built-in chat, and reviews appear after moderation.",
+  "Каталог фахівців для дітей з особливостями розвитку":
+    "Directory of specialists for children with developmental differences",
+  "Сайт пошуку спеціалістів для дітей з ООП":
+    "Specialist search site for children with special educational needs",
   "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
     "Search by city, format, and specialization. Parent reviews, in-service messaging, and listings that are automatically unpublished after 30 days unless renewed.",
   "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу\n            та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
@@ -63,8 +70,8 @@ const ukToEn = {
     "A short guide suggests where to start: doctor, diagnostics, corrective sessions, or family support.",
   "Зібрати маршрут": "Build a route",
   "Модерація": "Moderation",
-  "Усі нові оголошення, скарги, відгуки й листування доступні адміністратору в одній панелі.":
-    "All new listings, reports, reviews, and conversations are available to the administrator in one panel.",
+  "Усі нові оголошення, скарги й відгуки доступні адміністратору в одній панелі. Повідомлення видаляються автоматично після 3 унікальних дизлайків.":
+    "All new listings, reports, and reviews are available to the administrator in one panel. Messages are automatically removed after 3 unique dislikes.",
   "Панель адміністратора": "Admin panel",
   "Оголошення діє 30 днів і продовжується вручну": "A listing is active for 30 days and is renewed manually",
   "Фахівець заповнює анкету, додає документи, отримує статус модерації та бачить таймер публікації. Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
@@ -75,6 +82,22 @@ const ukToEn = {
   "Ім'я фахівця або назва центру": "Specialist or center name",
   "Наприклад, Анна Коваленко": "For example, Anna Kovalenko",
   "Київ або онлайн": "Kyiv or online",
+  "Район міста": "City district",
+  "Наприклад, Шевченківський": "For example, Shevchenkivskyi",
+  "Формати занять": "Session formats",
+  "Готовий займатися на виїзді": "Ready for home visits",
+  "Готовий займатися онлайн": "Ready to work online",
+  "Документи або приклади роботи": "Documents or work examples",
+  "PDF, PNG або JPG; можна додати кілька файлів": "PDF, PNG, or JPG; multiple files allowed",
+  "Автовидалення оголошення через": "Auto-remove listing after",
+  "60 днів": "60 days",
+  "90 днів": "90 days",
+  "Оплата": "Payment",
+  "Помісячна": "Monthly",
+  "Разова": "One-time",
+  "Погодинна": "Hourly",
+  "Сума оплати": "Payment amount",
+  "Наприклад, 1200": "For example, 1200",
   "Короткий опис": "Short description",
   "Досвід, методи роботи, формат занять": "Experience, methods, session format",
   "Надіслати на модерацію": "Send for moderation",
@@ -144,7 +167,6 @@ const ukToEn = {
   "Оголошення": "Listings",
   "Скарги": "Reports",
   "Скарга": "Report",
-  "Відгуки й повідомлення": "Reviews and messages",
   "Користувачі": "Users",
   "Вийти з панелі": "Exit panel",
   "Оголошення на перевірці": "Listings under review",
@@ -423,7 +445,7 @@ const ukToEn = {
   "Деталі оголошення": "Listing details",
   "Строк": "Term",
   "Нотатка модератора": "Moderator note",
-  "Листування і відгуки": "Messages and reviews",
+  "Скарги й відгуки": "Reports and reviews",
   "До архіву": "Archive",
   "Продовжити на 30 днів": "Renew for 30 days",
   "Відкрити": "Open",
@@ -444,8 +466,11 @@ const ukToEn = {
   "Написати:": "Message:",
   "Добрий день. Підкажіть, будь ласка, чи працюєте ви із запитом:": "Hello. Please tell me whether you work with this request:",
   "Так, можу підказати маршрут і запропонувати перше вікно:": "Yes, I can suggest a route and offer the first slot:",
-  "Повідомлення надіслано. У демо воно також потрапить у модерацію листувань.":
-    "Message sent. In the demo, it also goes to conversation moderation.",
+  "Дизлайк повідомлення": "Dislike message",
+  "Усі повідомлення в цій розмові видалені автоматично після 3 унікальних дизлайків.":
+    "All messages in this conversation were automatically removed after 3 unique dislikes.",
+  "Повідомлення надіслано. Воно буде автоматично видалене після 3 унікальних дизлайків.":
+    "Message sent. It will be automatically removed after 3 unique dislikes.",
   "Нове оголошення створене фахівцем і очікує перевірки документів.":
     "A new listing was created by a specialist and is waiting for document review.",
   "Чернетку надіслано на модерацію. Адміністратор побачить її в черзі.":
@@ -858,11 +883,19 @@ let sortMode = "recommended";
 let selectedCategory = "all";
 let selectedModerationId = moderationItems[0].id;
 let reviewVotes = {};
+let messageDislikes = {};
+let activeChatMessages = [];
 
 try {
   reviewVotes = JSON.parse(localStorage.getItem("reviewVotes") || "{}");
 } catch {
   reviewVotes = {};
+}
+
+try {
+  messageDislikes = JSON.parse(localStorage.getItem("messageDislikes") || "{}");
+} catch {
+  messageDislikes = {};
 }
 
 const allSpecialties = [...new Set(specialtyGroups.flatMap((group) => group.items))].sort((a, b) =>
@@ -922,6 +955,83 @@ function reviewCounts(review) {
 
 function saveReviewVotes() {
   localStorage.setItem("reviewVotes", JSON.stringify(reviewVotes));
+}
+
+function saveMessageDislikes() {
+  localStorage.setItem("messageDislikes", JSON.stringify(messageDislikes));
+}
+
+function currentMessageViewerId() {
+  const stored = localStorage.getItem("demoMessageViewerId");
+  if (stored) return stored;
+  const viewerId = `viewer-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  localStorage.setItem("demoMessageViewerId", viewerId);
+  return viewerId;
+}
+
+function escapeHtml(value) {
+  const replacements = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  };
+  return String(value).replace(/[&<>"']/g, (char) => replacements[char]);
+}
+
+function messageDislikeCount(messageId) {
+  return new Set(messageDislikes[messageId] || []).size;
+}
+
+function isMessageDeleted(messageId) {
+  return messageDislikeCount(messageId) >= 3;
+}
+
+function renderChatMessage(message) {
+  const dislikes = messageDislikeCount(message.id);
+  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentMessageViewerId());
+
+  return `
+    <div class="chat-message ${message.reply ? "is-reply" : ""}" data-chat-message="${message.id}">
+      <div class="chat-bubble ${message.reply ? "reply" : ""}">${escapeHtml(message.text)}</div>
+      <button
+        class="message-dislike ${dislikedByViewer ? "is-active" : ""}"
+        type="button"
+        data-message-dislike="${message.id}"
+        aria-label="Дизлайк повідомлення"
+      >
+        <span aria-hidden="true">&#128078;</span>
+        <span>${dislikes}</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderChatMessages() {
+  if (!elements.chatThread) return;
+  const visibleMessages = activeChatMessages.filter((message) => !isMessageDeleted(message.id));
+
+  elements.chatThread.innerHTML = visibleMessages.length
+    ? visibleMessages.map((message) => renderChatMessage(message)).join("")
+    : `<p class="chat-empty">Усі повідомлення в цій розмові видалені автоматично після 3 унікальних дизлайків.</p>`;
+  applyLanguage(elements.chatThread);
+}
+
+function handleMessageDislike(messageId) {
+  if (!messageId) return;
+  const viewerId = currentMessageViewerId();
+  const voters = new Set(messageDislikes[messageId] || []);
+
+  if (voters.has(viewerId)) {
+    voters.delete(viewerId);
+  } else {
+    voters.add(viewerId);
+  }
+
+  messageDislikes[messageId] = [...voters];
+  saveMessageDislikes();
+  renderChatMessages();
 }
 
 function statusLabel(status) {
@@ -1258,10 +1368,19 @@ function openDrawer(listingId) {
   const drawerTitle = document.querySelector("#drawerTitle");
   if (!listing || !elements.messageDrawer || !elements.chatThread || !drawerTitle) return;
   drawerTitle.textContent = `Написати: ${listing.name}`;
-  elements.chatThread.innerHTML = `
-    <div class="chat-bubble">Добрий день. Підкажіть, будь ласка, чи працюєте ви із запитом: ${listing.tags[0].toLowerCase()}?</div>
-    <div class="chat-bubble reply">Так, можу підказати маршрут і запропонувати перше вікно: ${listing.next}.</div>
-  `;
+  activeChatMessages = [
+    {
+      id: `listing-${listing.id}-parent`,
+      text: `Добрий день. Підкажіть, будь ласка, чи працюєте ви із запитом: ${listing.tags[0].toLowerCase()}?`,
+      reply: false
+    },
+    {
+      id: `listing-${listing.id}-specialist`,
+      text: `Так, можу підказати маршрут і запропонувати перше вікно: ${listing.next}.`,
+      reply: true
+    }
+  ];
+  renderChatMessages();
   applyLanguage(elements.messageDrawer);
   elements.messageDrawer.classList.add("is-open");
   elements.messageDrawer.setAttribute("aria-hidden", "false");
@@ -1340,7 +1459,7 @@ function renderModerationDetail(item) {
       <div><dt>Нотатка модератора</dt><dd>${item.notes}</dd></div>
     </dl>
     <div class="message-card">
-      <strong>Листування і відгуки</strong>
+      <strong>Скарги й відгуки</strong>
       <p>${item.message}</p>
     </div>
     <button class="primary-button" type="button" data-action="approved" data-id="${item.id}">Схвалити</button>
@@ -1444,15 +1563,26 @@ function bindEvents() {
   elements.messageDrawer?.addEventListener("click", (event) => {
     if (event.target === elements.messageDrawer) closeDrawer();
   });
+  elements.chatThread?.addEventListener("click", (event) => {
+    const dislikeButton = event.target.closest("[data-message-dislike]");
+    if (dislikeButton) handleMessageDislike(dislikeButton.dataset.messageDislike);
+  });
 
   document.querySelector("#messageForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const textarea = event.currentTarget.querySelector("textarea");
-    elements.chatThread?.insertAdjacentHTML("beforeend", `<div class="chat-bubble">${textarea.value}</div>`);
+    const text = textarea.value.trim();
+    if (!text) return;
+    activeChatMessages.push({
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      text,
+      reply: false
+    });
+    renderChatMessages();
     textarea.value = "";
     const status = document.querySelector("#messageStatus");
     if (status) {
-      status.textContent = "Повідомлення надіслано. У демо воно також потрапить у модерацію листувань.";
+      status.textContent = "Повідомлення надіслано. Воно буде автоматично видалене після 3 унікальних дизлайків.";
       applyLanguage(status);
     }
   });
@@ -1507,16 +1637,33 @@ function bindEvents() {
   document.querySelector("#publishForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const formats = data.getAll("formats");
+    const files = data
+      .getAll("documents")
+      .filter((file) => file && typeof file.name === "string" && file.name.trim());
+    const fileNames = files.map((file) => file.name).join(", ");
+    const district = data.get("district")?.trim();
+    const autoDeleteDays = data.get("autoDeleteDays");
+    const paymentType = data.get("paymentType");
+    const paymentAmount = Number(data.get("paymentAmount") || 0).toLocaleString("uk-UA");
+    const notes = [
+      `Опис: ${data.get("description")}`,
+      district ? `Район: ${district}` : "Район: не вказано",
+      `Формати: ${formats.length ? formats.join(", ") : "не вказано"}`,
+      `Автовидалення: ${autoDeleteDays} днів`,
+      `Оплата: ${paymentType}, ${paymentAmount} ₴`,
+      `Файли: ${fileNames || "не додано"}`
+    ].join(" · ");
     moderationItems.unshift({
       id: Date.now(),
       name: data.get("name"),
       specialty: data.get("specialty"),
-      city: data.get("city"),
+      city: district ? `${data.get("city")}, ${district}` : data.get("city"),
       status: "pending",
       createdAt: today.toISOString().slice(0, 10),
       reports: 0,
-      notes: data.get("description"),
-      message: "Нове оголошення створене фахівцем і очікує перевірки документів."
+      notes,
+      message: `Нове оголошення створене фахівцем і очікує перевірки документів. Вкладення: ${fileNames || "немає"}.`
     });
     const status = document.querySelector("#publishStatus");
     if (status) {

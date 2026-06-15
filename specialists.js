@@ -38,7 +38,7 @@ const translations = {
     profileCardText: "Заповніть анкету, додайте документи й отримуйте релевантні заявки після модерації.",
     fillProfile: "Заповнити анкету",
     safeChatTitle: "Безпечна комунікація",
-    safeChatText: "Відповіді, скарги й відгуки проходять через модерацію, щоб зберігати довіру в сервісі.",
+    safeChatText: "Якщо відповідь отримує 3 унікальні дизлайки, вона автоматично видаляється. Скарги й відгуки лишаються в панелі адміністратора.",
     forSpecialists: "Для фахівців",
     publishTitle: "Розмістіть анкету й отримуйте заявки від родин",
     publishText:
@@ -71,7 +71,9 @@ const translations = {
     documents: "Документи перевіряються",
     firstMessage: "Добрий день. Бачу вашу заявку і можу запропонувати першу консультацію.",
     familyReply: "Дякуємо. Напишіть, будь ласка, про досвід і найближчі вільні години.",
-    responseSent: "Відповідь надіслано. У демо вона також потрапить у модерацію листувань.",
+    dislikeMessage: "Дизлайк повідомлення",
+    allMessagesDeleted: "Усі повідомлення в цій розмові видалені автоматично після 3 унікальних дизлайків.",
+    responseSent: "Відповідь надіслано. Вона буде автоматично видалена після 3 унікальних дизлайків.",
     profileSent: "Анкету надіслано на модерацію. Після перевірки вона з'явиться в каталозі для родин.",
     inPerson: "Очно",
     online: "Онлайн",
@@ -127,7 +129,7 @@ const translations = {
     profileCardText: "Fill in your profile, add documents, and receive relevant requests after moderation.",
     fillProfile: "Fill profile",
     safeChatTitle: "Safe communication",
-    safeChatText: "Replies, reports, and reviews go through moderation to keep trust inside the service.",
+    safeChatText: "If a reply receives 3 unique dislikes, it is automatically removed. Reports and reviews stay in the admin panel.",
     forSpecialists: "For specialists",
     publishTitle: "Post your profile and receive family requests",
     publishText: "After moderation, the profile appears in the catalog for people looking for a specialist. Listings must be renewed every 30 days.",
@@ -159,7 +161,9 @@ const translations = {
     documents: "Documents under review",
     firstMessage: "Hello. I saw your request and can offer an initial consultation.",
     familyReply: "Thank you. Please write about your experience and nearest available times.",
-    responseSent: "Reply sent. In the demo, it also goes to conversation moderation.",
+    dislikeMessage: "Dislike message",
+    allMessagesDeleted: "All messages in this conversation were automatically removed after 3 unique dislikes.",
+    responseSent: "Reply sent. It will be automatically removed after 3 unique dislikes.",
     profileSent: "Profile sent for moderation. After review, it will appear in the family catalog.",
     inPerson: "In person",
     online: "Online",
@@ -289,6 +293,14 @@ const requestData = [
 let currentLang = localStorage.getItem("siteLanguage") === "en" ? "en" : "uk";
 let selectedCategory = "all";
 let requestSort = "new";
+let messageDislikes = {};
+let activeResponseMessages = [];
+
+try {
+  messageDislikes = JSON.parse(localStorage.getItem("messageDislikes") || "{}");
+} catch {
+  messageDislikes = {};
+}
 
 const elements = {
   city: document.querySelector("#requestCityFilter"),
@@ -308,6 +320,83 @@ const formatOptions = ["all", "inPerson", "online", "homeVisit"];
 
 function t(key) {
   return translations[currentLang][key] || key;
+}
+
+function saveMessageDislikes() {
+  localStorage.setItem("messageDislikes", JSON.stringify(messageDislikes));
+}
+
+function currentMessageViewerId() {
+  const stored = localStorage.getItem("demoMessageViewerId");
+  if (stored) return stored;
+  const viewerId = `viewer-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  localStorage.setItem("demoMessageViewerId", viewerId);
+  return viewerId;
+}
+
+function escapeHtml(value) {
+  const replacements = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  };
+  return String(value).replace(/[&<>"']/g, (char) => replacements[char]);
+}
+
+function messageDislikeCount(messageId) {
+  return new Set(messageDislikes[messageId] || []).size;
+}
+
+function isMessageDeleted(messageId) {
+  return messageDislikeCount(messageId) >= 3;
+}
+
+function renderResponseMessage(message) {
+  const dislikes = messageDislikeCount(message.id);
+  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentMessageViewerId());
+  const messageText = message.textKey ? t(message.textKey) : message.text;
+
+  return `
+    <div class="chat-message ${message.reply ? "is-reply" : ""}" data-chat-message="${message.id}">
+      <div class="chat-bubble ${message.reply ? "reply" : ""}">${escapeHtml(messageText)}</div>
+      <button
+        class="message-dislike ${dislikedByViewer ? "is-active" : ""}"
+        type="button"
+        data-response-dislike="${message.id}"
+        aria-label="${t("dislikeMessage")}"
+      >
+        <span aria-hidden="true">&#128078;</span>
+        <span>${dislikes}</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderResponseMessages() {
+  if (!elements.responseThread) return;
+  const visibleMessages = activeResponseMessages.filter((message) => !isMessageDeleted(message.id));
+
+  elements.responseThread.innerHTML = visibleMessages.length
+    ? visibleMessages.map((message) => renderResponseMessage(message)).join("")
+    : `<p class="chat-empty">${t("allMessagesDeleted")}</p>`;
+}
+
+function handleResponseDislike(messageId) {
+  if (!messageId) return;
+  const viewerId = currentMessageViewerId();
+  const voters = new Set(messageDislikes[messageId] || []);
+
+  if (voters.has(viewerId)) {
+    voters.delete(viewerId);
+  } else {
+    voters.add(viewerId);
+  }
+
+  messageDislikes[messageId] = [...voters];
+  saveMessageDislikes();
+  renderResponseMessages();
 }
 
 function setStaticText() {
@@ -471,6 +560,7 @@ function setLanguage(lang) {
   currentLang = lang === "en" ? "en" : "uk";
   localStorage.setItem("siteLanguage", currentLang);
   renderAll();
+  renderResponseMessages();
 }
 
 function openResponse(id) {
@@ -478,10 +568,19 @@ function openResponse(id) {
   const responseTitle = document.querySelector("#responseTitle");
   if (!request || !elements.responseDrawer || !elements.responseThread || !responseTitle) return;
   responseTitle.textContent = `${t("responseTitle")}: ${request.family[currentLang]}`;
-  elements.responseThread.innerHTML = `
-    <div class="chat-bubble">${t("firstMessage")}</div>
-    <div class="chat-bubble reply">${t("familyReply")}</div>
-  `;
+  activeResponseMessages = [
+    {
+      id: `request-${request.id}-specialist`,
+      textKey: "firstMessage",
+      reply: false
+    },
+    {
+      id: `request-${request.id}-family`,
+      textKey: "familyReply",
+      reply: true
+    }
+  ];
+  renderResponseMessages();
   elements.responseDrawer.classList.add("is-open");
   elements.responseDrawer.setAttribute("aria-hidden", "false");
   document.body.classList.add("drawer-open");
@@ -554,11 +653,22 @@ function bindEvents() {
   elements.responseDrawer?.addEventListener("click", (event) => {
     if (event.target === elements.responseDrawer) closeResponse();
   });
+  elements.responseThread?.addEventListener("click", (event) => {
+    const dislikeButton = event.target.closest("[data-response-dislike]");
+    if (dislikeButton) handleResponseDislike(dislikeButton.dataset.responseDislike);
+  });
 
   document.querySelector("#responseForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const textarea = event.currentTarget.querySelector("textarea");
-    elements.responseThread?.insertAdjacentHTML("beforeend", `<div class="chat-bubble">${textarea.value}</div>`);
+    const text = textarea.value.trim();
+    if (!text) return;
+    activeResponseMessages.push({
+      id: `response-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      text,
+      reply: false
+    });
+    renderResponseMessages();
     textarea.value = "";
     const status = document.querySelector("#responseStatus");
     if (status) {

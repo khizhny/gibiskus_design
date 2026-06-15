@@ -40,14 +40,14 @@
       <section class="workflow-band" id="publish">
         <div>
           <p class="section-note">Для фахівців</p>
-          <h1>Оголошення діє 30 днів і продовжується вручну</h1>
+          <h1>Оголошення діє 30, 60 або 90 днів</h1>
           <p>
-            Фахівець заповнює анкету, додає документи, отримує статус модерації та бачить таймер публікації.
+            Фахівець заповнює анкету, додає документи, обирає формат занять і строк автовидалення оголошення.
             Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.
           </p>
           <a class="secondary-button" href="specialists.html">Переглянути заявки родин</a>
         </div>
-        <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця">
+        <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця" enctype="multipart/form-data">
           <label>
             <span>Ім'я фахівця або назва центру</span>
             <input type="text" name="name" placeholder="Наприклад, Анна Коваленко" required />
@@ -59,6 +59,48 @@
           <label>
             <span>Місто</span>
             <input type="text" name="city" placeholder="Київ або онлайн" required />
+          </label>
+          <label>
+            <span>Район міста</span>
+            <input type="text" name="district" placeholder="Наприклад, Шевченківський" />
+          </label>
+          <fieldset class="option-group">
+            <legend>Формати занять</legend>
+            <label class="checkbox-row">
+              <input type="checkbox" name="formats" value="Виїзд" />
+              <span>Готовий займатися на виїзді</span>
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="formats" value="Онлайн" checked />
+              <span>Готовий займатися онлайн</span>
+            </label>
+          </fieldset>
+          <label>
+            <span>Документи або приклади роботи</span>
+            <input type="file" name="documents" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple />
+            <small>PDF, PNG або JPG; можна додати кілька файлів</small>
+          </label>
+          <div class="field-grid">
+            <label>
+              <span>Автовидалення оголошення через</span>
+              <select name="autoDeleteDays">
+                <option value="30">30 днів</option>
+                <option value="60">60 днів</option>
+                <option value="90">90 днів</option>
+              </select>
+            </label>
+            <label>
+              <span>Оплата</span>
+              <select name="paymentType">
+                <option value="Помісячна">Помісячна</option>
+                <option value="Разова">Разова</option>
+                <option value="Погодинна">Погодинна</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span>Сума оплати</span>
+            <input type="number" name="paymentAmount" min="0" step="50" placeholder="Наприклад, 1200" required />
           </label>
           <label>
             <span>Короткий опис</span>
