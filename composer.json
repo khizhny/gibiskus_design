@@ -1,0 +1,16 @@
+{
+  "name": "oop/specialist-search",
+  "description": "PHP backend for the specialist search website",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.1",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-pdo_sqlite": "*",
+    "google/auth": "^1.53"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

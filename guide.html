@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Тьютор і Я - довідник спеціалізацій</title>
+    <title>Пошук фахівця - довідник спеціалізацій</title>
     <meta
       name="description"
       content="Довідник фахівців для дітей з особливостями розвитку: освітні, психологічні, реабілітаційні, медичні та сімейні ролі."
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
-        <span class="brand-mark" aria-hidden="true">Т</span>
-        <span>Тьютор і Я</span>
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
       </a>
       <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
         <span></span>
@@ -24,15 +24,11 @@
       <nav class="nav" data-nav>
         <a href="index.html">Шукаю фахівця</a>
         <a href="specialists.html">Я фахівець</a>
-        <a class="is-active" href="guide.html">Довідник</a>
+        <a href="about.html">Про сайт</a>
+        <a href="admin.html">Адміністратор</a>
       </nav>
       <div class="header-actions">
-        <div class="language-switch" role="group" aria-label="Вибір мови">
-          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
-          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
-        </div>
-        <a class="ghost-button" href="admin.html">Увійти</a>
-        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+        <a class="ghost-button" href="auth.php">Увійти</a>
       </div>
     </header>
 
@@ -41,36 +37,19 @@
         <div class="section-header">
           <div>
             <p class="section-note">Довідник спеціалізацій</p>
-            <h1>Повний перелік ролей для каталогу</h1>
+            <h1>Повний перелік спеціальностей для каталогу</h1>
           </div>
           <p>
-            Список зібрано за освітніми, реабілітаційними та медичними ролями, які найчастіше беруть участь
-            у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини.
+            Список зібрано за освітніми, реабілітаційними та медичними спеціальностями, які найчастіше беруть участь
+            у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини. Зв'яжіться з нами, якщо вашої
+            спеціальності тут немає.
           </p>
         </div>
         <div class="specialty-grid" id="specialtyGrid"></div>
       </section>
-
-      <section class="workflow-band" id="route">
-        <div>
-          <p class="section-note">Маршрут родини</p>
-          <h2>З кого почати</h2>
-          <p>
-            Це короткий орієнтир для першого вибору фахівця. Він не замінює медичну консультацію, але допомагає
-            зрозуміти, які ролі можуть бути корисними для мовлення, поведінки, моторики та навчання.
-          </p>
-        </div>
-        <div class="publish-form">
-          <ol class="guide-list">
-            <li>Якщо є сумніви щодо розвитку, почніть із педіатра розвитку, дитячого невролога або психолога.</li>
-            <li>Для мовлення й комунікації зверніть увагу на логопеда, фахівця AAC або сурдолога/аудіолога.</li>
-            <li>Для навичок самообслуговування, сенсорної регуляції та моторики підійдуть ерготерапевт і фізичний терапевт.</li>
-            <li>Для поведінки, адаптації та навчального середовища додайте ABA-фахівця, тьютора або спеціального педагога.</li>
-          </ol>
-        </div>
-      </section>
     </main>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
   </body>
 </html>

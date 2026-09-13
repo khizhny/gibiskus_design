@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Тьютор і Я - каталог заявок для фахівців</title>
+    <title>Пошук фахівця - каталог заявок для фахівців</title>
     <meta
       name="description"
       content="Окремий каталог заявок для фахівців: запити родин, фільтри, відповіді та розміщення анкети спеціаліста."
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="index.html" data-i18n-aria-label="brandHome" aria-label="Тьютор і Я, на головну">
-        <span class="brand-mark" aria-hidden="true">Т</span>
-        <span data-i18n="brand">Тьютор і Я</span>
+      <a class="brand" href="index.html" data-i18n-aria-label="brandHome" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span data-i18n="brand">Пошук фахівця</span>
       </a>
       <button class="menu-button icon-button" type="button" data-menu-toggle data-i18n-aria-label="openMenu" aria-label="Відкрити меню">
         <span></span>
@@ -24,15 +24,11 @@
       <nav class="nav" data-nav>
         <a href="index.html" data-i18n="navSeek">Шукаю фахівця</a>
         <a class="is-active" href="specialists.html" data-i18n="navSpecialist">Я фахівець</a>
-        <a href="guide.html" data-i18n="navGuide">Довідник</a>
+        <a href="about.html" data-i18n="navAbout">Про сайт</a>
+        <a href="admin.html" data-i18n="navAdmin">Адміністратор</a>
       </nav>
       <div class="header-actions">
-        <div class="language-switch" role="group" data-i18n-aria-label="languageLabel" aria-label="Вибір мови">
-          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
-          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
-        </div>
-        <a class="ghost-button" href="admin.html" data-i18n="login">Увійти</a>
-        <a class="primary-button" href="publish.html" data-i18n="postProfile">Розмістити анкету</a>
+        <a class="ghost-button" href="auth.php" data-i18n="login">Увійти</a>
       </div>
     </header>
 
@@ -46,16 +42,46 @@
           </p>
           <form class="search-panel" id="requestSearchForm" data-i18n-aria-label="requestSearch" aria-label="Пошук заявок">
             <label>
+              <span data-i18n="region">Область</span>
+              <select id="requestRegionFilter"></select>
+            </label>
+            <label>
               <span data-i18n="city">Місто</span>
               <select id="requestCityFilter"></select>
+            </label>
+            <label>
+              <span>Район міста</span>
+              <select id="requestDistrictFilter">
+                <option value="all">Спочатку оберіть місто</option>
+              </select>
             </label>
             <label>
               <span data-i18n="specialization">Напрям</span>
               <select id="requestSpecialtyFilter"></select>
             </label>
-            <label>
+            <label class="format-select-field">
               <span data-i18n="format">Формат</span>
-              <select id="requestFormatFilter"></select>
+              <details class="multi-select" id="requestFormatFilter">
+                <summary><span data-request-format-summary>Будь-який</span></summary>
+                <div class="multi-select-menu">
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="requestFormatFilter" value="online" />
+                    <span data-i18n="online">Онлайн</span>
+                  </label>
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="requestFormatFilter" value="inPerson" />
+                    <span data-i18n="inPerson">У фахівця</span>
+                  </label>
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="requestFormatFilter" value="homeVisit" />
+                    <span data-i18n="homeVisit">У учня</span>
+                  </label>
+                </div>
+              </details>
+            </label>
+            <label>
+              <span data-i18n="descriptionSearch">Пошук по опису</span>
+              <input id="requestTextFilter" type="search" data-i18n-placeholder="descriptionSearchPlaceholder" placeholder="Наприклад, Фортепіано" />
             </label>
             <button class="primary-button search-button" type="submit" data-i18n="search">Знайти</button>
           </form>
@@ -65,7 +91,7 @@
         </figure>
       </section>
 
-      <section class="catalog-layout" aria-label="Каталог заявок" data-i18n-aria-label="requestsCatalog">
+      <section class="catalog-layout catalog-layout-requests" aria-label="Каталог заявок" data-i18n-aria-label="requestsCatalog">
         <aside class="category-panel">
           <div class="panel-heading">
             <h2 data-i18n="requestCategories">Напрями запитів</h2>
@@ -89,24 +115,11 @@
             </div>
             <div class="view-tools">
               <button class="tool-button is-active" type="button" data-request-sort="new" data-i18n="sortNew">Нові</button>
-              <button class="tool-button" type="button" data-request-sort="budget" data-i18n="sortBudget">Бюджет</button>
               <button class="tool-button" type="button" data-request-sort="urgent" data-i18n="sortUrgent">Термінові</button>
             </div>
           </div>
           <div class="listing-list" id="requestList"></div>
         </section>
-
-        <aside class="support-panel">
-          <div class="support-card">
-            <h2 data-i18n="profileCardTitle">Профіль фахівця</h2>
-            <p data-i18n="profileCardText">Заповніть анкету, додайте документи й отримуйте релевантні заявки після модерації.</p>
-            <a class="secondary-button" href="publish.html" data-i18n="fillProfile">Заповнити анкету</a>
-          </div>
-          <div class="support-card muted">
-            <h2 data-i18n="safeChatTitle">Безпечна комунікація</h2>
-            <p data-i18n="safeChatText">Якщо відповідь отримує 3 унікальні дизлайки, вона автоматично видаляється. Скарги й відгуки лишаються в панелі адміністратора.</p>
-          </div>
-        </aside>
       </section>
 
     </main>
@@ -128,6 +141,7 @@
       </div>
     </div>
 
-    <script src="specialists.js"></script>
+    <script src="specialists.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
   </body>
 </html>

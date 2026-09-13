@@ -1,58 +1,83 @@
 const today = new Date("2026-06-12T12:00:00");
 const expirationDays = 30;
+const lowRatingThreshold = 4.0;
+const negativeReviewThreshold = 3.0;
+const adminEmails = ["khizhny@gmail.com", "nadya.khizhnaya@gmail.com"];
+const adminVoteWeight = 100;
+const sqliteWasmUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm";
+const sqliteScriptUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js";
 const pageMeta = {
   uk: {
-    title: "Тьютор і Я - каталог фахівців для дітей з особливостями розвитку",
+    title: "Пошук фахівця - каталог фахівців для дітей з особливостями розвитку",
     description: "Сайт пошуку спеціалістів для дітей з ООП"
   },
   en: {
-    title: "Tutor and Me - directory of specialists for children with developmental differences",
+    title: "Specialist Search - directory of specialists for children with developmental differences",
     description: "Specialist search site for children with special educational needs"
   }
 };
 
 const ukToEn = {
-  "Тьютор і Я - каталог фахівців": "Tutor and Me - specialist directory",
-  "Тьютор і Я - довідник спеціалізацій": "Tutor and Me - specialization guide",
-  "Тьютор і Я - відгуки батьків": "Tutor and Me - parent reviews",
-  "Тьютор і Я - розмістити оголошення": "Tutor and Me - post a listing",
-  "Тьютор і Я - панель адміністратора": "Tutor and Me - admin panel",
-  "Оголошення діє 30, 60 або 90 днів": "A listing is active for 30, 60, or 90 days",
-  "Фахівець заповнює анкету, додає документи, обирає формат занять і строк автовидалення оголошення.\n            Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
-    "A specialist fills in a profile, adds documents, selects session formats, and chooses the listing auto-removal term. Parents message through the built-in chat, and reviews appear after moderation.",
-  "Фахівець заповнює анкету, додає документи, обирає формат занять і строк автовидалення оголошення.":
-    "A specialist fills in a profile, adds documents, selects session formats, and chooses the listing auto-removal term.",
-  "Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
-    "Parents message through the built-in chat, and reviews appear after moderation.",
-  "Каталог фахівців для дітей з особливостями розвитку":
-    "Directory of specialists for children with developmental differences",
+  "Довідник": "Guide",
+  "Довідник спеціальностей": "Specialty guide",
+  "Редагування запису каталогу": "Catalog record editing",
+  "Розділ": "Section",
+  "Назва запису": "Record title",
+  "Наприклад, Репетитор з алгебри": "For example, Algebra tutor",
+  "Додати запис": "Add record",
+  "Зберегти зміни": "Save changes",
+  "Скасувати": "Cancel",
+  "фахівців": "specialists",
+  "Редагувати": "Edit",
+  "Видалити": "Delete",
+  "Запис додано.": "Record added.",
+  "Запис оновлено.": "Record updated.",
+  "Запис видалено.": "Record deleted.",
+  "Такий запис уже є в цій категорії.": "This record already exists in this category.",
+  "Неможливо видалити: до цього напрямку прив'язані фахівці.": "Cannot delete: specialists are linked to this specialty.",
+  "Оберіть запис для редагування.": "Choose a record to edit.",
+  "Пошук фахівця - каталог фахівців": "Specialist Search - specialist directory",
+  "Пошук фахівця - довідник спеціалізацій": "Specialist Search - specialization guide",
+  "Пошук фахівця - відгуки батьків": "Specialist Search - parent reviews",
+  "Пошук фахівця - розмістити оголошення": "Specialist Search - post a listing",
+  "Пошук фахівця - панель адміністратора": "Specialist Search - admin panel",
+  "Подаючи заявку, ви підтверджуєте, що готові займатися з дітьми з ООП. А також згодні надавати ваші контактні дані батькам, користувачам даного сайту.":
+    "By submitting an application, you confirm that you are ready to work with children with special educational needs. You also agree to provide your contact details to parents who use this site.",
+  "Батьки пишуть через вбудовані повідомлення, а відгуки відображаються в анкеті фахівця.":
+    "Parents message through the built-in chat, and reviews appear in the specialist profile.",
+  "Ця платформа створена для того, щоб кожен міг швидко та зручно знайти фахівців, які працюють з людьми з ООП: педагогів, тренерів, викладачів, психологів та інших спеціалістів. Зрозуміло, доступно й без довгих пошуків.":
+    "This platform was created so everyone can quickly and easily find specialists who work with people with special educational needs: educators, coaches, teachers, psychologists, and other professionals. Clear, accessible, and without long searches.",
   "Сайт пошуку спеціалістів для дітей з ООП":
     "Specialist search site for children with special educational needs",
   "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
     "Search by city, format, and specialization. Parent reviews, in-service messaging, and listings that are automatically unpublished after 30 days unless renewed.",
   "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу\n            та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
     "Search by city, format, and specialization. Parent reviews, in-service messaging, and listings that are automatically unpublished after 30 days unless renewed.",
-  "Тьютор і Я, на головну": "Tutor and Me, home",
-  "Тьютор і Я": "Tutor and Me",
+  "Пошук фахівця, на головну": "Specialist Search, home",
+  "Пошук фахівця": "Specialist Search",
   "Відкрити меню": "Open menu",
   "Каталог": "Directory",
   "Фахівці": "Specialists",
   "Шукаю фахівця": "Find a specialist",
   "Я фахівець": "I am a specialist",
   "Довідник": "Guide",
+  "Про сайт": "About",
+  "Адміністратор": "Administrator",
   "Відгуки": "Reviews",
   "Для фахівців": "For specialists",
   "Увійти": "Log in",
   "Розмістити оголошення": "Post a listing",
   "Пошук фахівців": "Specialist search",
   "Місто": "City",
+  "Район міста": "City district",
+  "Будь-який район": "Any district",
   "Спеціалізація": "Specialization",
   "Формат": "Format",
   "Будь-яке": "Any",
   "Будь-яка": "Any",
   "Будь-який": "Any",
   "Знайти": "Search",
-  "Фахівчиня, мама і дитина займаються за столом": "A specialist, mother, and child working at a table",
+  "Фахівчиня і дитина займаються за столом": "A specialist, and child working at a table",
   "Каталог оголошень": "Listing directory",
   "Категорії": "Categories",
   "Увесь список": "Full list",
@@ -61,34 +86,45 @@ const ukToEn = {
     "After publication, a listing must be renewed or it is removed from the directory.",
   "Знайдено": "Found",
   "фахівців": "specialists",
-  "Рекомендовані анкети": "Recommended profiles",
-  "Рекомендовані": "Recommended",
+  "Знайдені фахівці": "Found specialists",
   "Рейтинг": "Rating",
-  "Невдовзі завершуються": "Expiring soon",
-  "Допомога з вибором": "Help choosing",
-  "Короткий маршрут підкаже, з кого почати: лікар, діагностика, корекційні заняття або супровід родини.":
-    "A short guide suggests where to start: doctor, diagnostics, corrective sessions, or family support.",
-  "Зібрати маршрут": "Build a route",
-  "Модерація": "Moderation",
-  "Усі нові оголошення, скарги й відгуки доступні адміністратору в одній панелі. Повідомлення видаляються автоматично після 3 унікальних дизлайків.":
-    "All new listings, reports, and reviews are available to the administrator in one panel. Messages are automatically removed after 3 unique dislikes.",
+  "від 4.9": "from 4.9",
+  "від 4.8": "from 4.8",
+  "від 4.7": "from 4.7",
   "Панель адміністратора": "Admin panel",
   "Оголошення діє 30 днів і продовжується вручну": "A listing is active for 30 days and is renewed manually",
-  "Фахівець заповнює анкету, додає документи, отримує статус модерації та бачить таймер публікації. Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
-    "A specialist fills in a profile, attaches documents, receives a moderation status, and sees the publication timer. Parents write through built-in messages, and reviews appear after review.",
-  "Фахівець заповнює анкету, додає документи, отримує статус модерації та бачить таймер публікації.\n            Батьки пишуть через вбудовані повідомлення, а відгуки з'являються після перевірки.":
-    "A specialist fills in a profile, attaches documents, receives a moderation status, and sees the publication timer. Parents write through built-in messages, and reviews appear after review.",
   "Чернетка оголошення фахівця": "Specialist listing draft",
   "Ім'я фахівця або назва центру": "Specialist or center name",
   "Наприклад, Анна Коваленко": "For example, Anna Kovalenko",
   "Київ або онлайн": "Kyiv or online",
   "Район міста": "City district",
+  "Категорія": "Category",
+  "Підкатегорія": "Subcategory",
+  "Спеціальності": "Specialties",
+  "Оберіть одну або кілька спеціальностей з вибраної категорії.": "Choose one or more specialties from the selected category.",
+  "Обрані спеціальності": "Selected specialties",
+  "Прибрати спеціальність": "Remove specialty",
+  "Оберіть хоча б одну спеціальність.": "Choose at least one specialty.",
+  "Категорія спеціаліста": "Specialist category",
+  "Будь-яка категорія": "Any category",
   "Наприклад, Шевченківський": "For example, Shevchenkivskyi",
+  "Номер телефону": "Phone number",
+  "Номери телефонів": "Phone numbers",
+  "Email": "Email",
+  "Додати телефон": "Add phone",
+  "Додати email": "Add email",
+  "Додатковий номер телефону": "Additional phone number",
+  "Додатковий email": "Additional email",
+  "Прибрати": "Remove",
   "Формати занять": "Session formats",
+  "Місце занять": "Session location",
+  "У фахівця": "At the specialist's place",
+  "У учня": "At the student's place",
+  "Райони міста для занять": "City districts for sessions",
+  "Райони для занять у фахівця": "Districts for sessions at the specialist's place",
+  "Райони для занять у учня": "Districts for sessions at the student's place",
   "Готовий займатися на виїзді": "Ready for home visits",
   "Готовий займатися онлайн": "Ready to work online",
-  "Документи або приклади роботи": "Documents or work examples",
-  "PDF, PNG або JPG; можна додати кілька файлів": "PDF, PNG, or JPG; multiple files allowed",
   "Автовидалення оголошення через": "Auto-remove listing after",
   "60 днів": "60 days",
   "90 днів": "90 days",
@@ -100,13 +136,13 @@ const ukToEn = {
   "Наприклад, 1200": "For example, 1200",
   "Короткий опис": "Short description",
   "Досвід, методи роботи, формат занять": "Experience, methods, session format",
-  "Надіслати на модерацію": "Send for moderation",
+  "Опублікувати оголошення": "Publish listing",
   "Довідник спеціалізацій": "Specialization guide",
-  "Повний перелік ролей для каталогу": "Full list of roles for the directory",
-  "Список зібрано за освітніми, реабілітаційними та медичними ролями, які найчастіше беруть участь у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини.":
-    "The list is organized by educational, rehabilitation, and medical roles that most often support diagnostics, early intervention, corrective work, and family support.",
-  "Список зібрано за освітніми, реабілітаційними та медичними ролями, які найчастіше беруть участь\n            у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини.":
-    "The list is organized by educational, rehabilitation, and medical roles that most often support diagnostics, early intervention, corrective work, and family support.",
+  "Повний перелік спеціальностей для каталогу": "Full list of specialties for the directory",
+  "Список зібрано за освітніми, реабілітаційними та медичними спеціальностями, які найчастіше беруть участь у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини. Зв'яжіться з нами, якщо вашої спеціальності тут немає.":
+    "The list is organized by educational, rehabilitation, and medical specialties that most often support diagnostics, early intervention, corrective work, and family support. Contact us if your specialty is not listed here.",
+  "Список зібрано за освітніми, реабілітаційними та медичними спеціальностями, які найчастіше беруть участь\n            у діагностиці, ранньому втручанні, корекційній роботі та супроводі родини. Зв'яжіться з нами, якщо вашої\n            спеціальності тут немає.":
+    "The list is organized by educational, rehabilitation, and medical specialties that most often support diagnostics, early intervention, corrective work, and family support. Contact us if your specialty is not listed here.",
   "Відгуки батьків": "Parent reviews",
   "Відгуки про фахівця": "Reviews for the specialist",
   "Дата:": "Date:",
@@ -118,42 +154,42 @@ const ukToEn = {
   "Оцінка коментаря": "Comment rating",
   "середня оцінка за опублікованими відгуками": "average rating from published reviews",
   "Розподіл оцінок": "Rating distribution",
-  "Марина, мама": "Maryna, mother",
+  "Марина": "Maryna",
   "Фахівчиня заздалегідь уточнила цілі, після заняття надіслала короткий план і вправи для дому. Дуже цінно, що можна писати всередині сервісу.":
     "The specialist clarified the goals in advance and sent a short plan and home exercises after the session. It is very helpful to message inside the service.",
   "Фахівчиня заздалегідь уточнила цілі, після заняття надіслала короткий план і вправи для дому.\n              Дуже цінно, що можна писати всередині сервісу.":
     "The specialist clarified the goals in advance and sent a short plan and home exercises after the session. It is very helpful to message inside the service.",
-  "Олег, тато підлітка": "Oleh, father of a teenager",
+  "Олег": "Oleh",
   "Знайшли нейропсихолога з досвідом роботи зі школою. Відгуки допомогли зрозуміти стиль спілкування до першої зустрічі.":
     "We found a neuropsychologist with school experience. Reviews helped us understand the communication style before the first meeting.",
-  "Ірина, мама": "Iryna, mother",
+  "Ірина": "Iryna",
   "Після першої зустрічі отримали короткий план вправ і зрозуміли, як займатися вдома без перевантаження.":
     "After the first meeting, we received a short exercise plan and understood how to practice at home without overload.",
-  "Андрій, тато": "Andrii, father",
+  "Андрій": "Andrii",
   "Сподобалося, що фахівець пояснив цілі простими словами й уточнив, які зміни відстежувати щотижня.":
     "I liked that the specialist explained the goals in simple words and clarified which changes to track each week.",
-  "Світлана, мама": "Svitlana, mother",
+  "Світлана": "Svitlana",
   "Консультація допомогла узгодити дії родини та школи. Окремо ціную спокійний тон спілкування.":
     "The consultation helped align the family and school. I especially value the calm communication style.",
-  "Наталя, мама": "Nataliia, mother",
+  "Наталя": "Nataliia",
   "Побачили чітку структуру занять і домашніх кроків. Дитині було комфортно, без тиску.":
     "We saw a clear structure for sessions and home steps. The child felt comfortable, without pressure.",
-  "Юлія, мама": "Yuliia, mother",
+  "Юлія": "Yuliia",
   "Фахівець уважно зібрав дані перед стартом і показав, як фіксувати прогрес у побутових ситуаціях.":
     "The specialist carefully gathered data before starting and showed how to record progress in everyday situations.",
-  "Максим, тато": "Maksym, father",
+  "Максим": "Maksym",
   "Добре, що батьків включають у процес: після сесії є конкретні вправи й зрозумілі критерії успіху.":
     "It is good that parents are included in the process: after the session there are specific exercises and clear success criteria.",
-  "Олена, мама": "Olena, mother",
+  "Олена": "Olena",
   "Отримали корисні поради для дому: як організувати сенсорні паузи, робоче місце й побутові задачі.":
     "We received useful home advice: how to organize sensory breaks, the workspace, and daily tasks.",
-  "Тарас, тато": "Taras, father",
+  "Тарас": "Taras",
   "Пояснення були практичними. Частину рекомендацій змогли застосувати вже наступного дня.":
     "The explanations were practical. We were able to apply part of the recommendations the next day.",
-  "Вікторія, мама": "Viktoriia, mother",
+  "Вікторія": "Viktoriia",
   "Команда подивилася на запит комплексно й запропонувала пріоритети без зайвих призначень.":
     "The team looked at the request comprehensively and suggested priorities without unnecessary referrals.",
-  "Роман, тато": "Roman, father",
+  "Роман": "Roman",
   "Сподобалося, що після консультації був короткий висновок і зрозумілий маршрут наступних кроків.":
     "I liked that after the consultation there was a short summary and a clear route for next steps.",
   "Додати відгук": "Add a review",
@@ -161,18 +197,20 @@ const ukToEn = {
   "Оцінка": "Rating",
   "Відгук": "Review",
   "Що було корисно родині": "What was helpful for the family",
-  "Надіслати на перевірку": "Send for review",
-  "Переглянути заявки родин": "View family requests",
+  "Опублікувати відгук": "Publish review",
   "Панель адміністратора": "Admin panel",
   "Оголошення": "Listings",
   "Скарги": "Reports",
   "Скарга": "Report",
   "Користувачі": "Users",
+  "Фахівці": "Specialists",
+  "Батьки": "Parents",
   "Вийти з панелі": "Exit panel",
-  "Оголошення на перевірці": "Listings under review",
+  "Керування": "Management",
+  "Керування оголошеннями": "Listing management",
   "Пошук": "Search",
   "Ім'я, місто, скарга": "Name, city, report",
-  "На перевірці": "Under review",
+  "Активні": "Active",
   "Завершується": "Expiring",
   "Завершуються за 3 дні": "Expiring in 3 days",
   "Скарги за тиждень": "Reports this week",
@@ -191,18 +229,21 @@ const ukToEn = {
   "Вхід адміністратора": "Administrator login",
   "Пароль": "Password",
   "Відкрити панель": "Open panel",
-  "Маршрут родини": "Family route",
-  "З кого почати": "Where to start",
-  "Це короткий орієнтир для першого вибору фахівця. Він не замінює медичну консультацію, але допомагає зрозуміти, які ролі можуть бути корисними для мовлення, поведінки, моторики та навчання.":
-    "This is a short guide for choosing the first specialist. It does not replace medical consultation, but helps clarify which roles may be useful for speech, behavior, motor skills, and learning.",
-  "Якщо є сумніви щодо розвитку, почніть із педіатра розвитку, дитячого невролога або психолога.":
-    "If you have concerns about development, start with a developmental pediatrician, child neurologist, or psychologist.",
-  "Для мовлення й комунікації зверніть увагу на логопеда, фахівця AAC або сурдолога/аудіолога.":
-    "For speech and communication, look for a speech therapist, AAC specialist, or hearing specialist/audiologist.",
-  "Для навичок самообслуговування, сенсорної регуляції та моторики підійдуть ерготерапевт і фізичний терапевт.":
-    "For self-care skills, sensory regulation, and motor skills, occupational and physical therapists may help.",
-  "Для поведінки, адаптації та навчального середовища додайте ABA-фахівця, тьютора або спеціального педагога.":
-    "For behavior, adaptation, and the learning environment, add an ABA specialist, tutor, or special educator.",
+  "Пошук фахівця - про сайт": "Specialist Search - about",
+  "Про сайт Пошук фахівця: пошук спеціалістів для дітей з ООП та листування з адміністраторами.":
+    "About Specialist Search: specialist search for children with special educational needs and messaging administrators.",
+  "Допомагає родинам знаходити фахівців, а спеціалістам - публікувати анкети,\n            відповідати на заявки та підтримувати актуальність оголошень.":
+    "Helps families find specialists, while specialists can publish profiles, reply to requests, and keep listings current.",
+  "Листування з адміністратором": "Messaging an administrator",
+  "Ваше ім'я": "Your name",
+  "Наприклад, Олена": "For example, Olena",
+  "Email для відповіді": "Reply email",
+  "Автозаповнюється з профілю": "Auto-filled from profile",
+  "Тема": "Subject",
+  "Питання щодо сайту": "Question about the site",
+  "Напишіть, що потрібно передати адміністраторам": "Write what should be sent to the administrators",
+  "Написати адміністраторам": "Message administrators",
+  "Лист підготовлено для адміністраторів сайту.": "The email has been prepared for the site administrators.",
   "Очно": "In person",
   "Онлайн": "Online",
   "Виїзд": "Home visit",
@@ -210,6 +251,10 @@ const ukToEn = {
   "Львів": "Lviv",
   "Одеса": "Odesa",
   "Дніпро": "Dnipro",
+  "Шевченківський": "Shevchenkivskyi",
+  "Галицький": "Halytskyi",
+  "Приморський": "Prymorskyi",
+  "Соборний": "Sobornyi",
   "сьогодні, 16:30": "today, 16:30",
   "завтра, 10:00": "tomorrow, 10:00",
   "сьогодні, 18:00": "today, 18:00",
@@ -217,9 +262,9 @@ const ukToEn = {
   "п'ятниця, 12:00": "Friday, 12:00",
   "Усі фахівці": "All specialists",
   "Нічого не знайдено": "Nothing found",
-  "Змініть місто, формат або спеціалізацію. У довіднику нижче є повний список ролей для розширення каталогу.":
-    "Change the city, format, or specialization. The guide below has a full role list for expanding the directory.",
-  "Документи перевірені": "Documents verified",
+  "Змініть місто, формат або спеціалізацію. У довіднику нижче є повний список спеціальностей для розширення каталогу.":
+    "Change the city, format, or specialization. The guide below has a full specialty list for expanding the directory.",
+  "Документи додані": "Documents added",
   "Деталі анкети": "Profile details",
   "Анкета фахівця": "Specialist profile",
   "Докладна анкета": "Detailed profile",
@@ -245,6 +290,29 @@ const ukToEn = {
   "1 дн.": "1 day",
   "хв": "min",
   "Корекційно-педагогічні": "Corrective and educational",
+  "Фахівці з розвитку, корекційної педагогіки, психологічної, реабілітаційної, медичної та сімейної підтримки.":
+    "Specialists in development, corrective education, psychological, rehabilitation, medical, and family support.",
+  "Педагоги та тренери": "Teachers and coaches",
+  "Фахівці для навчання, спорту, творчості, музики, предметної підготовки та розвитку інтересів.":
+    "Specialists for learning, sports, creativity, music, subject tutoring, and interest development.",
+  "Спорт": "Sports",
+  "Музика": "Music",
+  "Математика": "Mathematics",
+  "Фізика": "Physics",
+  "Творчість і мистецтво": "Creativity and arts",
+  "Мови та комунікація": "Languages and communication",
+  "Індивідуальні та групові заняття для руху, координації, витривалості й командної взаємодії.":
+    "Individual and group sessions for movement, coordination, endurance, and teamwork.",
+  "Музичні заняття, інструменти, вокал, ритміка та творчий розвиток.":
+    "Music lessons, instruments, vocals, rhythm, and creative development.",
+  "Підтримка у шкільній математиці, логіці, підготовці до контрольних і поступовому засвоєнні тем.":
+    "Support with school math, logic, test preparation, and gradual topic mastery.",
+  "Пояснення природничих тем через приклади, досліди, задачі та зрозумілу практику.":
+    "Explaining science topics through examples, experiments, tasks, and clear practice.",
+  "Практичні творчі заняття для самовираження, уваги, дрібної моторики та впевненості.":
+    "Practical creative sessions for self-expression, attention, fine motor skills, and confidence.",
+  "Мовні заняття, читання, письмо та розвиток комунікації у комфортному темпі.":
+    "Language lessons, reading, writing, and communication development at a comfortable pace.",
   "Мовлення, навчання, адаптація середовища та спеціальні освітні маршрути.":
     "Speech, learning, environment adaptation, and special education pathways.",
   "Психологія і поведінка": "Psychology and behavior",
@@ -444,9 +512,29 @@ const ukToEn = {
     "After the meeting, the family receives a short summary, support priorities, and recommended next specialists.",
   "Деталі оголошення": "Listing details",
   "Строк": "Term",
-  "Нотатка модератора": "Moderator note",
+  "Нотатка": "Note",
   "Скарги й відгуки": "Reports and reviews",
-  "До архіву": "Archive",
+  "Видалити": "Delete",
+  "Відхилити скаргу": "Dismiss report",
+  "Нове": "New",
+  "Низький рейтинг": "Low rating",
+  "Модерація відгуків": "Review moderation",
+  "Автор": "Author",
+  "Відгуків для модерації немає": "No reviews to moderate",
+  "Неперевірені відгуки з негативним рейтингом з'являться тут.": "Unmoderated reviews with a negative rating will appear here.",
+  "Користувачі-фахівці": "Specialist users",
+  "Користувачі-батьки": "Parent users",
+  "Користувач": "User",
+  "Контакти": "Contacts",
+  "Реєстрація": "Registration",
+  "Службові дані": "Internal data",
+  "Заявки": "Requests",
+  "Фахівців не знайдено": "No specialists found",
+  "Батьків не знайдено": "No parents found",
+  "Заявок для перевірки немає": "No listings to review",
+  "Нові оголошення, скарги або низькі рейтинги з'являться тут.": "New listings, reports, or low ratings will appear here.",
+  "Скаргу відхилено адміністратором. Оголошення залишено активним.":
+    "The report was dismissed by the administrator. The listing remains active.",
   "Продовжити на 30 днів": "Renew for 30 days",
   "Відкрити": "Open",
   "Схвалити": "Approve",
@@ -454,13 +542,13 @@ const ukToEn = {
   "сьогодні": "today",
   "днів до автоматичного зняття": "days until automatic removal",
   "знімається автоматично": "removed automatically",
-  "Перевірити диплом і сертифікат із запуску мовлення.": "Check diploma and speech initiation certificate.",
+  "Додано диплом і сертифікат із запуску мовлення.": "Diploma and speech initiation certificate added.",
   "Є скарга на непідтверджену інформацію про досвід.": "There is a report about unverified experience information.",
   "Строк публікації завершується, надіслано нагадування про продовження.":
     "The publication term is ending; a renewal reminder was sent.",
-  "Перевірити опис послуг для підлітків.": "Check the description of services for teenagers.",
+  "Опис послуг для підлітків оновлено.": "Teen service description updated.",
   "Батьки запитують, чи працює фахівчиня з ехолалією.": "Parents ask whether the specialist works with echolalia.",
-  "Модератор запросив уточнення щодо сертифіката BCBA/QBA.": "The moderator requested clarification on the BCBA/QBA certificate.",
+  "Адміністратор отримав уточнення щодо сертифіката BCBA/QBA.": "Administrator received clarification on the BCBA/QBA certificate.",
   "Фахівчиня просить продовжити оголошення після оплати.": "The specialist asks to renew the listing after payment.",
   "Батьки уточнюють формат сімейної консультації.": "Parents are clarifying the family consultation format.",
   "Написати:": "Message:",
@@ -471,14 +559,13 @@ const ukToEn = {
     "All messages in this conversation were automatically removed after 3 unique dislikes.",
   "Повідомлення надіслано. Воно буде автоматично видалене після 3 унікальних дизлайків.":
     "Message sent. It will be automatically removed after 3 unique dislikes.",
-  "Нове оголошення створене фахівцем і очікує перевірки документів.":
-    "A new listing was created by a specialist and is waiting for document review.",
-  "Чернетку надіслано на модерацію. Адміністратор побачить її в черзі.":
-    "Draft sent for moderation. The administrator will see it in the queue.",
-  "Відгук надіслано модератору на перевірку.": "Review sent to the moderator for approval."
+  "Нове оголошення опубліковане фахівцем.": "A new listing was published by a specialist.",
+  "Оголошення опубліковано. Адміністратор бачить його в панелі керування.":
+    "Listing published. The administrator can see it in the management panel.",
+  "Відгук опубліковано.": "Review published."
 };
 
-let currentLang = localStorage.getItem("siteLanguage") === "en" ? "en" : "uk";
+let currentLang = "uk";
 const textNodeOriginals = new WeakMap();
 const attrOriginals = new WeakMap();
 const translatableAttributes = ["placeholder", "aria-label", "alt", "title"];
@@ -561,6 +648,7 @@ const specialtyGroups = [
     description: "Навігація послугами, права родини, інклюзія та комунікація зі школою або садком.",
     items: [
       "Координатор раннього втручання",
+      "Центр раннього втручання",
       "Кейс-менеджер",
       "Соціальний працівник",
       "Консультант з ІПРА",
@@ -574,14 +662,132 @@ const specialtyGroups = [
   }
 ];
 
+const trainerSpecialtyGroups = [
+  {
+    title: "Спорт",
+    description: "Індивідуальні та групові заняття для руху, координації, витривалості й командної взаємодії.",
+    items: [
+      "Тренер з роликів",
+      "Тренер з велосипеда",
+      "Тренер з футболу",
+      "Тренер з плавання",
+      "Тренер з гімнастики",
+      "Тренер з легкої атлетики",
+      "Тренер з танців",
+      "Тренер з йоги",
+      "Тренер з адаптивного фітнесу",
+      "Тренер з настільного тенісу"
+    ]
+  },
+  {
+    title: "Музика",
+    description: "Музичні заняття, інструменти, вокал, ритміка та творчий розвиток.",
+    items: [
+      "Викладач фортепіано",
+      "Викладач гітари",
+      "Викладач скрипки",
+      "Викладач барабанів",
+      "Викладач вокалу",
+      "Викладач сольфеджіо",
+      "Викладач музичної грамоти",
+      "Викладач ритміки",
+      "Викладач хору",
+      "Викладач музичної імпровізації"
+    ]
+  },
+  {
+    title: "Математика",
+    description: "Підтримка у шкільній математиці, логіці, підготовці до контрольних і поступовому засвоєнні тем.",
+    items: [
+      "Репетитор з математики",
+      "Репетитор з алгебри",
+      "Репетитор з геометрії",
+      "Репетитор з логіки",
+      "Репетитор з арифметики",
+      "Репетитор з підготовки до НМТ з математики",
+      "Репетитор з підготовки до ДПА з математики",
+      "Репетитор з ментальної арифметики",
+      "Репетитор з фінансової грамотності",
+      "Репетитор з математичних ігор"
+    ]
+  },
+  {
+    title: "Фізика",
+    description: "Пояснення природничих тем через приклади, досліди, задачі та зрозумілу практику.",
+    items: [
+      "Репетитор з фізики",
+      "Репетитор з астрономії",
+      "Репетитор з механіки",
+      "Репетитор з електрики",
+      "Репетитор з оптики",
+      "Репетитор з термодинаміки",
+      "Репетитор з підготовки до НМТ з фізики",
+      "Викладач STEM",
+      "Викладач робототехніки",
+      "Викладач наукових дослідів"
+    ]
+  },
+  {
+    title: "Творчість і мистецтво",
+    description: "Практичні творчі заняття для самовираження, уваги, дрібної моторики та впевненості.",
+    items: [
+      "Репетитор з малювання",
+      "Викладач живопису",
+      "Викладач ліплення",
+      "Викладач кераміки",
+      "Викладач аплікації",
+      "Викладач дизайну",
+      "Викладач анімації",
+      "Викладач фотографії",
+      "Викладач рукоділля",
+      "Викладач театральної майстерності"
+    ]
+  },
+  {
+    title: "Мови та комунікація",
+    description: "Мовні заняття, читання, письмо та розвиток комунікації у комфортному темпі.",
+    items: [
+      "Репетитор з української мови",
+      "Репетитор з англійської мови",
+      "Репетитор з польської мови",
+      "Репетитор з німецької мови",
+      "Репетитор з читання",
+      "Репетитор з письма",
+      "Викладач сторітелінгу",
+      "Викладач ораторської майстерності",
+      "Викладач підготовки до школи",
+      "Викладач літератури"
+    ]
+  }
+];
+
+const allSpecialtyGroups = [...specialtyGroups, ...trainerSpecialtyGroups];
+
+const specialtySections = [
+  {
+    title: "Корекційно-педагогічні",
+    description: "Фахівці з розвитку, корекційної педагогіки, психологічної, реабілітаційної, медичної та сімейної підтримки.",
+    groups: specialtyGroups
+  },
+  {
+    title: "Педагоги та тренери",
+    description: "Фахівці для навчання, спорту, творчості, музики, предметної підготовки та розвитку інтересів.",
+    groups: trainerSpecialtyGroups
+  }
+];
+
 const listings = [
   {
     id: 1,
     name: "Катерина Смирнова",
     initials: "КС",
     specialty: "Логопед",
-    city: "Київ",
-    formats: ["Очно", "Онлайн"],
+    specialties: ["Логопед", "Логопед-дефектолог", "Педагог раннього розвитку"],
+    regionId: "UA80000000000093317",
+    region: "Київ",
+    city: "UA80000000000093317",
+    district: "Шевченківський",
+    formats: ["У фахівця", "Онлайн"],
     rating: 4.9,
     reviews: 56,
     price: 1200,
@@ -608,7 +814,7 @@ const listings = [
     reviewItems: [
       {
         id: "r1-1",
-        author: "Ірина, мама",
+        author: "Ірина",
         date: "2026-06-03",
         rating: 5.0,
         text: "Після першої зустрічі отримали короткий план вправ і зрозуміли, як займатися вдома без перевантаження.",
@@ -617,7 +823,7 @@ const listings = [
       },
       {
         id: "r1-2",
-        author: "Андрій, тато",
+        author: "Андрій",
         date: "2026-05-28",
         rating: 4.9,
         text: "Сподобалося, що фахівець пояснив цілі простими словами й уточнив, які зміни відстежувати щотижня.",
@@ -631,7 +837,11 @@ const listings = [
     name: "Анна Кузнєцова",
     initials: "АК",
     specialty: "Клінічний психолог",
-    city: "Онлайн",
+    specialties: ["Клінічний психолог", "Дитячий психолог", "Нейропсихолог"],
+    regionId: "",
+    region: "",
+    city: "",
+    district: "Онлайн",
     formats: ["Онлайн"],
     rating: 4.8,
     reviews: 34,
@@ -659,7 +869,7 @@ const listings = [
     reviewItems: [
       {
         id: "r2-1",
-        author: "Світлана, мама",
+        author: "Світлана",
         date: "2026-06-05",
         rating: 4.8,
         text: "Консультація допомогла узгодити дії родини та школи. Окремо ціную спокійний тон спілкування.",
@@ -668,7 +878,7 @@ const listings = [
       },
       {
         id: "r2-2",
-        author: "Наталя, мама",
+        author: "Наталя",
         date: "2026-05-22",
         rating: 4.7,
         text: "Побачили чітку структуру занять і домашніх кроків. Дитині було комфортно, без тиску.",
@@ -682,8 +892,12 @@ const listings = [
     name: "Ігор Лебедєв",
     initials: "ІЛ",
     specialty: "ABA-терапевт",
-    city: "Львів",
-    formats: ["Очно", "Виїзд"],
+    specialties: ["ABA-терапевт", "Поведінковий аналітик", "Ігровий терапевт"],
+    regionId: "UA46000000000026241",
+    region: "Львівська",
+    city: "UA46060250010015970",
+    district: "Галицький",
+    formats: ["У фахівця", "У учня"],
     rating: 5.0,
     reviews: 42,
     price: 1400,
@@ -710,7 +924,7 @@ const listings = [
     reviewItems: [
       {
         id: "r3-1",
-        author: "Юлія, мама",
+        author: "Юлія",
         date: "2026-06-01",
         rating: 5.0,
         text: "Фахівець уважно зібрав дані перед стартом і показав, як фіксувати прогрес у побутових ситуаціях.",
@@ -719,7 +933,7 @@ const listings = [
       },
       {
         id: "r3-2",
-        author: "Максим, тато",
+        author: "Максим",
         date: "2026-05-26",
         rating: 4.9,
         text: "Добре, що батьків включають у процес: після сесії є конкретні вправи й зрозумілі критерії успіху.",
@@ -733,8 +947,12 @@ const listings = [
     name: "Ольга Захарова",
     initials: "ОЗ",
     specialty: "Ерготерапевт",
-    city: "Одеса",
-    formats: ["Очно"],
+    specialties: ["Ерготерапевт", "Фахівець із сенсорної інтеграції", "Орально-моторний терапевт"],
+    regionId: "UA51000000000030770",
+    region: "Одеська",
+    city: "UA51100270010076757",
+    district: "Приморський",
+    formats: ["У фахівця"],
     rating: 4.9,
     reviews: 27,
     price: 1300,
@@ -761,7 +979,7 @@ const listings = [
     reviewItems: [
       {
         id: "r4-1",
-        author: "Олена, мама",
+        author: "Олена",
         date: "2026-06-07",
         rating: 4.9,
         text: "Отримали корисні поради для дому: як організувати сенсорні паузи, робоче місце й побутові задачі.",
@@ -770,7 +988,7 @@ const listings = [
       },
       {
         id: "r4-2",
-        author: "Тарас, тато",
+        author: "Тарас",
         date: "2026-05-30",
         rating: 4.8,
         text: "Пояснення були практичними. Частину рекомендацій змогли застосувати вже наступного дня.",
@@ -784,8 +1002,12 @@ const listings = [
     name: "Центр Гармонія",
     initials: "ЦГ",
     specialty: "Центр раннього втручання",
-    city: "Дніпро",
-    formats: ["Очно", "Виїзд"],
+    specialties: ["Центр раннього втручання", "Координатор раннього втручання", "Кейс-менеджер"],
+    regionId: "UA12000000000090473",
+    region: "Дніпропетровська",
+    city: "UA12020010010037010",
+    district: "Соборний",
+    formats: ["У фахівця", "У учня"],
     rating: 4.7,
     reviews: 88,
     price: 1800,
@@ -812,7 +1034,7 @@ const listings = [
     reviewItems: [
       {
         id: "r5-1",
-        author: "Вікторія, мама",
+        author: "Вікторія",
         date: "2026-06-04",
         rating: 4.8,
         text: "Команда подивилася на запит комплексно й запропонувала пріоритети без зайвих призначень.",
@@ -821,7 +1043,7 @@ const listings = [
       },
       {
         id: "r5-2",
-        author: "Роман, тато",
+        author: "Роман",
         date: "2026-05-24",
         rating: 4.7,
         text: "Сподобалося, що після консультації був короткий висновок і зрозумілий маршрут наступних кроків.",
@@ -837,32 +1059,35 @@ let moderationItems = [
     id: 101,
     name: "Марія Воронцова",
     specialty: "Логопед",
-    city: "Київ",
-    status: "pending",
+    city: "UA80000000000093317",
+    status: "approved",
     createdAt: "2026-06-10",
     reports: 0,
-    notes: "Перевірити диплом і сертифікат із запуску мовлення.",
+    rating: 4.9,
+    notes: "Додано диплом і сертифікат із запуску мовлення.",
     message: "Батьки запитують, чи працює фахівчиня з ехолалією."
   },
   {
     id: 102,
     name: "Олексій Фролов",
     specialty: "ABA-терапевт",
-    city: "Львів",
+    city: "UA46060250010015970",
     status: "reported",
     createdAt: "2026-05-14",
     reports: 3,
+    rating: 4.6,
     notes: "Є скарга на непідтверджену інформацію про досвід.",
-    message: "Модератор запросив уточнення щодо сертифіката BCBA/QBA."
+    message: "Адміністратор отримав уточнення щодо сертифіката BCBA/QBA."
   },
   {
     id: 103,
     name: "Ольга Іванова",
     specialty: "Ерготерапевт",
-    city: "Одеса",
+    city: "UA51100270010076757",
     status: "expiring",
     createdAt: "2026-05-16",
     reports: 0,
+    rating: 4.8,
     notes: "Строк публікації завершується, надіслано нагадування про продовження.",
     message: "Фахівчиня просить продовжити оголошення після оплати."
   },
@@ -870,21 +1095,167 @@ let moderationItems = [
     id: 104,
     name: "Дмитро Соколов",
     specialty: "Психолог",
-    city: "Онлайн",
-    status: "pending",
+    city: "",
+    formats: ["Онлайн"],
+    status: "approved",
     createdAt: "2026-06-09",
     reports: 0,
-    notes: "Перевірити опис послуг для підлітків.",
+    rating: 3.7,
+    notes: "Опис послуг для підлітків оновлено.",
     message: "Батьки уточнюють формат сімейної консультації."
   }
 ];
 
-let sortMode = "recommended";
+let adminReviewItems = [
+  {
+    id: "amr-1",
+    specialist: "Олексій Фролов",
+    author: "Ірина",
+    date: "2026-06-09",
+    rating: 1.4,
+    moderated: false,
+    text: "Не отримали відповіді після оплати пробної консультації. Потрібна перевірка комунікації."
+  },
+  {
+    id: "amr-2",
+    specialist: "Дмитро Соколов",
+    author: "Марина",
+    date: "2026-06-07",
+    rating: 2.1,
+    moderated: false,
+    text: "Консультація була коротшою за домовленість, рекомендації залишились нечіткими."
+  },
+  {
+    id: "amr-3",
+    specialist: "Центр Гармонія",
+    author: "Олена",
+    date: "2026-06-05",
+    rating: 2.8,
+    moderated: false,
+    text: "Довго чекали на висновок після зустрічі, частина запитань лишилась без відповіді."
+  },
+  {
+    id: "amr-4",
+    specialist: "Катерина Смирнова",
+    author: "Андрій",
+    date: "2026-06-03",
+    rating: 4.6,
+    moderated: false,
+    text: "Позитивний відгук не потрапляє в негативну чергу."
+  },
+  {
+    id: "amr-5",
+    specialist: "Ольга Захарова",
+    author: "Тарас",
+    date: "2026-06-01",
+    rating: 1.9,
+    moderated: true,
+    text: "Уже промодерований відгук не показується в черзі."
+  }
+];
+
+const specialistUsers = [
+  {
+    id: "sp-101",
+    name: "Марія Воронцова",
+    role: "Логопед",
+    phone: "+380 67 421 19 04",
+    email: "m.vorontsova@example.com",
+    registeredAt: "2026-04-18",
+    listings: 1,
+    activeListings: 1,
+    reviews: 18,
+    averageRating: 4.9,
+    lastActive: "2026-06-12",
+    payment: "Помісячна",
+    notes: "Документи додані, очікує оновлення сертифіката у липні."
+  },
+  {
+    id: "sp-102",
+    name: "Олексій Фролов",
+    role: "ABA-терапевт",
+    phone: "+380 50 883 44 21",
+    email: "o.frolov@example.com",
+    registeredAt: "2026-03-29",
+    listings: 2,
+    activeListings: 1,
+    reviews: 7,
+    averageRating: 4.6,
+    lastActive: "2026-06-10",
+    payment: "Погодинна",
+    notes: "Є історія скарг, потрібна перевірка підтвердження досвіду."
+  },
+  {
+    id: "sp-103",
+    name: "Дмитро Соколов",
+    role: "Психолог",
+    phone: "+380 93 118 27 62",
+    email: "d.sokolov@example.com",
+    registeredAt: "2026-05-20",
+    listings: 1,
+    activeListings: 1,
+    reviews: 4,
+    averageRating: 3.7,
+    lastActive: "2026-06-09",
+    payment: "Разова",
+    notes: "Низький рейтинг, варто перевірити останні відгуки."
+  }
+];
+
+const parentUsers = [
+  {
+    id: "pa-201",
+    name: "Ірина Коваленко",
+    phone: "+380 97 304 12 86",
+    email: "iryna.k@example.com",
+    registeredAt: "2026-05-02",
+    requests: 3,
+    activeRequests: 1,
+    reviews: 5,
+    lastActive: "2026-06-11",
+    city: "Київ",
+    notes: "Шукає логопеда та психолога, часто користується онлайн-форматом."
+  },
+  {
+    id: "pa-202",
+    name: "Марина Левченко",
+    phone: "+380 66 590 08 17",
+    email: "maryna.l@example.com",
+    registeredAt: "2026-04-14",
+    requests: 2,
+    activeRequests: 1,
+    reviews: 2,
+    lastActive: "2026-06-07",
+    city: "Львів",
+    notes: "Є відгук з негативним рейтингом у черзі модерації."
+  },
+  {
+    id: "pa-203",
+    name: "Роман Гнатюк",
+    phone: "+380 73 206 45 90",
+    email: "roman.h@example.com",
+    registeredAt: "2026-02-26",
+    requests: 1,
+    activeRequests: 0,
+    reviews: 3,
+    lastActive: "2026-05-30",
+    city: "Дніпро",
+    notes: "Потребує повторного підтвердження email після зміни адреси."
+  }
+];
+
+let sortMode = "rating";
 let selectedCategory = "all";
 let selectedModerationId = moderationItems[0].id;
 let reviewVotes = {};
 let messageDislikes = {};
 let activeChatMessages = [];
+const selectedPublishSpecialties = new Set();
+let catalogSuggestions = [];
+let mapDatabasePromise = null;
+let siteDatabasePromise = null;
+let searchCatalogTree = [];
+const cityNameCache = new Map();
 
 try {
   reviewVotes = JSON.parse(localStorage.getItem("reviewVotes") || "{}");
@@ -898,15 +1269,381 @@ try {
   messageDislikes = {};
 }
 
-const allSpecialties = [...new Set(specialtyGroups.flatMap((group) => group.items))].sort((a, b) =>
-  a.localeCompare(b, "uk")
-);
+try {
+  catalogSuggestions = JSON.parse(localStorage.getItem("catalogSuggestions") || "[]");
+} catch {
+  catalogSuggestions = [];
+}
+
+function saveCatalogSuggestions() {
+  localStorage.setItem("catalogSuggestions", JSON.stringify(catalogSuggestions));
+}
+
+function getAllSpecialties() {
+  return [...new Set(allSpecialtyGroups.flatMap((group) => group.items))].sort((a, b) => a.localeCompare(b, "uk"));
+}
+
+function escapeAttribute(value) {
+  return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function getListingSpecialties(item) {
+  const values = Array.isArray(item?.specialties) ? item.specialties : [];
+  return [...new Set([...values, item?.specialty].filter(Boolean))];
+}
+
+function listingHasSpecialty(item, specialty) {
+  return getListingSpecialties(item).includes(specialty);
+}
+
+function listingHasSpecialtyFromGroup(item, groupTitle) {
+  const group = allSpecialtyGroups.find((entry) => entry.title === groupTitle);
+  if (!group) return false;
+  return getListingSpecialties(item).some((specialty) => group.items.includes(specialty));
+}
+
+function fallbackCatalogTree() {
+  return specialtySections.map((section) => ({
+    title: section.title,
+    groups: section.groups.map((group) => ({
+      title: group.title,
+      description: group.description || "",
+      items: [...group.items]
+    }))
+  }));
+}
+
+function activeCatalogTree() {
+  return searchCatalogTree.length ? searchCatalogTree : fallbackCatalogTree();
+}
+
+function activeCatalogGroups() {
+  return activeCatalogTree().flatMap((section) =>
+    (section.groups || []).map((group) => ({
+      ...group,
+      sectionTitle: section.title
+    }))
+  );
+}
+
+function findActiveCatalogGroup(groupTitle) {
+  for (const section of activeCatalogTree()) {
+    const group = (section.groups || []).find((entry) => entry.title === groupTitle);
+    if (group) return { section, group };
+  }
+  return null;
+}
+
+function buildCatalogTreeFromRows(rows) {
+  const groupMap = new Map();
+  rows.forEach((row) => {
+    const groupTitle = String(row.group_title || "").trim();
+    const subgroupTitle = String(row.subgroup_title || "").trim();
+    const recordTitle = String(row.record_title || "").trim();
+    if (!groupTitle || !subgroupTitle || !recordTitle) return;
+
+    if (!groupMap.has(groupTitle)) {
+      groupMap.set(groupTitle, {
+        title: groupTitle,
+        groups: [],
+        subgroupMap: new Map()
+      });
+    }
+
+    const group = groupMap.get(groupTitle);
+    if (!group.subgroupMap.has(subgroupTitle)) {
+      const subgroup = {
+        title: subgroupTitle,
+        description: row.subgroup_description || "",
+        items: []
+      };
+      group.subgroupMap.set(subgroupTitle, subgroup);
+      group.groups.push(subgroup);
+    }
+
+    const subgroup = group.subgroupMap.get(subgroupTitle);
+    if (!subgroup.items.includes(recordTitle)) {
+      subgroup.items.push(recordTitle);
+    }
+  });
+
+  return [...groupMap.values()].map(({ subgroupMap, ...group }) => group);
+}
+
+function selectedSearchSpecialists() {
+  return [...(elements.specialistRecordFilters || [])]
+    .filter((control) => control.checked)
+    .map((control) => control.value);
+}
+
+function updateSpecialistSummary() {
+  if (!elements.specialistSummary) return;
+  const selectedSpecialists = selectedSearchSpecialists();
+  if (!selectedSpecialists.length) {
+    elements.specialistSummary.textContent = "Будь-який спеціаліст";
+  } else if (selectedSpecialists.length === 1) {
+    elements.specialistSummary.textContent = selectedSpecialists[0];
+  } else {
+    elements.specialistSummary.textContent = `${selectedSpecialists.length} спеціалісти`;
+  }
+  elements.specialistSelect?.classList.toggle("has-value", selectedSpecialists.length > 0);
+}
+
+function renderSpecialistTree() {
+  if (!elements.specialistTree) return;
+  const selectedValues = new Set(selectedSearchSpecialists());
+  const tree = searchCatalogTree.length ? searchCatalogTree : fallbackCatalogTree();
+
+  elements.specialistTree.innerHTML = tree.length
+    ? tree
+        .map(
+          (group) => `
+            <section class="specialist-tree-group">
+              <div class="specialist-tree-group-title">${escapeHtml(group.title)}</div>
+              ${(group.groups || [])
+                .map(
+                  (subgroup) => `
+                    <div class="specialist-tree-subgroup">
+                      <div class="specialist-tree-subgroup-title">${escapeHtml(subgroup.title)}</div>
+                      <div class="specialist-tree-records">
+                        ${(subgroup.items || [])
+                          .map(
+                            (record) => `
+                              <label class="multi-select-option specialist-tree-record">
+                                <input
+                                  type="checkbox"
+                                  name="specialistFilter"
+                                  value="${escapeAttribute(record)}"
+                                  data-catalog-group="${escapeAttribute(group.title)}"
+                                  data-catalog-subgroup="${escapeAttribute(subgroup.title)}"
+                                  ${selectedValues.has(record) ? "checked" : ""}
+                                />
+                                <span>${escapeHtml(record)}</span>
+                              </label>
+                            `
+                          )
+                          .join("")}
+                      </div>
+                    </div>
+                  `
+                )
+                .join("")}
+            </section>
+          `
+        )
+        .join("")
+    : `<p class="specialist-tree-empty">Каталог спеціальностей не завантажено.</p>`;
+
+  applyLanguage(elements.specialistTree);
+  elements.specialistRecordFilters = elements.specialistTree.querySelectorAll('input[name="specialistFilter"]');
+  elements.specialistRecordFilters.forEach((control) => {
+    control.addEventListener("change", () => {
+      selectedCategory = "all";
+      updateSpecialistSummary();
+      renderCategories();
+      renderListings();
+    });
+  });
+  updateSpecialistSummary();
+}
+
+function clearSearchSpecialists() {
+  elements.specialistRecordFilters?.forEach((control) => {
+    control.checked = false;
+  });
+  updateSpecialistSummary();
+}
+
+function selectedPublishGroup() {
+  return findActiveCatalogGroup(elements.publishCategory?.value)?.group || activeCatalogGroups()[0] || null;
+}
+
+function updatePublishCategorySummary() {
+  if (!elements.publishCategorySummary) return;
+  const found = findActiveCatalogGroup(elements.publishCategory?.value);
+  elements.publishCategorySummary.textContent = found
+    ? `${found.section.title} / ${found.group.title}`
+    : "Оберіть підгрупу";
+  elements.publishCategoryTree?.classList.toggle("has-value", Boolean(found));
+}
+
+function renderPublishCategoryTree(selectedTitle = elements.publishCategory?.value) {
+  if (!elements.publishCategoryMenu || !elements.publishCategory) return;
+  const groups = activeCatalogGroups();
+  const selectedGroup = groups.find((group) => group.title === selectedTitle) || groups[0] || null;
+  elements.publishCategory.value = selectedGroup?.title || "";
+
+  elements.publishCategoryMenu.innerHTML = activeCatalogTree().length
+    ? activeCatalogTree()
+        .map(
+          (section) => `
+            <section class="publish-category-group">
+              <div class="publish-category-group-title">${escapeHtml(section.title)}</div>
+              <div class="publish-category-subgroups">
+                ${(section.groups || [])
+                  .map(
+                    (group) => `
+                      <button
+                        class="publish-category-button ${group.title === elements.publishCategory.value ? "is-active" : ""}"
+                        type="button"
+                        data-publish-category="${escapeAttribute(group.title)}"
+                      >
+                        ${escapeHtml(group.title)}
+                      </button>
+                    `
+                  )
+                  .join("")}
+              </div>
+            </section>
+          `
+        )
+        .join("")
+    : `<p class="specialist-tree-empty">Каталог спеціальностей не завантажено.</p>`;
+
+  updatePublishCategorySummary();
+  applyLanguage(elements.publishCategoryMenu);
+}
+
+function selectPublishCategory(groupTitle) {
+  const found = findActiveCatalogGroup(groupTitle);
+  if (!found || !elements.publishCategory) return;
+  elements.publishCategory.value = found.group.title;
+  renderPublishCategoryTree(found.group.title);
+  updatePublishSpecialtyOptions(false);
+  if (elements.publishCategoryTree) elements.publishCategoryTree.open = false;
+}
+
+function formatListingSpecialties(item, limit = 3) {
+  const specialties = getListingSpecialties(item);
+  if (specialties.length <= limit) return specialties.join(", ");
+  return `${specialties.slice(0, limit).join(", ")} +${specialties.length - limit}`;
+}
+
+function normalizeCatalogInput(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function findCatalogGroup(groupTitle) {
+  for (const section of specialtySections) {
+    const group = section.groups.find((entry) => entry.title === groupTitle);
+    if (group) return { section, group };
+  }
+  return null;
+}
+
+function defaultSuggestionSection() {
+  const selected = findCatalogGroup(elements.publishCategory?.value);
+  return selected?.section || specialtySections.find((section) => section.title === "Педагоги та тренери") || specialtySections[0];
+}
+
+function setCatalogSuggestionStatus(message) {
+  if (!elements.catalogSuggestionStatus) return;
+  elements.catalogSuggestionStatus.textContent = message;
+  applyLanguage(elements.catalogSuggestionStatus);
+}
+
+function pendingCatalogSuggestions() {
+  return catalogSuggestions.filter((suggestion) => suggestion.status === "pending" && suggestion.enabled === false);
+}
+
+function suggestionMatches(suggestion, sectionTitle, groupTitle, recordTitle) {
+  return (
+    suggestion.status === "pending" &&
+    suggestion.sectionTitle === sectionTitle &&
+    suggestion.groupTitle.toLocaleLowerCase("uk-UA") === groupTitle.toLocaleLowerCase("uk-UA") &&
+    String(suggestion.recordTitle || "").toLocaleLowerCase("uk-UA") === String(recordTitle || "").toLocaleLowerCase("uk-UA")
+  );
+}
+
+function addCatalogSuggestionFromFields({ silent = false } = {}) {
+  const rawCategory = normalizeCatalogInput(elements.suggestedCategory?.value);
+  const rawSpecialty = normalizeCatalogInput(elements.suggestedSpecialty?.value);
+  if (!rawCategory && !rawSpecialty) {
+    if (!silent) setCatalogSuggestionStatus("Введіть нову категорію або спеціальність.");
+    return null;
+  }
+
+  const selectedGroupTitle = elements.publishCategory?.value || allSpecialtyGroups[0]?.title || "";
+  const groupTitle = rawCategory || selectedGroupTitle;
+  const recordTitle = rawSpecialty;
+  const section = defaultSuggestionSection();
+  const existingGroup = findCatalogGroup(groupTitle);
+  const existingRecord = recordTitle ? findCatalogRecord(recordTitle) : null;
+
+  if (!rawCategory && recordTitle && existingRecord) {
+    selectedPublishSpecialties.add(existingRecord.group.items[existingRecord.index]);
+    renderSelectedPublishSpecialties();
+    if (!silent) setCatalogSuggestionStatus("Ця спеціальність уже є в каталозі та додана до анкети.");
+    return null;
+  }
+
+  if (rawCategory && !recordTitle && existingGroup) {
+    if (!silent) setCatalogSuggestionStatus("Така категорія вже є в каталозі.");
+    return null;
+  }
+
+  const duplicate = catalogSuggestions.find((suggestion) =>
+    suggestionMatches(suggestion, section.title, groupTitle, recordTitle)
+  );
+
+  const suggestion =
+    duplicate ||
+    {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      type: recordTitle ? "record" : "group",
+      sectionTitle: section.title,
+      groupTitle,
+      recordTitle,
+      suggestedBy: "Фахівець",
+      suggestedAt: today.toISOString().slice(0, 10),
+      status: "pending",
+      enabled: false
+    };
+
+  if (!duplicate) {
+    catalogSuggestions.unshift(suggestion);
+    saveCatalogSuggestions();
+  }
+
+  if (recordTitle) {
+    selectedPublishSpecialties.add(recordTitle);
+    renderSelectedPublishSpecialties();
+  }
+
+  if (elements.suggestedCategory) elements.suggestedCategory.value = "";
+  if (elements.suggestedSpecialty) elements.suggestedSpecialty.value = "";
+  if (!silent) {
+    setCatalogSuggestionStatus(
+      duplicate ? "Така пропозиція вже очікує затвердження." : "Пропозицію додано. Адміністратор побачить її в оновленнях каталогу."
+    );
+  }
+  renderCatalogUpdates();
+  return suggestion;
+}
 
 const elements = {
+  regionFilter: document.querySelector("#regionFilter"),
   cityFilter: document.querySelector("#cityFilter"),
-  specialtyFilter: document.querySelector("#specialtyFilter"),
-  formatFilter: document.querySelector("#formatFilter"),
+  districtFilter: document.querySelector("#districtFilter"),
+  specialistSelect: document.querySelector("#specialistFilter"),
+  specialistSummary: document.querySelector("[data-specialist-summary]"),
+  specialistTree: document.querySelector("#specialistTree"),
+  specialistRecordFilters: document.querySelectorAll('input[name="specialistFilter"]'),
+  formatSelect: document.querySelector("#formatFilter"),
+  formatSummary: document.querySelector("[data-format-summary]"),
+  formatFilters: document.querySelectorAll('input[name="formatFilter"]'),
+  ratingFilter: document.querySelector("#ratingFilter"),
+  publishCategory: document.querySelector("#publishCategory"),
+  publishCategoryTree: document.querySelector("#publishCategoryTree"),
+  publishCategorySummary: document.querySelector("[data-publish-category-summary]"),
+  publishCategoryMenu: document.querySelector("#publishCategoryMenu"),
   publishSpecialty: document.querySelector("#publishSpecialty"),
+  regionSelect: document.querySelector("#regionSelect"),
+  publishCitySelect: document.querySelector("#publishCitySelect"),
+  suggestedCategory: document.querySelector("#suggestedCategory"),
+  suggestedSpecialty: document.querySelector("#suggestedSpecialty"),
+  addCatalogSuggestion: document.querySelector("#addCatalogSuggestion"),
+  catalogSuggestionStatus: document.querySelector("#catalogSuggestionStatus"),
   categoryList: document.querySelector("#categoryList"),
   listingList: document.querySelector("#listingList"),
   resultCount: document.querySelector("#resultCount"),
@@ -920,11 +1657,37 @@ const elements = {
   adminPanel: document.querySelector("#adminPanel"),
   moderationRows: document.querySelector("#moderationRows"),
   moderationDetail: document.querySelector("#moderationDetail"),
+  adminNavButtons: document.querySelectorAll("[data-admin-view]"),
+  adminViews: document.querySelectorAll("[data-admin-view-panel]"),
+  adminReviewRows: document.querySelector("#adminReviewRows"),
+  adminCatalogRows: document.querySelector("#adminCatalogRows"),
+  catalogUpdatesRows: document.querySelector("#catalogUpdatesRows"),
+  catalogUpdatesCount: document.querySelector("#catalogUpdatesCount"),
+  catalogEditorForm: document.querySelector("#catalogEditorForm"),
+  catalogSectionSelect: document.querySelector("#catalogSectionSelect"),
+  catalogGroupSelect: document.querySelector("#catalogGroupSelect"),
+  catalogOriginalRecord: document.querySelector("#catalogOriginalRecord"),
+  catalogRecordTitle: document.querySelector("#catalogRecordTitle"),
+  catalogSubmitButton: document.querySelector("#catalogSubmitButton"),
+  catalogCancelEdit: document.querySelector("#catalogCancelEdit"),
+  catalogStatus: document.querySelector("#catalogStatus"),
+  specialistUserRows: document.querySelector("#specialistUserRows"),
+  parentUserRows: document.querySelector("#parentUserRows"),
   metricPending: document.querySelector("#metricPending"),
   metricExpiring: document.querySelector("#metricExpiring"),
   metricReports: document.querySelector("#metricReports"),
   metricArchived: document.querySelector("#metricArchived"),
-  adminSearch: document.querySelector("#adminSearch")
+  adminSearch: document.querySelector("#adminSearch"),
+  adminContactForm: document.querySelector("#adminContactForm"),
+  profileEmailFields: document.querySelectorAll("[data-profile-email]"),
+  profilePhoneFields: document.querySelectorAll("[data-profile-phone]"),
+  phoneList: document.querySelector('[data-repeatable-list="phones"]'),
+  emailList: document.querySelector('[data-repeatable-list="emails"]'),
+  selectedSpecialties: document.querySelector("[data-selected-specialties]"),
+  placeDistrictPanels: document.querySelectorAll("[data-district-panel]"),
+  publishSubmit: document.querySelector("[data-publish-submit]"),
+  publishConsents: document.querySelectorAll("[data-publish-consent]"),
+  adminContactStatus: document.querySelector("#adminContactStatus")
 };
 
 function daysBetween(startDate, endDate = today) {
@@ -945,16 +1708,129 @@ function formatReviewDate(date) {
 }
 
 function reviewCounts(review) {
-  const vote = reviewVotes[review.id];
+  const state = normalizedReviewVote(review.id);
   return {
-    likes: review.likes + (vote === "like" ? 1 : 0),
-    dislikes: review.dislikes + (vote === "dislike" ? 1 : 0),
-    vote
+    likes: review.likes + (state.vote === "like" ? state.weight : 0),
+    dislikes: review.dislikes + (state.vote === "dislike" ? state.weight : 0),
+    vote: state.vote
   };
 }
 
 function saveReviewVotes() {
   localStorage.setItem("reviewVotes", JSON.stringify(reviewVotes));
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function currentUserEmail() {
+  return normalizeEmail(localStorage.getItem("siteUserEmail"));
+}
+
+function currentProfileEmail() {
+  return (
+    normalizeEmail(localStorage.getItem("profileEmail")) ||
+    currentUserEmail() ||
+    "user@example.com"
+  );
+}
+
+function normalizePhone(value) {
+  return String(value || "").trim();
+}
+
+function currentProfilePhone() {
+  return normalizePhone(localStorage.getItem("profilePhone")) || normalizePhone(localStorage.getItem("siteUserPhone"));
+}
+
+function fillProfileContactFields() {
+  elements.profileEmailFields.forEach((input) => {
+    input.value = currentProfileEmail();
+  });
+  elements.profilePhoneFields.forEach((input) => {
+    input.value = currentProfilePhone();
+  });
+}
+
+function createContactField(type) {
+  const isPhone = type === "phone";
+  const row = document.createElement("div");
+  row.className = "repeatable-row";
+  row.innerHTML = `
+    <label>
+      <span>${isPhone ? "Додатковий номер телефону" : "Додатковий email"}</span>
+      <input
+        type="${isPhone ? "tel" : "email"}"
+        name="${isPhone ? "phones" : "emails"}"
+        placeholder="${isPhone ? "+380 ..." : "name@example.com"}"
+      />
+    </label>
+    <button class="mini-button reject delete-action" type="button" data-remove-contact>Прибрати</button>
+  `;
+  applyLanguage(row);
+  return row;
+}
+
+function resetAdditionalContactFields() {
+  document.querySelectorAll("[data-remove-contact]").forEach((button) => button.closest(".repeatable-row")?.remove());
+}
+
+function renderSelectedPublishSpecialties() {
+  if (!elements.selectedSpecialties) return;
+  const values = [...selectedPublishSpecialties];
+  elements.selectedSpecialties.innerHTML = values.length
+    ? values
+        .map(
+          (specialty) => `
+            <span class="specialty-chip">
+              <span>${specialty}</span>
+              <input type="hidden" name="specialties" value="${escapeAttribute(specialty)}" />
+              <button class="delete-action delete-action--icon-only" type="button" data-remove-specialty="${escapeAttribute(specialty)}" aria-label="Прибрати спеціальність" title="Прибрати спеціальність"></button>
+            </span>
+          `
+        )
+        .join("")
+    : `<span class="field-label">Обрані спеціальності</span>`;
+  applyLanguage(elements.selectedSpecialties);
+}
+
+function updatePlaceDistrictPanel() {
+  elements.placeDistrictPanels.forEach((panel) => {
+    const target = panel.dataset.districtPanel;
+    const shouldShow = Boolean(document.querySelector(`[data-district-target="${target}"]:checked`));
+    panel.classList.toggle("is-hidden", !shouldShow);
+    if (!shouldShow) {
+      panel.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+        input.checked = false;
+      });
+    }
+  });
+}
+
+function isAdminEmail(email) {
+  return adminEmails.includes(normalizeEmail(email));
+}
+
+function currentVoterId() {
+  return currentUserEmail() || currentMessageViewerId();
+}
+
+function voteWeightFor(voterId = currentVoterId()) {
+  return isAdminEmail(voterId) ? adminVoteWeight : 1;
+}
+
+function normalizedReviewVote(reviewId) {
+  const stored = reviewVotes[reviewId];
+  if (!stored) return { vote: null, weight: 0, voterId: "" };
+  if (typeof stored === "string") {
+    return { vote: stored, weight: 1, voterId: "guest" };
+  }
+  return {
+    vote: stored.vote || null,
+    weight: Number(stored.weight) || 1,
+    voterId: stored.voterId || stored.email || "guest"
+  };
 }
 
 function saveMessageDislikes() {
@@ -981,7 +1857,7 @@ function escapeHtml(value) {
 }
 
 function messageDislikeCount(messageId) {
-  return new Set(messageDislikes[messageId] || []).size;
+  return [...new Set(messageDislikes[messageId] || [])].reduce((sum, voterId) => sum + voteWeightFor(voterId), 0);
 }
 
 function isMessageDeleted(messageId) {
@@ -990,7 +1866,7 @@ function isMessageDeleted(messageId) {
 
 function renderChatMessage(message) {
   const dislikes = messageDislikeCount(message.id);
-  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentMessageViewerId());
+  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentVoterId());
 
   return `
     <div class="chat-message ${message.reply ? "is-reply" : ""}" data-chat-message="${message.id}">
@@ -1020,7 +1896,7 @@ function renderChatMessages() {
 
 function handleMessageDislike(messageId) {
   if (!messageId) return;
-  const viewerId = currentMessageViewerId();
+  const viewerId = currentVoterId();
   const voters = new Set(messageDislikes[messageId] || []);
 
   if (voters.has(viewerId)) {
@@ -1036,18 +1912,48 @@ function handleMessageDislike(messageId) {
 
 function statusLabel(status) {
   const labels = {
-    pending: "На перевірці",
+    pending: "Нове",
     reported: "Скарга",
     expiring: "Завершується",
-    approved: "Схвалено",
-    rejected: "Відхилено",
+    approved: "Активне",
+    active: "Активне",
+    rejected: "Архів",
     archived: "Архів"
   };
   return labels[status] || status;
 }
 
+function hasReports(item) {
+  return item.reports > 0 || item.status === "reported";
+}
+
+function hasLowRating(item) {
+  return typeof item.rating === "number" && item.rating < lowRatingThreshold;
+}
+
+function isNewModerationItem(item) {
+  return item.status === "pending" || item.status === "new";
+}
+
+function needsAdminAttention(item) {
+  return item.status !== "archived" && (isNewModerationItem(item) || hasReports(item) || hasLowRating(item));
+}
+
+function moderationStatusLabel(item) {
+  if (hasReports(item)) return "Скарга";
+  if (isNewModerationItem(item)) return "Нове";
+  if (hasLowRating(item)) return "Низький рейтинг";
+  return statusLabel(item.status);
+}
+
+function moderationStatusClass(item, remaining) {
+  if (hasReports(item) || hasLowRating(item)) return "danger";
+  if (isNewModerationItem(item)) return "";
+  return statusClass(item.status, remaining);
+}
+
 function statusClass(status, remaining) {
-  if (status === "reported" || status === "rejected") return "danger";
+  if (status === "reported" || status === "rejected" || status === "archived") return "danger";
   if (status === "expiring" || remaining <= 3) return "warning";
   return "";
 }
@@ -1087,44 +1993,42 @@ function applyLanguage(root = document.body) {
   });
 }
 
-function updateLanguageButtons() {
-  document.querySelectorAll("[data-lang-switch]").forEach((button) => {
-    const isActive = button.dataset.langSwitch === currentLang;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-pressed", String(isActive));
-  });
-}
-
-function setLanguage(lang) {
-  currentLang = lang === "en" ? "en" : "uk";
-  localStorage.setItem("siteLanguage", currentLang);
+function setLanguage() {
+  currentLang = "uk";
+  localStorage.removeItem("siteLanguage");
   document.documentElement.lang = currentLang;
   document.title = translateText(initialPageTitle || pageMeta.uk.title, currentLang);
   document.querySelector('meta[name="description"]')?.setAttribute(
     "content",
     translateText(initialPageDescription || pageMeta.uk.description, currentLang)
   );
-  updateLanguageButtons();
   applyLanguage();
 }
 
-function bindLanguageSwitch() {
-  document.querySelectorAll("[data-lang-switch]").forEach((button) => {
-    button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
-  });
+function fillSelects() {
+  renderSpecialistTree();
+  renderPublishCategoryTree();
+  updatePublishSpecialtyOptions();
 }
 
-function fillSelects() {
-  const specialtyOptions = [`<option value="all">Будь-яка</option>`]
-    .concat(allSpecialties.map((item) => `<option value="${item}">${item}</option>`))
-    .join("");
-  if (elements.specialtyFilter) {
-    elements.specialtyFilter.innerHTML = specialtyOptions;
-    applyLanguage(elements.specialtyFilter);
-  }
+function updatePublishSpecialtyOptions(ensureDefault = true) {
   if (elements.publishSpecialty) {
-    elements.publishSpecialty.innerHTML = allSpecialties.map((item) => `<option value="${item}">${item}</option>`).join("");
+    const selectedGroup = selectedPublishGroup();
+    if (ensureDefault && !selectedPublishSpecialties.size && selectedGroup?.items?.[0]) {
+      selectedPublishSpecialties.add(selectedGroup.items[0]);
+    }
+    elements.publishSpecialty.innerHTML = (selectedGroup?.items || [])
+      .map(
+        (item) => `
+          <label class="checkbox-row">
+            <input type="checkbox" name="specialtyOptions" value="${escapeAttribute(item)}" ${selectedPublishSpecialties.has(item) ? "checked" : ""} />
+            <span>${item}</span>
+          </label>
+        `
+      )
+      .join("");
     applyLanguage(elements.publishSpecialty);
+    renderSelectedPublishSpecialties();
   }
 }
 
@@ -1147,7 +2051,7 @@ function renderCategories() {
       const count =
         item === "all"
           ? listings.filter((listing) => listing.status !== "archived").length
-          : listings.filter((listing) => listing.specialty === item).length;
+          : listings.filter((listing) => listingHasSpecialty(listing, item)).length;
       const label = item === "all" ? "Усі фахівці" : item;
       return `
         <button class="category-item ${selectedCategory === item ? "is-active" : ""}" type="button" data-category="${item}">
@@ -1160,17 +2064,48 @@ function renderCategories() {
   applyLanguage(elements.categoryList);
 }
 
+function selectedSearchFormats() {
+  return [...(elements.formatFilters || [])]
+    .filter((control) => control.checked)
+    .map((control) => control.value);
+}
+
+function updateFormatSummary() {
+  if (!elements.formatSummary) return;
+  const selectedFormats = selectedSearchFormats();
+  if (!selectedFormats.length) {
+    elements.formatSummary.textContent = "Будь-який";
+  } else if (selectedFormats.length === 1) {
+    elements.formatSummary.textContent = selectedFormats[0];
+  } else {
+    elements.formatSummary.textContent = `${selectedFormats.length} формати`;
+  }
+  elements.formatSelect?.classList.toggle("has-value", selectedFormats.length > 0);
+}
+
+function updatePublishSubmitState() {
+  if (!elements.publishSubmit) return;
+  const consents = [...(elements.publishConsents || [])];
+  elements.publishSubmit.disabled = !consents.length || consents.some((control) => !control.checked);
+}
+
 function filteredListings() {
+  const region = elements.regionFilter?.value || "all";
   const city = elements.cityFilter?.value || "all";
-  const specialty = elements.specialtyFilter?.value || "all";
-  const format = elements.formatFilter?.value || "all";
+  const district = elements.districtFilter?.value || "all";
+  const selectedSpecialists = selectedSearchSpecialists();
+  const selectedFormats = selectedSearchFormats();
+  const rating = elements.ratingFilter?.value || "all";
 
   let result = listings.filter((listing) => {
     if (listing.status === "archived") return false;
-    if (city !== "all" && listing.city !== city && !(city === "Онлайн" && listing.formats.includes("Онлайн"))) return false;
-    if (specialty !== "all" && listing.specialty !== specialty) return false;
-    if (selectedCategory !== "all" && listing.specialty !== selectedCategory) return false;
-    if (format !== "all" && !listing.formats.includes(format)) return false;
+    if (region !== "all" && listing.regionId !== region) return false;
+    if (city !== "all" && listing.city !== city) return false;
+    if (district !== "all" && listing.district !== district) return false;
+    if (selectedSpecialists.length && !selectedSpecialists.some((specialty) => listingHasSpecialty(listing, specialty))) return false;
+    if (selectedCategory !== "all" && !listingHasSpecialty(listing, selectedCategory)) return false;
+    if (selectedFormats.length && !selectedFormats.some((format) => listing.formats.includes(format))) return false;
+    if (rating !== "all" && listing.rating < Number(rating)) return false;
     return true;
   });
 
@@ -1196,7 +2131,7 @@ function renderListings() {
         <div class="avatar">?</div>
         <div class="listing-main">
           <h3>Нічого не знайдено</h3>
-          <p>Змініть місто, формат або спеціалізацію. У довіднику нижче є повний список ролей для розширення каталогу.</p>
+          <p>Змініть місто, формат або спеціалізацію. У довіднику нижче є повний список спеціальностей для розширення каталогу.</p>
         </div>
       </div>
     `;
@@ -1233,16 +2168,30 @@ function renderListings() {
 
 function renderSpecialtyGrid() {
   if (!elements.specialtyGrid) return;
-  elements.specialtyGrid.innerHTML = specialtyGroups
+  elements.specialtyGrid.innerHTML = specialtySections
     .map(
-      (group) => `
-        <article class="specialty-card">
-          <h3>${group.title}</h3>
-          <p>${group.description}</p>
-          <ul>
-            ${group.items.map((item) => `<li>${item}</li>`).join("")}
-          </ul>
-        </article>
+      (section) => `
+        <section class="specialty-section">
+          <div class="specialty-section-head">
+            <h2>${section.title}</h2>
+            <p>${section.description}</p>
+          </div>
+          <div class="specialty-card-grid">
+            ${section.groups
+              .map(
+                (group) => `
+                  <article class="specialty-card">
+                    <h3>${group.title}</h3>
+                    <p>${group.description}</p>
+                    <ul>
+                      ${group.items.map((item) => `<li>${item}</li>`).join("")}
+                    </ul>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>
+        </section>
       `
     )
     .join("");
@@ -1296,6 +2245,7 @@ function openSpecialistDetails(listingId) {
   const listing = listings.find((item) => item.id === Number(listingId));
   if (!listing || !elements.specialistModal || !elements.specialistDetail) return;
   const remaining = daysLeft(listing);
+  const listingSpecialties = getListingSpecialties(listing);
   elements.specialistDetail.dataset.listingId = listing.id;
   elements.specialistDetail.innerHTML = `
     <div class="specialist-detail-head">
@@ -1303,7 +2253,7 @@ function openSpecialistDetails(listingId) {
       <div>
         <p class="section-note">Анкета фахівця</p>
         <h2 id="specialistDetailTitle">${listing.name}</h2>
-        <p>${listing.specialty} · ${listing.city} · ${listing.formats.join(", ")}</p>
+        <p>${formatListingSpecialties(listing)} · ${listingCityLabel(listing)} · ${listing.formats.join(", ")}</p>
       </div>
     </div>
     <div class="specialist-summary">
@@ -1321,6 +2271,7 @@ function openSpecialistDetails(listingId) {
       <span><strong>Для кого:</strong> ${listing.audience}</span>
       <span><strong>Відповідає:</strong> ${listing.response}</span>
       <span><strong>Формат роботи:</strong> ${listing.formats.join(", ")}</span>
+      <span><strong>Спеціальності:</strong> ${listingSpecialties.join(", ")}</span>
     </div>
     <div class="listing-offer">
       <strong>Оголошення:</strong>
@@ -1336,7 +2287,7 @@ function openSpecialistDetails(listingId) {
     ${renderSpecialistReviews(listing)}
     <div class="tag-row">
       ${listing.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
-      ${listing.verified ? `<span class="tag">Документи перевірені</span>` : ""}
+      ${listing.verified ? `<span class="tag">Документи додані</span>` : ""}
     </div>
     <div class="detail-actions">
       <button class="primary-button" type="button" data-message="${listing.id}">Написати</button>
@@ -1352,10 +2303,16 @@ function closeSpecialistDetails() {
 
 function handleReviewVote(reviewId, vote) {
   if (!reviewId || !vote) return;
-  if (reviewVotes[reviewId] === vote) {
+  const currentVote = normalizedReviewVote(reviewId);
+  if (currentVote.vote === vote) {
     delete reviewVotes[reviewId];
   } else {
-    reviewVotes[reviewId] = vote;
+    const voterId = currentVoterId();
+    reviewVotes[reviewId] = {
+      vote,
+      voterId,
+      weight: voteWeightFor(voterId)
+    };
   }
   saveReviewVotes();
 
@@ -1412,24 +2369,47 @@ function renderModeration() {
   if (!elements.moderationRows) return;
   const query = elements.adminSearch?.value.trim().toLowerCase() || "";
   const data = moderationItems.filter((item) => {
-    const text = `${item.name} ${item.specialty} ${item.city} ${item.notes}`.toLowerCase();
-    return text.includes(query);
+    const text = `${item.name} ${formatListingSpecialties(item)} ${listingCityLabel(item)} ${item.notes}`.toLowerCase();
+    return needsAdminAttention(item) && text.includes(query);
   });
+
+  if (!data.length) {
+    elements.moderationRows.innerHTML = `
+      <div class="table-row">
+        <span><strong>Заявок для перевірки немає</strong><small>Нові оголошення, скарги або низькі рейтинги з'являться тут.</small></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    `;
+    applyLanguage(elements.moderationRows);
+    selectedModerationId = null;
+    if (elements.moderationDetail) {
+      elements.moderationDetail.innerHTML = "";
+    }
+    renderMetrics();
+    return;
+  }
 
   elements.moderationRows.innerHTML = data
     .map((item) => {
       const remaining = daysLeft(item);
+      const itemHasReports = hasReports(item);
+      const primaryAction = itemHasReports
+        ? `<button class="mini-button approve" type="button" data-action="dismiss-report" data-id="${item.id}">Відхилити скаргу</button>`
+        : `<button class="mini-button" type="button" data-detail="${item.id}">Відкрити</button>`;
       return `
         <div class="table-row">
           <span><strong>${item.name}</strong><small>${item.notes}</small></span>
-          <span>${item.specialty}</span>
-          <span>${item.city}</span>
-          <span><span class="status ${statusClass(item.status, remaining)}">${statusLabel(item.status)}</span></span>
+          <span>${formatListingSpecialties(item)}</span>
+          <span>${listingCityLabel(item)}</span>
+          <span><span class="status ${moderationStatusClass(item, remaining)}">${moderationStatusLabel(item)}</span></span>
           <span>${remaining > 0 ? `${remaining} дн.` : "сьогодні"}</span>
           <span class="row-actions">
-            <button class="mini-button" type="button" data-detail="${item.id}">Відкрити</button>
-            <button class="mini-button approve" type="button" data-action="approved" data-id="${item.id}">Схвалити</button>
-            <button class="mini-button reject" type="button" data-action="rejected" data-id="${item.id}">Відхилити</button>
+            ${primaryAction}
+            <button class="mini-button reject delete-action" type="button" data-action="archived" data-id="${item.id}">Видалити</button>
           </span>
         </div>
       `;
@@ -1437,7 +2417,7 @@ function renderModeration() {
     .join("");
   applyLanguage(elements.moderationRows);
 
-  const selected = moderationItems.find((item) => item.id === selectedModerationId) || moderationItems[0];
+  const selected = data.find((item) => item.id === selectedModerationId) || data[0];
   if (selected) renderModerationDetail(selected);
   renderMetrics();
 }
@@ -1446,38 +2426,897 @@ function renderModerationDetail(item) {
   if (!elements.moderationDetail) return;
   selectedModerationId = item.id;
   const remaining = daysLeft(item);
+  const hasReports = item.reports > 0 || item.status === "reported";
   elements.moderationDetail.innerHTML = `
     <div>
       <p class="section-note">Деталі оголошення</p>
       <h3>${item.name}</h3>
     </div>
     <dl class="detail-list">
-      <div><dt>Спеціалізація</dt><dd>${item.specialty}</dd></div>
-      <div><dt>Місто</dt><dd>${item.city}</dd></div>
-      <div><dt>Статус</dt><dd>${statusLabel(item.status)}</dd></div>
+      <div><dt>Спеціальності</dt><dd>${formatListingSpecialties(item)}</dd></div>
+      <div><dt>Місто</dt><dd>${listingCityLabel(item)}</dd></div>
+      <div><dt>Статус</dt><dd>${moderationStatusLabel(item)}</dd></div>
       <div><dt>Строк</dt><dd>${remaining > 0 ? `${remaining} днів до автоматичного зняття` : "знімається автоматично"}</dd></div>
-      <div><dt>Нотатка модератора</dt><dd>${item.notes}</dd></div>
+      <div><dt>Нотатка</dt><dd>${item.notes}</dd></div>
     </dl>
     <div class="message-card">
       <strong>Скарги й відгуки</strong>
       <p>${item.message}</p>
     </div>
-    <button class="primary-button" type="button" data-action="approved" data-id="${item.id}">Схвалити</button>
-    <button class="ghost-button" type="button" data-action="archived" data-id="${item.id}">До архіву</button>
+    ${
+      hasReports
+        ? `<button class="secondary-button" type="button" data-action="dismiss-report" data-id="${item.id}">Відхилити скаргу</button>`
+        : ""
+    }
+    <button class="ghost-button delete-action" type="button" data-action="archived" data-id="${item.id}">Видалити</button>
     <button class="secondary-button" type="button" data-renew="${item.id}">Продовжити на 30 днів</button>
   `;
   applyLanguage(elements.moderationDetail);
 }
 
+function filteredAdminReviews() {
+  return adminReviewItems
+    .filter((review) => !review.moderated && review.rating < negativeReviewThreshold)
+    .sort((a, b) => a.rating - b.rating || new Date(b.date) - new Date(a.date));
+}
+
+function renderAdminReviews() {
+  if (!elements.adminReviewRows) return;
+  const reviews = filteredAdminReviews();
+
+  if (!reviews.length) {
+    elements.adminReviewRows.innerHTML = `
+      <article class="review-moderation-card">
+        <div>
+          <strong>Відгуків для модерації немає</strong>
+          <p>Неперевірені відгуки з негативним рейтингом з'являться тут.</p>
+        </div>
+      </article>
+    `;
+    applyLanguage(elements.adminReviewRows);
+    return;
+  }
+
+  elements.adminReviewRows.innerHTML = reviews
+    .map(
+      (review) => `
+        <article class="review-moderation-card" data-review-moderation="${review.id}">
+          <div>
+            <span class="section-note">${review.specialist}</span>
+            <strong>${review.author}</strong>
+            <p>${review.text}</p>
+          </div>
+          <span class="rating"><span class="star">★</span>${review.rating.toFixed(1)}</span>
+          <span>${formatReviewDate(review.date)}</span>
+        </article>
+      `
+    )
+    .join("");
+  applyLanguage(elements.adminReviewRows);
+}
+
+function catalogRecordCount(recordTitle) {
+  return listings.filter((listing) => listingHasSpecialty(listing, recordTitle)).length;
+}
+
+function findCatalogRecord(recordTitle) {
+  for (const section of specialtySections) {
+    for (const group of section.groups) {
+      const index = group.items.indexOf(recordTitle);
+      if (index !== -1) return { section, group, index };
+    }
+  }
+  return null;
+}
+
+function selectedCatalogSection() {
+  return specialtySections.find((section) => section.title === elements.catalogSectionSelect?.value) || specialtySections[0];
+}
+
+function selectedCatalogGroup() {
+  const section = selectedCatalogSection();
+  return section?.groups.find((group) => group.title === elements.catalogGroupSelect?.value) || section?.groups[0];
+}
+
+function setCatalogStatus(message) {
+  if (!elements.catalogStatus) return;
+  elements.catalogStatus.textContent = message;
+  applyLanguage(elements.catalogStatus);
+}
+
+function resetCatalogEditor() {
+  elements.catalogEditorForm?.reset();
+  if (elements.catalogOriginalRecord) elements.catalogOriginalRecord.value = "";
+  if (elements.catalogSubmitButton) elements.catalogSubmitButton.textContent = "Додати запис";
+  applyLanguage(elements.catalogSubmitButton);
+  if (elements.catalogCancelEdit) elements.catalogCancelEdit.hidden = true;
+  renderCatalogSelectors();
+}
+
+function updateCatalogSelectors() {
+  if (!elements.catalogSectionSelect || !elements.catalogGroupSelect) return;
+  const currentSectionTitle = elements.catalogSectionSelect.value || specialtySections[0]?.title;
+  elements.catalogSectionSelect.innerHTML = specialtySections
+    .map((section) => `<option value="${escapeAttribute(section.title)}">${section.title}</option>`)
+    .join("");
+  elements.catalogSectionSelect.value = specialtySections.some((section) => section.title === currentSectionTitle)
+    ? currentSectionTitle
+    : specialtySections[0]?.title || "";
+
+  const section = selectedCatalogSection();
+  const currentGroupTitle = elements.catalogGroupSelect.value || section?.groups[0]?.title;
+  elements.catalogGroupSelect.innerHTML = (section?.groups || [])
+    .map((group) => `<option value="${escapeAttribute(group.title)}">${group.title}</option>`)
+    .join("");
+  elements.catalogGroupSelect.value = section?.groups.some((group) => group.title === currentGroupTitle)
+    ? currentGroupTitle
+    : section?.groups[0]?.title || "";
+  applyLanguage(elements.catalogSectionSelect);
+  applyLanguage(elements.catalogGroupSelect);
+}
+
+function renderCatalogSelectors() {
+  updateCatalogSelectors();
+  renderAdminCatalog();
+}
+
+function updateSpecialtyReferences(oldTitle, newTitle) {
+  listings.forEach((listing) => {
+    if (listing.specialty === oldTitle) listing.specialty = newTitle;
+    if (Array.isArray(listing.specialties)) {
+      listing.specialties = listing.specialties.map((specialty) => (specialty === oldTitle ? newTitle : specialty));
+    }
+  });
+  moderationItems.forEach((item) => {
+    if (item.specialty === oldTitle) item.specialty = newTitle;
+    if (Array.isArray(item.specialties)) {
+      item.specialties = item.specialties.map((specialty) => (specialty === oldTitle ? newTitle : specialty));
+    }
+  });
+}
+
+function refreshCatalogDependents() {
+  fillSelects();
+  renderCategories();
+  renderListings();
+  renderAdminCatalog();
+  renderCatalogUpdates();
+  renderModeration();
+}
+
+function renderAdminCatalog() {
+  if (!elements.adminCatalogRows) return;
+  elements.adminCatalogRows.innerHTML = specialtySections
+    .map(
+      (section) => `
+        <section class="catalog-admin-section">
+          <div class="catalog-admin-section-head">
+            <h2>${section.title}</h2>
+            <p>${section.description}</p>
+          </div>
+          ${section.groups
+            .map(
+              (group) => `
+                <article class="catalog-admin-group">
+                  <div class="catalog-admin-group-head">
+                    <h3>${group.title}</h3>
+                    <p>${group.description}</p>
+                  </div>
+                  <div class="catalog-record-list">
+                    ${group.items
+                      .map((record) => {
+                        const count = catalogRecordCount(record);
+                        return `
+                          <div class="catalog-record-row">
+                            <span><strong>${record}</strong></span>
+                            <span><strong>${count}</strong> <span>фахівців</span></span>
+                            <span class="row-actions">
+                              <button class="mini-button" type="button" data-edit-catalog-record="${escapeAttribute(record)}">Редагувати</button>
+                              <button class="mini-button reject delete-action" type="button" data-delete-catalog-record="${escapeAttribute(record)}" ${count > 0 ? "disabled" : ""}>Видалити</button>
+                            </span>
+                          </div>
+                        `;
+                      })
+                      .join("")}
+                  </div>
+                </article>
+              `
+            )
+            .join("")}
+        </section>
+      `
+    )
+    .join("");
+  applyLanguage(elements.adminCatalogRows);
+}
+
+function updateCatalogUpdatesBadge() {
+  if (!elements.catalogUpdatesCount) return;
+  elements.catalogUpdatesCount.textContent = pendingCatalogSuggestions().length;
+}
+
+function ensureCatalogGroup(sectionTitle, groupTitle) {
+  const existing = findCatalogGroup(groupTitle);
+  if (existing) return existing.group;
+
+  const section =
+    specialtySections.find((entry) => entry.title === sectionTitle) ||
+    specialtySections.find((entry) => entry.title === "Педагоги та тренери") ||
+    specialtySections[0];
+  const group = {
+    title: groupTitle,
+    description: "Запропоновано користувачем.",
+    items: []
+  };
+  section.groups.push(group);
+  if (!allSpecialtyGroups.includes(group)) allSpecialtyGroups.push(group);
+  return group;
+}
+
+function approveCatalogSuggestion(suggestion, card) {
+  const groupTitle = normalizeCatalogInput(card?.querySelector('[data-update-field="groupTitle"]')?.value || suggestion.groupTitle);
+  const recordTitle = normalizeCatalogInput(card?.querySelector('[data-update-field="recordTitle"]')?.value || suggestion.recordTitle);
+  if (!groupTitle && !recordTitle) return;
+
+  const group = ensureCatalogGroup(suggestion.sectionTitle, groupTitle || suggestion.groupTitle);
+  if (recordTitle && !group.items.includes(recordTitle)) {
+    group.items.push(recordTitle);
+  }
+
+  suggestion.groupTitle = group.title;
+  suggestion.recordTitle = recordTitle;
+  suggestion.status = "approved";
+  suggestion.enabled = true;
+  saveCatalogSuggestions();
+  refreshCatalogDependents();
+  renderCatalogUpdates();
+}
+
+function rejectCatalogSuggestion(suggestion) {
+  suggestion.status = "rejected";
+  suggestion.enabled = false;
+  saveCatalogSuggestions();
+  renderCatalogUpdates();
+}
+
+function renderCatalogUpdates() {
+  updateCatalogUpdatesBadge();
+  if (!elements.catalogUpdatesRows) return;
+  const pending = pendingCatalogSuggestions();
+  elements.catalogUpdatesRows.innerHTML = pending.length
+    ? pending
+        .map(
+          (suggestion) => `
+            <article class="catalog-update-card" data-suggestion-id="${suggestion.id}">
+              <div>
+                <strong>${suggestion.recordTitle || suggestion.groupTitle}</strong>
+                <p>${suggestion.recordTitle ? "Нова спеціальність" : "Нова категорія"} · ${suggestion.sectionTitle}</p>
+                <small>Запропонував: ${suggestion.suggestedBy} · ${formatReviewDate(suggestion.suggestedAt)}</small>
+              </div>
+              <div class="catalog-update-fields">
+                <label>
+                  <span>Категорія</span>
+                  <input type="text" data-update-field="groupTitle" value="${escapeAttribute(suggestion.groupTitle)}" />
+                </label>
+                <label>
+                  <span>Спеціальність</span>
+                  <input type="text" data-update-field="recordTitle" value="${escapeAttribute(suggestion.recordTitle || "")}" placeholder="Не обов'язково для нової категорії" />
+                </label>
+              </div>
+              <span class="row-actions">
+                <button class="mini-button" type="button" data-approve-catalog-update="${suggestion.id}">Затвердити</button>
+                <button class="mini-button reject" type="button" data-reject-catalog-update="${suggestion.id}">Відхилити</button>
+              </span>
+            </article>
+          `
+        )
+        .join("")
+    : `<article class="catalog-update-card catalog-update-empty"><strong>Немає пропозицій</strong><p>Нові категорії та спеціальності з форми фахівця з'являться тут.</p><span></span></article>`;
+  applyLanguage(elements.catalogUpdatesRows);
+}
+
+function handleCatalogUpdateClick(event) {
+  const approveButton = event.target.closest("[data-approve-catalog-update]");
+  const rejectButton = event.target.closest("[data-reject-catalog-update]");
+  if (!approveButton && !rejectButton) return;
+
+  const id = Number(approveButton?.dataset.approveCatalogUpdate || rejectButton?.dataset.rejectCatalogUpdate);
+  const suggestion = catalogSuggestions.find((item) => item.id === id);
+  if (!suggestion) return;
+  const card = event.target.closest("[data-suggestion-id]");
+
+  if (approveButton) {
+    approveCatalogSuggestion(suggestion, card);
+  } else {
+    rejectCatalogSuggestion(suggestion);
+  }
+}
+
+function beginCatalogEdit(recordTitle) {
+  const found = findCatalogRecord(recordTitle);
+  if (!found) {
+    setCatalogStatus("Оберіть запис для редагування.");
+    return;
+  }
+  if (elements.catalogOriginalRecord) elements.catalogOriginalRecord.value = recordTitle;
+  if (elements.catalogRecordTitle) elements.catalogRecordTitle.value = recordTitle;
+  if (elements.catalogSectionSelect) elements.catalogSectionSelect.value = found.section.title;
+  updateCatalogSelectors();
+  if (elements.catalogGroupSelect) elements.catalogGroupSelect.value = found.group.title;
+  if (elements.catalogSubmitButton) elements.catalogSubmitButton.textContent = "Зберегти зміни";
+  applyLanguage(elements.catalogSubmitButton);
+  if (elements.catalogCancelEdit) elements.catalogCancelEdit.hidden = false;
+  setCatalogStatus("");
+  elements.catalogRecordTitle?.focus();
+}
+
+function submitCatalogRecord(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const originalTitle = String(formData.get("originalRecord") || "").trim();
+  const newTitle = String(formData.get("recordTitle") || "").trim();
+  const group = selectedCatalogGroup();
+  if (!group || !newTitle) return;
+
+  const existing = findCatalogRecord(newTitle);
+  if (existing && newTitle !== originalTitle) {
+    setCatalogStatus("Такий запис уже є в цій категорії.");
+    return;
+  }
+
+  if (originalTitle) {
+    const original = findCatalogRecord(originalTitle);
+    if (!original) {
+      setCatalogStatus("Оберіть запис для редагування.");
+      return;
+    }
+    original.group.items.splice(original.index, 1);
+    group.items.push(newTitle);
+    updateSpecialtyReferences(originalTitle, newTitle);
+    setCatalogStatus("Запис оновлено.");
+  } else {
+    group.items.push(newTitle);
+    setCatalogStatus("Запис додано.");
+  }
+
+  resetCatalogEditor();
+  refreshCatalogDependents();
+}
+
+function deleteCatalogRecord(recordTitle) {
+  const count = catalogRecordCount(recordTitle);
+  if (count > 0) {
+    setCatalogStatus("Неможливо видалити: до цього напрямку прив'язані фахівці.");
+    return;
+  }
+  const found = findCatalogRecord(recordTitle);
+  if (!found) return;
+  found.group.items.splice(found.index, 1);
+  resetCatalogEditor();
+  refreshCatalogDependents();
+  setCatalogStatus("Запис видалено.");
+}
+
+function userContactMarkup(user) {
+  return `
+    <a href="tel:${user.phone.replace(/\s/g, "")}">${user.phone}</a>
+    <a href="mailto:${user.email}">${user.email}</a>
+  `;
+}
+
+function renderSpecialistUsers() {
+  if (!elements.specialistUserRows) return;
+  elements.specialistUserRows.innerHTML = specialistUsers.length
+    ? specialistUsers
+        .map(
+          (user) => `
+            <article class="user-row">
+              <span><strong>${user.name}</strong><small>${user.role}</small></span>
+              <span class="contact-stack">${userContactMarkup(user)}</span>
+              <span>${formatReviewDate(user.registeredAt)}<small>Останній вхід: ${formatReviewDate(user.lastActive)}</small></span>
+              <span>${user.activeListings} активних з ${user.listings}<small>Оплата: ${user.payment}</small></span>
+              <span><span class="rating"><span class="star">★</span>${user.averageRating.toFixed(1)}</span><small>${user.reviews} відгуків</small></span>
+              <span>${user.notes}</span>
+            </article>
+          `
+        )
+        .join("")
+    : `<article class="user-row"><span><strong>Фахівців не знайдено</strong></span><span></span><span></span><span></span><span></span><span></span></article>`;
+  applyLanguage(elements.specialistUserRows);
+}
+
+function renderParentUsers() {
+  if (!elements.parentUserRows) return;
+  elements.parentUserRows.innerHTML = parentUsers.length
+    ? parentUsers
+        .map(
+          (user) => `
+            <article class="user-row">
+              <span><strong>${user.name}</strong><small>${user.city}</small></span>
+              <span class="contact-stack">${userContactMarkup(user)}</span>
+              <span>${formatReviewDate(user.registeredAt)}<small>Останній вхід: ${formatReviewDate(user.lastActive)}</small></span>
+              <span>${user.activeRequests} активних з ${user.requests}</span>
+              <span>${user.reviews} відгуків</span>
+              <span>${user.notes}</span>
+            </article>
+          `
+        )
+        .join("")
+    : `<article class="user-row"><span><strong>Батьків не знайдено</strong></span><span></span><span></span><span></span><span></span><span></span></article>`;
+  applyLanguage(elements.parentUserRows);
+}
+
+function renderAdminUsers() {
+  renderSpecialistUsers();
+  renderParentUsers();
+}
+
+function loadExternalScript(src, globalName) {
+  if (window[globalName]) return Promise.resolve(window[globalName]);
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window[globalName]), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Cannot load ${src}`)), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve(window[globalName]);
+    script.onerror = () => reject(new Error(`Cannot load ${src}`));
+    document.head.append(script);
+  });
+}
+
+async function loadSqlJs() {
+  const initSqlJs = await loadExternalScript(sqliteScriptUrl, "initSqlJs");
+  return initSqlJs({
+    locateFile: () => sqliteWasmUrl
+  });
+}
+
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Cannot read file."));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function fetchArrayBuffer(url, fallbackFile, fallbackLabel) {
+  if (fallbackFile) return readFileAsArrayBuffer(fallbackFile);
+  const noCacheUrl = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+  let lastError = null;
+  for (const requestUrl of [noCacheUrl, url]) {
+    try {
+      const response = await fetch(requestUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.arrayBuffer();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw new Error(`Cannot load ${fallbackLabel}. Select it manually with the file picker. Details: ${lastError?.message || "unknown error"}`);
+}
+
+function quoteSqlName(name) {
+  return `"${String(name).replace(/"/g, '""')}"`;
+}
+
+function quoteSqlValue(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function resolveOblastId(db, oblastId) {
+  const regionValue = quoteSqlValue(oblastId);
+  try {
+    return (
+      sqlRows(
+        db,
+        `SELECT oblast_id FROM oblasti WHERE oblast_id = ${regionValue} or name = ${regionValue} LIMIT 1`
+      )[0]?.oblast_id || oblastId
+    );
+  } catch (error) {
+    console.warn("Cannot resolve oblast id from map.sqlite", error);
+    return oblastId;
+  }
+}
+
+function sqlRows(db, sql, params = []) {
+  const result = db.exec(sql, params)[0];
+  if (!result) return [];
+  return result.values.map((values) =>
+    Object.fromEntries(values.map((value, index) => [result.columns[index], value]))
+  );
+}
+
+async function loadMapDatabase() {
+  if (!mapDatabasePromise) {
+    mapDatabasePromise = (async () => {
+      const SQL = await loadSqlJs();
+      const buffer = await fetchArrayBuffer("database/map.sqlite", null, "database/map.sqlite");
+      return new SQL.Database(new Uint8Array(buffer));
+    })();
+  }
+  return mapDatabasePromise;
+}
+
+async function loadSiteDatabase() {
+  if (!siteDatabasePromise) {
+    siteDatabasePromise = (async () => {
+      const SQL = await loadSqlJs();
+      const buffer = await fetchArrayBuffer("database/site.sqlite", null, "database/site.sqlite");
+      return new SQL.Database(new Uint8Array(buffer));
+    })();
+  }
+  return siteDatabasePromise;
+}
+
+async function loadSearchCatalogTree() {
+  if (!elements.specialistTree) return;
+  try {
+    const db = await loadSiteDatabase();
+    const rows = sqlRows(
+      db,
+      `SELECT
+        g.id as group_id,
+        g.title as group_title,
+        g.sort_order as group_sort,
+        s.id as subgroup_id,
+        s.title as subgroup_title,
+        s.description as subgroup_description,
+        s.sort_order as subgroup_sort,
+        r.id as record_id,
+        r.title as record_title,
+        r.sort_order as record_sort
+      FROM Catalog_groups g
+      JOIN Catalog_subgroups s ON s.group_id = g.id AND s.enabled = 1
+      JOIN Catalog_record r ON r.subgroup_id = s.id AND r.enabled = 1
+      WHERE g.enabled = 1
+      ORDER BY g.sort_order, g.id, s.sort_order, s.id, r.sort_order, r.id`
+    );
+    const tree = buildCatalogTreeFromRows(rows);
+    if (tree.length) {
+      searchCatalogTree = tree;
+      renderSpecialistTree();
+      renderPublishCategoryTree(elements.publishCategory?.value);
+      updatePublishSpecialtyOptions(false);
+    }
+  } catch (error) {
+    console.warn("Cannot load specialist catalog from site.sqlite", error);
+    searchCatalogTree = fallbackCatalogTree();
+    renderSpecialistTree();
+    renderPublishCategoryTree(elements.publishCategory?.value);
+    updatePublishSpecialtyOptions(false);
+  }
+}
+
+function normalizeRegionOptions(regions) {
+  const regionMap = new Map();
+  regions.forEach((item) => {
+    const name = String(typeof item === "string" ? item : item?.name || "").trim();
+    if (!name) return;
+    const oblastId = String(
+      typeof item === "string" ? item : item?.oblast_id || item?.l1_parent_id || item?.id || name
+    ).trim();
+    regionMap.set(oblastId || name, { oblastId: oblastId || name, name });
+  });
+  return [...regionMap.values()].sort((a, b) => a.name.localeCompare(b.name, "uk"));
+}
+
+function renderRegionOptionsInto(select, regions, { selectedValue = "", placeholder = "Оберіть область", allValue = "" } = {}) {
+  if (!select) return;
+  const uniqueRegions = normalizeRegionOptions(regions);
+  select.innerHTML = [
+    `<option value="${escapeAttribute(allValue)}">${escapeHtml(placeholder)}</option>`,
+    ...uniqueRegions.map(
+      (region) =>
+        `<option value="${escapeAttribute(region.oblastId)}" data-region-name="${escapeAttribute(region.name)}">${escapeHtml(region.name)}</option>`
+    )
+  ].join("");
+  const selectedRegion = uniqueRegions.find((region) => region.oblastId === selectedValue || region.name === selectedValue);
+  if (selectedRegion) {
+    select.value = selectedRegion.oblastId;
+  }
+  applyLanguage(select);
+}
+
+function normalizeCityOptions(cities) {
+  const cityMap = new Map();
+  cities.forEach((item) => {
+    const name = String(item?.city_name || item?.name || "").trim();
+    const cityId = String(item?.cityId || item?.city_id || item?.l4_parent_id || item?.l1_parent_id || "").trim();
+    if (!name || !cityId) return;
+    if (!cityMap.has(cityId)) {
+      cityMap.set(cityId, { cityId, name });
+      cityNameCache.set(cityId, name);
+    }
+  });
+  return [...cityMap.values()];
+}
+
+function renderCityOptionsInto(select, cities, { selectedValue = "all", placeholder = "Будь-яке місто", allValue = "all" } = {}) {
+  if (!select) return;
+  const uniqueCities = normalizeCityOptions(cities);
+  select.innerHTML = [
+    `<option value="${escapeAttribute(allValue)}">${escapeHtml(placeholder)}</option>`,
+    ...uniqueCities.map((city) => `<option value="${escapeAttribute(city.cityId)}">${escapeHtml(city.name)}</option>`)
+  ].join("");
+  if (uniqueCities.some((city) => city.cityId === selectedValue)) {
+    select.value = selectedValue;
+  } else {
+    select.value = allValue;
+  }
+  applyLanguage(select);
+}
+
+function normalizeDistrictOptions(districts) {
+  const districtMap = new Map();
+  districts.forEach((item) => {
+    const name = String(item?.district_name || item?.name || "").trim();
+    const districtId = String(item?.districtId || item?.district_id || item?.l5_parent_id || name).trim();
+    if (!name) return;
+    if (!districtMap.has(name)) {
+      districtMap.set(name, { districtId, name });
+    }
+  });
+  return [...districtMap.values()];
+}
+
+function renderDistrictOptionsInto(select, districts, { selectedValue = "all", placeholder = "Будь-який район", allValue = "all" } = {}) {
+  if (!select) return;
+  const uniqueDistricts = normalizeDistrictOptions(districts);
+  select.innerHTML = [
+    `<option value="${escapeAttribute(allValue)}">${escapeHtml(placeholder)}</option>`,
+    ...uniqueDistricts.map(
+      (district) =>
+        `<option value="${escapeAttribute(district.name)}" data-district-id="${escapeAttribute(district.districtId)}">${escapeHtml(district.name)}</option>`
+    )
+  ].join("");
+  select.value = uniqueDistricts.some((district) => district.name === selectedValue) ? selectedValue : allValue;
+  applyLanguage(select);
+}
+
+async function loadCitiesForRegion(oblastId) {
+  if (!oblastId || oblastId === "all") return [];
+  const db = await loadMapDatabase();
+  const regionValue = quoteSqlValue(resolveOblastId(db, oblastId));
+  return normalizeCityOptions(
+    sqlRows(
+      db,
+      `SELECT
+        name as city_name,
+        COALESCE(l4_parent_id, l1_parent_id) as city_id
+      FROM entries
+      WHERE type in (2, 5) and l1_parent_id = ${regionValue}
+      ORDER BY type asc, name`
+    )
+  );
+}
+
+async function loadDistrictsForCity(cityId) {
+  if (!cityId || cityId === "all") return [];
+  const db = await loadMapDatabase();
+  const cityValue = quoteSqlValue(cityId);
+  return normalizeDistrictOptions(
+    sqlRows(
+      db,
+      `SELECT
+        name as district_name,
+        l5_parent_id as district_id
+      FROM entries
+      WHERE type = 9 and l4_parent_id = ${cityValue}
+      ORDER BY name`
+    )
+  );
+}
+
+async function updateSearchCityOptions(selectedValue = "all") {
+  if (!elements.cityFilter) return;
+  const oblastId = elements.regionFilter?.value || "all";
+  if (!oblastId || oblastId === "all") {
+    renderCityOptionsInto(elements.cityFilter, [], {
+      selectedValue: "all",
+      placeholder: "Спочатку оберіть область",
+      allValue: "all"
+    });
+    return;
+  }
+  try {
+    const cities = await loadCitiesForRegion(oblastId);
+    renderCityOptionsInto(elements.cityFilter, cities, {
+      selectedValue,
+      placeholder: "Будь-яке місто",
+      allValue: "all"
+    });
+  } catch (error) {
+    console.warn("Cannot load cities from map.sqlite", error);
+    renderCityOptionsInto(elements.cityFilter, [], {
+      selectedValue: "all",
+      placeholder: "Міста не завантажено",
+      allValue: "all"
+    });
+  }
+}
+
+async function updateSearchDistrictOptions(selectedValue = "all") {
+  if (!elements.districtFilter) return;
+  const cityId = elements.cityFilter?.value || "all";
+  if (!cityId || cityId === "all") {
+    renderDistrictOptionsInto(elements.districtFilter, [], {
+      selectedValue: "all",
+      placeholder: "Спочатку оберіть місто",
+      allValue: "all"
+    });
+    return;
+  }
+  try {
+    const districts = await loadDistrictsForCity(cityId);
+    renderDistrictOptionsInto(elements.districtFilter, districts, {
+      selectedValue,
+      placeholder: districts.length ? "Будь-який район" : "Районів не знайдено",
+      allValue: "all"
+    });
+  } catch (error) {
+    console.warn("Cannot load city districts from map.sqlite", error);
+    renderDistrictOptionsInto(elements.districtFilter, [], {
+      selectedValue: "all",
+      placeholder: "Райони не завантажено",
+      allValue: "all"
+    });
+  }
+}
+
+async function updatePublishCityOptions(selectedValue = "") {
+  if (!elements.publishCitySelect) return;
+  const oblastId = elements.regionSelect?.value || "";
+  if (!oblastId) {
+    renderCityOptionsInto(elements.publishCitySelect, [], {
+      selectedValue: "",
+      placeholder: "Спочатку оберіть область",
+      allValue: ""
+    });
+    return;
+  }
+  try {
+    const cities = await loadCitiesForRegion(oblastId);
+    renderCityOptionsInto(elements.publishCitySelect, cities, {
+      selectedValue,
+      placeholder: "Оберіть місто",
+      allValue: ""
+    });
+  } catch (error) {
+    console.warn("Cannot load publish cities from map.sqlite", error);
+    renderCityOptionsInto(elements.publishCitySelect, [], {
+      selectedValue: "",
+      placeholder: "Міста не завантажено",
+      allValue: ""
+    });
+  }
+}
+
+function cityDisplayName(cityId) {
+  const normalizedCityId = String(cityId || "").trim();
+  if (!normalizedCityId) return "";
+  return cityNameCache.get(normalizedCityId) || normalizedCityId;
+}
+
+function listingCityLabel(listing) {
+  return cityDisplayName(listing?.city) || (listing?.formats || []).find((format) => format === "Онлайн") || "Не вказано";
+}
+
+async function loadCityName(cityId) {
+  const normalizedCityId = String(cityId || "").trim();
+  if (!normalizedCityId || cityNameCache.has(normalizedCityId)) return;
+  try {
+    const db = await loadMapDatabase();
+    const cityValue = quoteSqlValue(normalizedCityId);
+    const row = sqlRows(
+      db,
+      `SELECT name
+      FROM entries
+      WHERE type in (2, 5, 7, 8) and (l4_parent_id = ${cityValue} or l1_parent_id = ${cityValue})
+      ORDER BY type asc
+      LIMIT 1`
+    )[0];
+    if (row?.name) cityNameCache.set(normalizedCityId, String(row.name));
+  } catch (error) {
+    console.warn("Cannot resolve city name from map.sqlite", error);
+  }
+}
+
+async function hydrateCityNames() {
+  const cityIds = [...new Set([...listings, ...moderationItems].map((item) => item.city).filter(Boolean))];
+  await Promise.all(cityIds.map((cityId) => loadCityName(cityId)));
+}
+
+function renderRegionOptions(regions, selectedValue = "") {
+  renderRegionOptionsInto(elements.regionSelect, regions, {
+    selectedValue,
+    placeholder: "Оберіть область",
+    allValue: ""
+  });
+}
+
+function renderSearchRegionOptions(regions, selectedValue = "all") {
+  renderRegionOptionsInto(elements.regionFilter, regions, {
+    selectedValue,
+    placeholder: "Будь-яка область",
+    allValue: "all"
+  });
+}
+
+async function loadRegionOptions() {
+  if (!elements.regionSelect && !elements.regionFilter) return;
+  const selectedPublishValue = elements.regionSelect?.value || "";
+  const selectedSearchValue = elements.regionFilter?.value || "all";
+  try {
+    const db = await loadMapDatabase();
+    const rows = sqlRows(db, "SELECT oblast_id, name FROM oblasti ORDER BY name");
+    if (rows.length) {
+      renderRegionOptions(rows, selectedPublishValue);
+      renderSearchRegionOptions(rows, selectedSearchValue);
+    }
+    await updateSearchCityOptions(elements.cityFilter?.value || "all");
+    await updateSearchDistrictOptions(elements.districtFilter?.value || "all");
+    await updatePublishCityOptions(elements.publishCitySelect?.value || "");
+    await hydrateCityNames();
+    renderListings();
+    renderModeration();
+  } catch (error) {
+    console.warn("Cannot load regions from map.sqlite", error);
+    await updateSearchCityOptions("all");
+    await updatePublishCityOptions("");
+  }
+}
+
+function tableExists(db, tableName) {
+  return Boolean(
+    sqlRows(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [tableName]).length
+  );
+}
+
+function getUserTables(db) {
+  return sqlRows(
+    db,
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+  ).map((row) => row.name);
+}
+
+function getTableColumns(db, tableName) {
+  return sqlRows(db, `PRAGMA table_info(${quoteSqlName(tableName)})`);
+}
+
+function setAdminView(viewName) {
+  const activeView = viewName || "listings";
+  elements.adminNavButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminView === activeView);
+  });
+  elements.adminViews.forEach((view) => {
+    const isActive = view.dataset.adminViewPanel === activeView;
+    view.hidden = !isActive;
+    view.classList.toggle("is-active", isActive);
+  });
+  if (activeView === "reviews") renderAdminReviews();
+  if (activeView === "catalog") renderAdminCatalog();
+  if (activeView === "catalog-updates") renderCatalogUpdates();
+  if (activeView === "specialist-users" || activeView === "parent-users") renderAdminUsers();
+}
+
 function renderMetrics() {
+  const reportsCount = moderationItems.reduce((sum, item) => sum + item.reports, 0);
   if (elements.metricPending) {
-    elements.metricPending.textContent = moderationItems.filter((item) => item.status === "pending").length;
+    elements.metricPending.textContent = moderationItems.filter((item) => item.status !== "archived").length;
   }
   if (elements.metricExpiring) {
     elements.metricExpiring.textContent = moderationItems.filter((item) => daysLeft(item) <= 3 && item.status !== "archived").length;
   }
   if (elements.metricReports) {
-    elements.metricReports.textContent = moderationItems.reduce((sum, item) => sum + item.reports, 0);
+    elements.metricReports.textContent = reportsCount;
   }
   if (elements.metricArchived) {
     elements.metricArchived.textContent = moderationItems.filter((item) => item.status === "archived").length;
@@ -1486,7 +3325,7 @@ function renderMetrics() {
 
 function runExpirationSweep() {
   moderationItems = moderationItems.map((item) => {
-    if (daysLeft(item) < 0 && item.status !== "approved") {
+    if (daysLeft(item) < 0 && item.status !== "archived") {
       return { ...item, status: "archived" };
     }
     return item;
@@ -1513,7 +3352,26 @@ function bindEvents() {
     renderListings();
   });
 
-  [elements.cityFilter, elements.specialtyFilter, elements.formatFilter].forEach((control) => {
+  elements.regionFilter?.addEventListener("change", async () => {
+    selectedCategory = "all";
+    await updateSearchCityOptions("all");
+    await updateSearchDistrictOptions("all");
+    renderCategories();
+    renderListings();
+  });
+
+  elements.regionSelect?.addEventListener("change", async () => {
+    await updatePublishCityOptions("");
+  });
+
+  elements.cityFilter?.addEventListener("change", async () => {
+    selectedCategory = "all";
+    await updateSearchDistrictOptions("all");
+    renderCategories();
+    renderListings();
+  });
+
+  [elements.districtFilter, elements.ratingFilter].forEach((control) => {
     control?.addEventListener("change", () => {
       selectedCategory = "all";
       renderCategories();
@@ -1521,22 +3379,56 @@ function bindEvents() {
     });
   });
 
+  elements.formatFilters?.forEach((control) => {
+    control.addEventListener("change", () => {
+      selectedCategory = "all";
+      updateFormatSummary();
+      renderCategories();
+      renderListings();
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (elements.formatSelect && !elements.formatSelect.contains(event.target)) {
+      elements.formatSelect.open = false;
+    }
+    if (elements.specialistSelect && !elements.specialistSelect.contains(event.target)) {
+      elements.specialistSelect.open = false;
+    }
+    if (elements.publishCategoryTree && !elements.publishCategoryTree.contains(event.target)) {
+      elements.publishCategoryTree.open = false;
+    }
+  });
+
+  document.querySelectorAll('input[name="formats"]').forEach((control) => {
+    control.addEventListener("change", updatePlaceDistrictPanel);
+  });
+  updatePlaceDistrictPanel();
+
+  elements.publishCategoryMenu?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-publish-category]");
+    if (!button) return;
+    selectPublishCategory(button.dataset.publishCategory || button.textContent.trim());
+  });
+  elements.publishSpecialty?.addEventListener("change", (event) => {
+    const input = event.target.closest('input[name="specialtyOptions"]');
+    if (!input) return;
+    if (input.checked) {
+      selectedPublishSpecialties.add(input.value);
+    } else {
+      selectedPublishSpecialties.delete(input.value);
+    }
+    renderSelectedPublishSpecialties();
+  });
+  elements.addCatalogSuggestion?.addEventListener("click", () => addCatalogSuggestionFromFields());
+
   elements.categoryList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
     if (!button) return;
     selectedCategory = button.dataset.category;
-    if (elements.specialtyFilter) elements.specialtyFilter.value = "all";
+    clearSearchSpecialists();
     renderCategories();
     renderListings();
-  });
-
-  document.querySelectorAll("[data-sort]").forEach((button) => {
-    button.addEventListener("click", () => {
-      sortMode = button.dataset.sort;
-      document.querySelectorAll("[data-sort]").forEach((item) => item.classList.remove("is-active"));
-      button.classList.add("is-active");
-      renderListings();
-    });
   });
 
   elements.listingList?.addEventListener("click", (event) => {
@@ -1626,6 +3518,54 @@ function bindEvents() {
   elements.adminSearch?.addEventListener("input", renderModeration);
   elements.moderationRows?.addEventListener("click", handleModerationClick);
   elements.moderationDetail?.addEventListener("click", handleModerationClick);
+  elements.adminNavButtons.forEach((button) => {
+    button.addEventListener("click", () => setAdminView(button.dataset.adminView));
+  });
+  elements.catalogSectionSelect?.addEventListener("change", () => {
+    updateCatalogSelectors();
+  });
+  elements.catalogEditorForm?.addEventListener("submit", submitCatalogRecord);
+  elements.catalogCancelEdit?.addEventListener("click", () => {
+    resetCatalogEditor();
+    setCatalogStatus("");
+  });
+  elements.adminCatalogRows?.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-catalog-record]");
+    const deleteButton = event.target.closest("[data-delete-catalog-record]");
+    if (editButton) {
+      beginCatalogEdit(editButton.dataset.editCatalogRecord);
+      return;
+    }
+    if (deleteButton) {
+      deleteCatalogRecord(deleteButton.dataset.deleteCatalogRecord);
+    }
+  });
+  elements.catalogUpdatesRows?.addEventListener("click", handleCatalogUpdateClick);
+  fillProfileContactFields();
+  elements.publishConsents?.forEach((control) => {
+    control.addEventListener("change", updatePublishSubmitState);
+  });
+  updatePublishSubmitState();
+
+  document.querySelectorAll("[data-add-contact]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const type = button.dataset.addContact;
+      const list = type === "phone" ? elements.phoneList : elements.emailList;
+      list?.append(createContactField(type));
+    });
+  });
+
+  document.querySelector("#publishForm")?.addEventListener("click", (event) => {
+    const removeSpecialtyButton = event.target.closest("[data-remove-specialty]");
+    if (removeSpecialtyButton) {
+      selectedPublishSpecialties.delete(removeSpecialtyButton.dataset.removeSpecialty);
+      updatePublishSpecialtyOptions(false);
+      return;
+    }
+    const removeButton = event.target.closest("[data-remove-contact]");
+    if (!removeButton) return;
+    removeButton.closest(".repeatable-row")?.remove();
+  });
 
   document.querySelectorAll("[data-scroll-to]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1634,43 +3574,129 @@ function bindEvents() {
     });
   });
 
-  document.querySelector("#publishForm")?.addEventListener("submit", (event) => {
+  elements.adminContactForm?.addEventListener("submit", (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const subject = encodeURIComponent(`[Пошук фахівця] ${data.get("subject")}`);
+    const body = encodeURIComponent(
+      `Ім'я: ${data.get("name")}\nEmail: ${data.get("email")}\n\n${data.get("message")}`
+    );
+    window.location.href = `mailto:${adminEmails.join(",")}?subject=${subject}&body=${body}`;
+    if (elements.adminContactStatus) {
+      elements.adminContactStatus.textContent = "Лист підготовлено для адміністраторів сайту.";
+      applyLanguage(elements.adminContactStatus);
+    }
+  });
+
+  document.querySelector("#publishForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    addCatalogSuggestionFromFields({ silent: true });
+    const data = new FormData(event.currentTarget);
     const formats = data.getAll("formats");
-    const files = data
-      .getAll("documents")
-      .filter((file) => file && typeof file.name === "string" && file.name.trim());
-    const fileNames = files.map((file) => file.name).join(", ");
-    const district = data.get("district")?.trim();
+    const phones = data.getAll("phones").map((value) => String(value).trim()).filter(Boolean);
+    const emails = data.getAll("emails").map((value) => String(value).trim()).filter(Boolean);
+    const specialistDistricts = data.getAll("specialistDistricts").map((value) => String(value).trim()).filter(Boolean);
+    const studentDistricts = data.getAll("studentDistricts").map((value) => String(value).trim()).filter(Boolean);
+    const allDistricts = [...new Set([...specialistDistricts, ...studentDistricts])];
+    const regionId = String(data.get("region") || "").trim();
+    const selectedRegionOption = elements.regionSelect?.selectedOptions?.[0];
+    const regionName = String(selectedRegionOption?.dataset.regionName || selectedRegionOption?.textContent || regionId).trim();
+    const cityId = String(data.get("city") || "").trim();
+    const cityName = cityDisplayName(cityId);
+    const specialtyCategory = data.get("specialtyCategory");
+    const selectedSpecialties = data.getAll("specialties").map((value) => String(value).trim()).filter(Boolean);
+    const primarySpecialty = selectedSpecialties[0];
+    if (!primarySpecialty) {
+      const status = document.querySelector("#publishStatus");
+      if (status) {
+        status.textContent = "Оберіть хоча б одну спеціальність.";
+        applyLanguage(status);
+      }
+      return;
+    }
     const autoDeleteDays = data.get("autoDeleteDays");
     const paymentType = data.get("paymentType");
-    const paymentAmount = Number(data.get("paymentAmount") || 0).toLocaleString("uk-UA");
+    const rawPaymentAmount = String(data.get("paymentAmount") || "").trim();
+    const paymentAmount = rawPaymentAmount ? `${Number(rawPaymentAmount).toLocaleString("uk-UA")} ₴` : "не вказано";
     const notes = [
       `Опис: ${data.get("description")}`,
-      district ? `Район: ${district}` : "Район: не вказано",
-      `Формати: ${formats.length ? formats.join(", ") : "не вказано"}`,
+      `Категорія: ${specialtyCategory}`,
+      `Спеціальності: ${selectedSpecialties.join(", ")}`,
+      `Телефони: ${phones.length ? phones.join(", ") : "не вказано"}`,
+      `Email: ${emails.length ? emails.join(", ") : "не вказано"}`,
+      `Область: ${regionName || "не вказано"}`,
+      `ID області: ${regionId || "не вказано"}`,
+      `Місто: ${cityName || "не вказано"}`,
+      `ID міста: ${cityId || "не вказано"}`,
+      `Місце занять: ${formats.length ? formats.join(", ") : "не вказано"}`,
+      `Райони у фахівця: ${specialistDistricts.length ? specialistDistricts.join(", ") : "не вказано"}`,
+      `Райони у учня: ${studentDistricts.length ? studentDistricts.join(", ") : "не вказано"}`,
       `Автовидалення: ${autoDeleteDays} днів`,
-      `Оплата: ${paymentType}, ${paymentAmount} ₴`,
-      `Файли: ${fileNames || "не додано"}`
+      `Оплата: ${paymentType}, ${paymentAmount}`
     ].join(" · ");
+    const publishStatus = document.querySelector("#publishStatus");
+    try {
+      const response = await fetch("/api/account/listings.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: data.get("name"),
+          city: cityId,
+          specialties: selectedSpecialties,
+          formats,
+          districts: allDistricts,
+          price: rawPaymentAmount || 0,
+          paymentType,
+          autoDeleteDays,
+          description: data.get("description")
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        window.location.href = `auth.php?next=${encodeURIComponent("publish.html")}`;
+        return;
+      }
+      if (!response.ok) throw new Error(result.message || "Не вдалося опублікувати оголошення.");
+    } catch (error) {
+      if (publishStatus) {
+        publishStatus.textContent = error.message || "Не вдалося опублікувати оголошення.";
+        applyLanguage(publishStatus);
+      }
+      return;
+    }
     moderationItems.unshift({
       id: Date.now(),
       name: data.get("name"),
-      specialty: data.get("specialty"),
-      city: district ? `${data.get("city")}, ${district}` : data.get("city"),
+      specialty: primarySpecialty,
+      specialties: selectedSpecialties,
+      regionId,
+      region: regionName,
+      city: cityId,
+      districts: allDistricts.join(", "),
       status: "pending",
       createdAt: today.toISOString().slice(0, 10),
       reports: 0,
+      rating: null,
       notes,
-      message: `Нове оголошення створене фахівцем і очікує перевірки документів. Вкладення: ${fileNames || "немає"}.`
+      message: "Нове оголошення опубліковане фахівцем."
     });
-    const status = document.querySelector("#publishStatus");
-    if (status) {
-      status.textContent = "Чернетку надіслано на модерацію. Адміністратор побачить її в черзі.";
-      applyLanguage(status);
+    if (publishStatus) {
+      publishStatus.textContent = "Оголошення опубліковано та додано до особистого кабінету.";
+      applyLanguage(publishStatus);
     }
     event.currentTarget.reset();
+    selectedPublishSpecialties.clear();
+    updatePublishSpecialtyOptions();
+    updatePublishCityOptions("");
+    updatePlaceDistrictPanel();
+    resetAdditionalContactFields();
+    fillProfileContactFields();
+    updatePublishSubmitState();
+    setCatalogSuggestionStatus("");
     renderModeration();
   });
 
@@ -1678,7 +3704,7 @@ function bindEvents() {
     event.preventDefault();
     const status = document.querySelector("#reviewStatus");
     if (status) {
-      status.textContent = "Відгук надіслано модератору на перевірку.";
+      status.textContent = "Відгук опубліковано.";
       applyLanguage(status);
     }
     event.currentTarget.reset();
@@ -1698,9 +3724,19 @@ function handleModerationClick(event) {
 
   if (actionButton) {
     const id = Number(actionButton.dataset.id);
-    moderationItems = moderationItems.map((item) =>
-      item.id === id ? { ...item, status: actionButton.dataset.action } : item
-    );
+    const action = actionButton.dataset.action;
+    moderationItems = moderationItems.map((item) => {
+      if (item.id !== id) return item;
+      if (action === "dismiss-report") {
+        return {
+          ...item,
+          reports: 0,
+          status: "approved",
+          message: "Скаргу відхилено адміністратором. Оголошення залишено активним."
+        };
+      }
+      return { ...item, status: action };
+    });
     selectedModerationId = id;
     renderModeration();
     return;
@@ -1712,13 +3748,21 @@ function handleModerationClick(event) {
 }
 
 function init() {
-  bindLanguageSwitch();
   fillSelects();
+  loadSearchCatalogTree();
+  loadRegionOptions();
   runExpirationSweep();
   renderCategories();
+  updateFormatSummary();
+  updatePublishSubmitState();
   renderListings();
   renderSpecialtyGrid();
   renderModeration();
+  renderAdminReviews();
+  renderCatalogSelectors();
+  renderCatalogUpdates();
+  renderAdminUsers();
+  setAdminView("listings");
   bindEvents();
   setLanguage(currentLang);
   setInterval(() => {

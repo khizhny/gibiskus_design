@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Тьютор і Я - каталог фахівців</title>
+    <title>Пошук фахівця - каталог фахівців</title>
     <meta
       name="description"
       content="Сайт пошуку спеціалістів для дітей з ООП"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
-        <span class="brand-mark" aria-hidden="true">Т</span>
-        <span>Тьютор і Я</span>
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
       </a>
       <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
         <span></span>
@@ -24,99 +24,92 @@
       <nav class="nav" data-nav>
         <a class="is-active" href="index.html">Шукаю фахівця</a>
         <a href="specialists.html">Я фахівець</a>
-        <a href="guide.html">Довідник</a>
+        <a href="about.html">Про сайт</a>
+        <a href="admin.html">Адміністратор</a>
       </nav>
       <div class="header-actions">
-        <div class="language-switch" role="group" aria-label="Вибір мови">
-          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
-          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
-        </div>
-        <a class="ghost-button" href="admin.html">Увійти</a>
-        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+        <a class="ghost-button" href="auth.php">Увійти</a>
       </div>
     </header>
 
     <main>
       <section class="hero" id="catalog">
         <div class="hero-copy">
-          <h1>Каталог фахівців для дітей з особливостями розвитку</h1>
-          <p>Сайт пошуку спеціалістів для дітей з ООП</p>
+          <h1>Пошук фахівців для людей з ООП</h1>
           <form class="search-panel" id="searchForm" aria-label="Пошук фахівців">
+            <label>
+              <span>Область</span>
+              <select id="regionFilter">
+                <option value="all">Будь-яка область</option>
+              </select>
+            </label>
             <label>
               <span>Місто</span>
               <select id="cityFilter">
-                <option value="all">Будь-яке</option>
-                <option value="Київ">Київ</option>
-                <option value="Львів">Львів</option>
-                <option value="Одеса">Одеса</option>
-                <option value="Дніпро">Дніпро</option>
-                <option value="Онлайн">Онлайн</option>
+                <option value="all">Спочатку оберіть область</option>
               </select>
             </label>
             <label>
-              <span>Спеціалізація</span>
-              <select id="specialtyFilter"></select>
+              <span>Район міста</span>
+              <select id="districtFilter">
+                <option value="all">Спочатку оберіть місто</option>
+              </select>
             </label>
-            <label>
+            <div class="form-field specialist-select-field">
+              <span class="field-label">Спеціаліст</span>
+              <details class="multi-select specialist-tree-select" id="specialistFilter">
+                <summary><span data-specialist-summary>Будь-який спеціаліст</span></summary>
+                <div class="multi-select-menu specialist-tree-menu" id="specialistTree"></div>
+              </details>
+            </div>
+            <label class="format-select-field">
               <span>Формат</span>
-              <select id="formatFilter">
+              <details class="multi-select" id="formatFilter">
+                <summary><span data-format-summary>Будь-який</span></summary>
+                <div class="multi-select-menu">
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="formatFilter" value="Онлайн" />
+                    <span>Онлайн</span>
+                  </label>
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="formatFilter" value="У фахівця" />
+                    <span>У фахівця</span>
+                  </label>
+                  <label class="multi-select-option">
+                    <input type="checkbox" name="formatFilter" value="У учня" />
+                    <span>У учня</span>
+                  </label>
+                </div>
+              </details>
+            </label>
+            <label>
+              <span>Рейтинг</span>
+              <select id="ratingFilter">
                 <option value="all">Будь-який</option>
-                <option value="Очно">Очно</option>
-                <option value="Онлайн">Онлайн</option>
-                <option value="Виїзд">Виїзд</option>
+                <option value="5">5.0</option>
+                <option value="4.9">від 4.9</option>
+                <option value="4.8">від 4.8</option>
+                <option value="4.7">від 4.7</option>
               </select>
             </label>
-            <button class="primary-button search-button" type="submit">Знайти</button>
           </form>
         </div>
         <figure class="hero-media">
-          <img src="assets/hero-consultation.png" alt="Фахівчиня, мама і дитина займаються за столом" />
+          <img src="assets/hero-illustration.png" alt="Ілюстрація заняття фахівця з дитиною та батьками" />
         </figure>
       </section>
 
-      <section class="catalog-layout" aria-label="Каталог оголошень">
-        <aside class="category-panel">
-          <div class="panel-heading">
-            <h2>Категорії</h2>
-            <a class="text-button" href="guide.html">Увесь список</a>
-          </div>
-          <div class="category-list" id="categoryList"></div>
-          <div class="expiry-card">
-            <div class="calendar-icon" aria-hidden="true">
-              <span></span>
-            </div>
-            <strong>30 днів</strong>
-            <p>Після публікації оголошення потрібно продовжити, інакше воно знімається з каталогу.</p>
-          </div>
-        </aside>
-
+      <section class="catalog-layout catalog-layout-single" aria-label="Каталог оголошень">
         <section class="results-panel">
           <div class="results-head">
             <div>
               <p class="section-note">Знайдено <span id="resultCount">0</span> фахівців</p>
-              <h2>Рекомендовані анкети</h2>
-            </div>
-            <div class="view-tools">
-              <button class="tool-button is-active" type="button" data-sort="recommended">Рекомендовані</button>
-              <button class="tool-button" type="button" data-sort="rating">Рейтинг</button>
-              <button class="tool-button" type="button" data-sort="expires">Невдовзі завершуються</button>
+              <h2>Знайдені фахівці</h2>
             </div>
           </div>
           <div class="listing-list" id="listingList"></div>
         </section>
 
-        <aside class="support-panel">
-          <div class="support-card">
-            <h2>Допомога з вибором</h2>
-            <p>Короткий маршрут підкаже, з кого почати: лікар, діагностика, корекційні заняття або супровід родини.</p>
-            <a class="secondary-button" href="guide.html">Зібрати маршрут</a>
-          </div>
-          <div class="support-card muted">
-            <h2>Модерація</h2>
-            <p>Усі нові оголошення, скарги й відгуки доступні адміністратору в одній панелі. Повідомлення видаляються автоматично після 3 унікальних дизлайків.</p>
-            <a class="ghost-button full" href="admin.html">Панель адміністратора</a>
-          </div>
-        </aside>
       </section>
     </main>
 
@@ -144,6 +137,7 @@
       </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
   </body>
 </html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Пошук фахівця - особистий кабінет</title>
+    <meta name="description" content="Особистий кабінет користувача сайту Пошук фахівця." />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="about.html">Про сайт</a>
+        <a href="admin.html">Адміністратор</a>
+      </nav>
+      <div class="header-actions">
+        <a class="ghost-button" href="auth.php">Увійти</a>
+      </div>
+    </header>
+
+    <main class="account-main">
+      <section class="account-header">
+        <div>
+          <p class="section-note">Акаунт</p>
+          <h1>Особистий кабінет</h1>
+          <p class="account-member-meta" id="accountMemberMeta"></p>
+        </div>
+      </section>
+
+      <nav class="account-tabs" role="tablist" aria-label="Розділи особистого кабінету">
+        <button class="account-tab is-active" type="button" role="tab" aria-selected="true" data-account-tab="profile">Профіль</button>
+        <button class="account-tab" type="button" role="tab" aria-selected="false" data-account-tab="listings">Оголошення (<span id="accountListingsCount">0</span>)</button>
+        <button class="account-tab" type="button" role="tab" aria-selected="false" data-account-tab="notifications">Сповіщення (<span id="accountNotificationsCount">0</span>)</button>
+      </nav>
+
+      <section class="account-view is-active" data-account-view="profile">
+        <form class="account-profile-form" id="accountProfileForm">
+          <div class="field-grid">
+            <label><span>Ім'я</span><input name="firstName" autocomplete="given-name" required /></label>
+            <label><span>Прізвище</span><input name="lastName" autocomplete="family-name" required /></label>
+          </div>
+          <div class="field-grid">
+            <label><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <label>
+              <span>Номер телефону</span>
+              <input name="phone" type="tel" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" title="Введіть номер у форматі +380XXXXXXXXX" required />
+            </label>
+          </div>
+          <label><span>Тип акаунта</span><input name="role" disabled /></label>
+        </form>
+        <div class="account-contact-columns">
+          <section class="account-contact-manager">
+            <h3>Збережені email</h3>
+            <form class="account-contact-add-form" data-contact-form="email">
+              <label>
+                <span>Новий email</span>
+                <input type="email" name="value" autocomplete="email" required />
+              </label>
+              <button class="add-contact-button" type="submit" aria-label="Додати email" title="Додати email">+</button>
+            </form>
+            <p class="form-status account-contact-status" data-contact-status="email" role="status"></p>
+            <div class="account-contact-list" id="accountEmails"></div>
+          </section>
+          <section class="account-contact-manager">
+            <h3>Збережені телефони</h3>
+            <form class="account-contact-add-form" data-contact-form="phone">
+              <label>
+                <span>Новий номер телефону</span>
+                <input type="tel" name="value" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" placeholder="+380XXXXXXXXX" title="Введіть номер у форматі +380XXXXXXXXX" required />
+              </label>
+              <button class="add-contact-button" type="submit" aria-label="Додати номер телефону" title="Додати номер телефону">+</button>
+            </form>
+            <p class="form-status account-contact-status" data-contact-status="phone" role="status"></p>
+            <div class="account-contact-list" id="accountPhones"></div>
+          </section>
+        </div>
+        <div class="account-profile-actions account-profile-actions-bottom">
+          <button class="primary-button" type="submit" form="accountProfileForm">Зберегти зміни</button>
+          <p class="form-status" id="accountProfileStatus" role="status"></p>
+        </div>
+        <section class="account-danger-zone">
+          <div>
+            <h3>Видалення акаунта</h3>
+            <p>Усі особисті дані, оголошення, запити, повідомлення та відгуки буде видалено без можливості відновлення.</p>
+          </div>
+          <button class="danger-button delete-action" type="button" id="openDeleteAccount">Видалити акаунт</button>
+        </section>
+      </section>
+
+      <section class="account-view" data-account-view="listings" hidden>
+        <div class="account-section-heading">
+          <div><p class="section-note">Ваші публікації</p><h2>Мої оголошення</h2></div>
+          <a class="primary-button" id="accountPublishAction" href="publish.html" data-publish-link>Розмістити оголошення</a>
+        </div>
+        <div class="account-feed" id="accountListings"></div>
+      </section>
+
+      <section class="account-view" data-account-view="notifications" hidden>
+        <div class="account-section-heading">
+          <div><p class="section-note">Оновлення</p><h2>Сповіщення</h2></div>
+        </div>
+        <div class="account-feed" id="accountNotifications"></div>
+      </section>
+
+      <p class="account-load-status" id="accountLoadStatus" role="status">Завантаження...</p>
+    </main>
+
+    <dialog class="account-delete-dialog" id="deleteAccountDialog" aria-labelledby="deleteAccountTitle">
+      <section data-delete-step="first">
+        <h2 id="deleteAccountTitle">Підтвердьте видалення</h2>
+        <p>Ви справді бажаєте видалити свій акаунт та всі пов'язані з ним дані?</p>
+        <div class="dialog-actions">
+          <button class="ghost-button" type="button" data-delete-cancel>Скасувати</button>
+          <button class="danger-button" type="button" id="continueDeleteAccount">Так, продовжити</button>
+        </div>
+      </section>
+      <section data-delete-step="second" hidden>
+        <h2>Останнє підтвердження</h2>
+        <p>Після натискання наступної кнопки акаунт і всі його оголошення буде видалено назавжди.</p>
+        <div class="dialog-actions">
+          <button class="ghost-button" type="button" id="backDeleteAccount">Назад</button>
+          <button class="danger-button delete-action" type="button" id="confirmDeleteAccount">Видалити назавжди</button>
+        </div>
+        <p class="form-status" id="deleteAccountStatus" role="status"></p>
+      </section>
+    </dialog>
+
+    <script src="cabinet.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
+  </body>
+</html>

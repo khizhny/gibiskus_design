@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    <title>Пошук фахівця - вхід</title>
+    <meta name="description" content="Вхід для зареєстрованих користувачів через Google або email." />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a href="about.html">Про сайт</a>
+        <a href="admin.html">Адміністратор</a>
+      </nav>
+      <div class="header-actions"></div>
+    </header>
+
+    <main>
+      <section class="auth-layout login-layout" id="auth">
+        <div class="auth-intro">
+          <p class="section-note">Для зареєстрованих користувачів</p>
+          <h1>Вхід до акаунта</h1>
+          <p>Увійдіть через Google або використайте email і пароль, вказані під час реєстрації.</p>
+        </div>
+
+        <section class="auth-panel" aria-label="Форма входу">
+          <div class="auth-login-methods" aria-label="Спосіб входу">
+            <div class="google-auth-mount" id="googleAuthButton" aria-live="polite"></div>
+            <p class="auth-provider-note" id="googleAuthNote"></p>
+            <button
+              class="secondary-button auth-email-toggle"
+              id="emailLoginToggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="emailLoginForm"
+            >
+              Вхід через email
+            </button>
+          </div>
+
+          <form class="auth-email-login-form" id="emailLoginForm" aria-label="Вхід за email" hidden>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
+            </label>
+            <label>
+              <span>Пароль</span>
+              <input type="password" name="password" autocomplete="current-password" minlength="8" maxlength="128" required />
+            </label>
+            <button class="primary-button" type="submit">Увійти</button>
+          </form>
+
+          <p class="auth-status" id="authStatus" role="status"></p>
+          <p class="auth-switch-link">Ще не маєте акаунта? <a href="register.php">Зареєструватися</a></p>
+        </section>
+      </section>
+    </main>
+
+    <script src="auth-config.js?v=ui-icons-20260913"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="auth.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
+  </body>
+</html>

@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Тьютор і Я - панель адміністратора</title>
+    <title>Пошук фахівця - панель адміністратора</title>
     <meta
       name="description"
-      content="Панель адміністратора для модерації оголошень, скарг, відгуків і контролю автоматичного зняття публікацій."
+      content="Панель адміністратора для керування оголошеннями, скаргами, відгуками і контролю автоматичного зняття публікацій."
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="index.html" aria-label="Тьютор і Я, на головну">
-        <span class="brand-mark" aria-hidden="true">Т</span>
-        <span>Тьютор і Я</span>
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
       </a>
       <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
         <span></span>
@@ -24,15 +24,11 @@
       <nav class="nav" data-nav>
         <a href="index.html">Шукаю фахівця</a>
         <a href="specialists.html">Я фахівець</a>
-        <a href="guide.html">Довідник</a>
+        <a href="about.html">Про сайт</a>
+        <a class="is-active" href="admin.html">Адміністратор</a>
       </nav>
       <div class="header-actions">
-        <div class="language-switch" role="group" aria-label="Вибір мови">
-          <button class="lang-button is-active" type="button" data-lang-switch="uk" aria-pressed="true">UA</button>
-          <button class="lang-button" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
-        </div>
-        <a class="ghost-button" href="admin.html">Увійти</a>
-        <a class="primary-button" href="publish.html">Розмістити оголошення</a>
+        <a class="ghost-button" href="auth.php">Увійти</a>
       </div>
     </header>
 
@@ -40,65 +36,166 @@
       <section class="admin-section" id="adminPanel" aria-label="Панель адміністратора">
         <aside class="admin-sidebar">
           <a class="brand admin-brand" href="admin.html">
-            <span class="brand-mark" aria-hidden="true">Т</span>
-            <span>Тьютор і Я</span>
+            <span class="brand-mark" aria-hidden="true">П</span>
+            <span>Пошук фахівця</span>
           </a>
           <p>Панель адміністратора</p>
           <nav>
-            <button class="admin-nav is-active" type="button">Оголошення</button>
-            <button class="admin-nav" type="button">Скарги</button>
-            <button class="admin-nav" type="button">Відгуки</button>
-            <button class="admin-nav" type="button">Користувачі</button>
+            <button class="admin-nav is-active" type="button" data-admin-view="listings">Оголошення</button>
+            <button class="admin-nav" type="button" data-admin-view="reviews">Відгуки</button>
+            <button class="admin-nav" type="button" data-admin-view="catalog">Довідник</button>
+            <button class="admin-nav" type="button" data-admin-view="catalog-updates">Оновлення каталогу <span class="nav-badge" id="catalogUpdatesCount">0</span></button>
+            <button class="admin-nav" type="button" data-admin-view="specialist-users">Фахівці</button>
+            <button class="admin-nav" type="button" data-admin-view="parent-users">Батьки</button>
           </nav>
           <a class="ghost-button full" href="index.html">Вийти з панелі</a>
         </aside>
         <div class="admin-workspace">
-          <div class="admin-top">
-            <div>
-              <p class="section-note">Модерація</p>
-              <h1>Оголошення на перевірці</h1>
+          <div class="admin-view is-active" data-admin-view-panel="listings">
+            <div class="admin-top">
+              <div>
+                <p class="section-note">Керування</p>
+                <h1>Керування оголошеннями</h1>
+              </div>
+              <label class="admin-search">
+                <span>Пошук</span>
+                <input type="search" id="adminSearch" placeholder="Ім'я, місто, скарга" />
+              </label>
             </div>
-            <label class="admin-search">
-              <span>Пошук</span>
-              <input type="search" id="adminSearch" placeholder="Ім'я, місто, скарга" />
-            </label>
+            <div class="admin-metrics">
+              <article>
+                <span>Активні</span>
+                <strong id="metricPending">0</strong>
+              </article>
+              <article>
+                <span>Завершуються за 3 дні</span>
+                <strong id="metricExpiring">0</strong>
+              </article>
+              <article>
+                <span>Скарги за тиждень</span>
+                <strong id="metricReports">0</strong>
+              </article>
+              <article>
+                <span>Зняті автоматично</span>
+                <strong id="metricArchived">0</strong>
+              </article>
+            </div>
+            <div class="admin-grid">
+              <section class="moderation-table" aria-label="Черга оголошень">
+                <div class="table-row table-head">
+                  <span>Фахівець</span>
+                  <span>Спеціалізація</span>
+                  <span>Місто</span>
+                  <span>Статус</span>
+                  <span>До зняття</span>
+                  <span>Дії</span>
+                </div>
+                <div id="moderationRows"></div>
+              </section>
+              <aside class="moderation-detail" id="moderationDetail"></aside>
+            </div>
           </div>
-          <div class="admin-metrics">
-            <article>
-              <span>На перевірці</span>
-              <strong id="metricPending">0</strong>
-            </article>
-            <article>
-              <span>Завершуються за 3 дні</span>
-              <strong id="metricExpiring">0</strong>
-            </article>
-            <article>
-              <span>Скарги за тиждень</span>
-              <strong id="metricReports">0</strong>
-            </article>
-            <article>
-              <span>Зняті автоматично</span>
-              <strong id="metricArchived">0</strong>
-            </article>
+
+          <div class="admin-view" data-admin-view-panel="reviews" hidden>
+            <div>
+              <p class="section-note">Керування</p>
+              <h1>Модерація відгуків</h1>
+            </div>
+            <section class="moderation-table review-moderation" aria-label="Відгуки на модерації">
+              <div class="review-moderation-head">
+                <span>Відгук</span>
+                <span>Рейтинг</span>
+                <span>Дата</span>
+              </div>
+              <div id="adminReviewRows"></div>
+            </section>
           </div>
-          <div class="admin-grid">
-            <section class="moderation-table" aria-label="Черга оголошень">
-              <div class="table-row table-head">
-                <span>Фахівець</span>
-                <span>Спеціалізація</span>
-                <span>Місто</span>
-                <span>Статус</span>
-                <span>До зняття</span>
+
+          <div class="admin-view" data-admin-view-panel="catalog" hidden>
+            <div>
+              <p class="section-note">Керування</p>
+              <h1>Довідник спеціальностей</h1>
+            </div>
+            <form class="catalog-editor" id="catalogEditorForm" aria-label="Редагування запису каталогу">
+              <input type="hidden" name="originalRecord" id="catalogOriginalRecord" />
+              <label>
+                <span>Розділ</span>
+                <select name="sectionTitle" id="catalogSectionSelect"></select>
+              </label>
+              <label>
+                <span>Категорія</span>
+                <select name="groupTitle" id="catalogGroupSelect"></select>
+              </label>
+              <label>
+                <span>Назва запису</span>
+                <input type="text" name="recordTitle" id="catalogRecordTitle" placeholder="Наприклад, Репетитор з алгебри" required />
+              </label>
+              <div class="catalog-editor-actions">
+                <button class="primary-button" type="submit" id="catalogSubmitButton">Додати запис</button>
+                <button class="ghost-button" type="button" id="catalogCancelEdit" hidden>Скасувати</button>
+              </div>
+              <p class="form-status" id="catalogStatus" role="status"></p>
+            </form>
+            <section class="catalog-admin-table" aria-label="Записи каталогу">
+              <div id="adminCatalogRows"></div>
+            </section>
+          </div>
+
+          <div class="admin-view" data-admin-view-panel="catalog-updates" hidden>
+            <div>
+              <p class="section-note">Керування</p>
+              <h1>Оновлення каталогу</h1>
+            </div>
+            <section class="moderation-table catalog-updates" aria-label="Пропозиції оновлення каталогу">
+              <div class="catalog-update-head">
+                <span>Пропозиція</span>
+                <span>Редагування</span>
                 <span>Дії</span>
               </div>
-              <div id="moderationRows"></div>
+              <div id="catalogUpdatesRows"></div>
             </section>
-            <aside class="moderation-detail" id="moderationDetail"></aside>
+          </div>
+
+          <div class="admin-view" data-admin-view-panel="specialist-users" hidden>
+            <div>
+              <p class="section-note">Керування</p>
+              <h1>Користувачі-фахівці</h1>
+            </div>
+            <section class="moderation-table user-table" aria-label="Фахівці сайту">
+              <div class="user-table-head">
+                <span>Користувач</span>
+                <span>Контакти</span>
+                <span>Реєстрація</span>
+                <span>Оголошення</span>
+                <span>Відгуки</span>
+                <span>Службові дані</span>
+              </div>
+              <div id="specialistUserRows"></div>
+            </section>
+          </div>
+
+          <div class="admin-view" data-admin-view-panel="parent-users" hidden>
+            <div>
+              <p class="section-note">Керування</p>
+              <h1>Користувачі-батьки</h1>
+            </div>
+            <section class="moderation-table user-table" aria-label="Батьки сайту">
+              <div class="user-table-head">
+                <span>Користувач</span>
+                <span>Контакти</span>
+                <span>Реєстрація</span>
+                <span>Заявки</span>
+                <span>Відгуки</span>
+                <span>Службові дані</span>
+              </div>
+              <div id="parentUserRows"></div>
+            </section>
           </div>
         </div>
       </section>
     </main>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
   </body>
 </html>

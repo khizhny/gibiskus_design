@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Пошук фахівця - про сайт</title>
+    <meta
+      name="description"
+      content="Про сайт Пошук фахівця: пошук спеціалістів для дітей з ООП та листування з адміністраторами."
+    />
+    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Пошук фахівця, на головну">
+        <span class="brand-mark" aria-hidden="true">П</span>
+        <span>Пошук фахівця</span>
+      </a>
+      <button class="menu-button icon-button" type="button" data-menu-toggle aria-label="Відкрити меню">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav" data-nav>
+        <a href="index.html">Шукаю фахівця</a>
+        <a href="specialists.html">Я фахівець</a>
+        <a class="is-active" href="about.html">Про сайт</a>
+        <a href="admin.html">Адміністратор</a>
+      </nav>
+      <div class="header-actions">
+        <a class="ghost-button" href="auth.php">Увійти</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="workflow-band about-band" id="about">
+        <div>
+          <p class="section-note">Про сайт</p>
+          <p>
+            Ця платформа створена для того, щоб кожен міг швидко та зручно знайти фахівців, які працюють з людьми з ООП:
+            педагогів, тренерів, викладачів, психологів та інших спеціалістів. Зрозуміло, доступно й без довгих пошуків.
+          </p>
+          <p>
+            Допомагає родинам знаходити фахівців, а спеціалістам - публікувати анкети,
+            відповідати на заявки та підтримувати актуальність оголошень.
+          </p>
+        </div>
+        <form class="publish-form" id="adminContactForm" aria-label="Листування з адміністратором">
+          <h2>Написати адміністратору</h2>
+          <label>
+            <span>Ваше ім'я</span>
+            <input type="text" name="name" placeholder="Наприклад, Олена" required />
+          </label>
+          <label>
+            <span>Email для відповіді</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="Автозаповнюється з профілю"
+              data-profile-email
+              readonly
+              aria-readonly="true"
+              required
+            />
+          </label>
+          <label>
+            <span>Тема</span>
+            <input type="text" name="subject" placeholder="Питання щодо сайту" required />
+          </label>
+          <label>
+            <span>Повідомлення</span>
+            <textarea rows="5" name="message" placeholder="Напишіть, що потрібно передати адміністраторам" required></textarea>
+          </label>
+          <button class="primary-button" type="submit">Написати адміністраторам</button>
+          <p class="form-status" id="adminContactStatus" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="session.js?v=ui-icons-20260913"></script>
+  </body>
+</html>

@@ -1,9 +1,9 @@
 const translations = {
   uk: {
-    title: "Тьютор і Я - каталог заявок для фахівців",
+    title: "Пошук фахівця - каталог заявок для фахівців",
     description: "Окремий каталог заявок для фахівців: запити родин, фільтри, відповіді та розміщення анкети спеціаліста.",
-    brand: "Тьютор і Я",
-    brandHome: "Тьютор і Я, на головну",
+    brand: "Пошук фахівця",
+    brandHome: "Пошук фахівця, на головну",
     openMenu: "Відкрити меню",
     languageLabel: "Вибір мови",
     navSeek: "Шукаю фахівця",
@@ -11,16 +11,21 @@ const translations = {
     navRequests: "Заявки родин",
     navProfile: "Анкета",
     navGuide: "Довідник",
+    navAbout: "Про сайт",
+    navAdmin: "Адміністратор",
     navReviews: "Відгуки",
     login: "Увійти",
     postProfile: "Розмістити анкету",
     heroTitle: "Каталог заявок для фахівців",
     heroText:
-      "Переглядайте запити родин, фільтруйте за містом, напрямом і форматом роботи та відповідайте на ті заявки, які відповідають вашому досвіду.",
+      "Переглядайте запити родин, фільтруйте за містом, напрямом, форматом роботи й описом та відповідайте на ті заявки, які відповідають вашому досвіду.",
     requestSearch: "Пошук заявок",
+    region: "Область",
     city: "Місто",
     specialization: "Напрям",
     format: "Формат",
+    descriptionSearch: "Пошук по опису",
+    descriptionSearchPlaceholder: "Наприклад, Фортепіано",
     search: "Знайти",
     heroAlt: "Фахівчиня, мама і дитина займаються за столом",
     requestsCatalog: "Каталог заявок",
@@ -32,24 +37,18 @@ const translations = {
     requestsFound: "заявок",
     activeRequests: "Актуальні запити родин",
     sortNew: "Нові",
-    sortBudget: "Бюджет",
     sortUrgent: "Термінові",
-    profileCardTitle: "Профіль фахівця",
-    profileCardText: "Заповніть анкету, додайте документи й отримуйте релевантні заявки після модерації.",
-    fillProfile: "Заповнити анкету",
-    safeChatTitle: "Безпечна комунікація",
-    safeChatText: "Якщо відповідь отримує 3 унікальні дизлайки, вона автоматично видаляється. Скарги й відгуки лишаються в панелі адміністратора.",
     forSpecialists: "Для фахівців",
     publishTitle: "Розмістіть анкету й отримуйте заявки від родин",
     publishText:
-      "Після модерації анкета з'явиться в каталозі для людей, які шукають фахівця. Оголошення потрібно продовжувати кожні 30 днів.",
+      "Після публікації анкета з'явиться в каталозі для людей, які шукають фахівця. Оголошення потрібно продовжувати кожні 30 днів.",
     profileDraft: "Анкета фахівця",
     nameLabel: "Ім'я або назва центру",
     namePlaceholder: "Наприклад, Анна Коваленко",
     cityPlaceholder: "Київ або онлайн",
     profileDescription: "Опис досвіду",
     profileDescriptionPlaceholder: "Методи, документи, формат роботи",
-    sendModeration: "Надіслати на модерацію",
+    sendModeration: "Опублікувати анкету",
     responseNote: "Відповідь на заявку",
     responseTitle: "Написати родині",
     close: "Закрити",
@@ -57,10 +56,11 @@ const translations = {
     responsePlaceholder: "Коротко опишіть досвід і перше доступне вікно",
     send: "Надіслати",
     any: "Будь-яке",
+    anyRegion: "Будь-яка область",
     anyDirection: "Будь-який",
     allRequests: "Усі заявки",
     noRequestsTitle: "Заявок не знайдено",
-    noRequestsText: "Змініть місто, напрям або формат роботи.",
+    noRequestsText: "Змініть місто, напрям, формат роботи або текст пошуку.",
     reply: "Відгукнутися",
     budget: "Бюджет",
     available: "Бажаний час",
@@ -68,16 +68,16 @@ const translations = {
     newRequest: "Новий запит",
     daysLeft: "дн. активна",
     willArchive: "Буде архівовано",
-    documents: "Документи перевіряються",
+    documents: "Документи додані",
     firstMessage: "Добрий день. Бачу вашу заявку і можу запропонувати першу консультацію.",
     familyReply: "Дякуємо. Напишіть, будь ласка, про досвід і найближчі вільні години.",
     dislikeMessage: "Дизлайк повідомлення",
     allMessagesDeleted: "Усі повідомлення в цій розмові видалені автоматично після 3 унікальних дизлайків.",
     responseSent: "Відповідь надіслано. Вона буде автоматично видалена після 3 унікальних дизлайків.",
-    profileSent: "Анкету надіслано на модерацію. Після перевірки вона з'явиться в каталозі для родин.",
-    inPerson: "Очно",
+    profileSent: "Анкету опубліковано. Вона з'явиться в каталозі для родин.",
+    inPerson: "У фахівця",
     online: "Онлайн",
-    homeVisit: "Виїзд",
+    homeVisit: "У учня",
     kyiv: "Київ",
     lviv: "Львів",
     odesa: "Одеса",
@@ -88,13 +88,14 @@ const translations = {
     occupational: "Ерготерапевт",
     physical: "Фізичний терапевт",
     tutor: "Тьютор",
-    early: "Раннє втручання"
+    early: "Раннє втручання",
+    other: "Інше"
   },
   en: {
-    title: "Tutor and Me - request directory for specialists",
+    title: "Specialist Search - request directory for specialists",
     description: "Separate request directory for specialists: family requests, filters, replies, and specialist profile publishing.",
-    brand: "Tutor and Me",
-    brandHome: "Tutor and Me, home",
+    brand: "Specialist Search",
+    brandHome: "Specialist Search, home",
     openMenu: "Open menu",
     languageLabel: "Language selection",
     navSeek: "Find a specialist",
@@ -102,16 +103,21 @@ const translations = {
     navRequests: "Family requests",
     navProfile: "Profile",
     navGuide: "Guide",
+    navAbout: "About",
+    navAdmin: "Administrator",
     navReviews: "Reviews",
     login: "Log in",
     postProfile: "Post a profile",
     heroTitle: "Request directory for specialists",
     heroText:
-      "Browse family requests, filter by city, specialization, and work format, and reply to requests that match your experience.",
+      "Browse family requests, filter by city, specialization, work format, and description, and reply to requests that match your experience.",
     requestSearch: "Request search",
+    region: "Region",
     city: "City",
     specialization: "Specialization",
     format: "Format",
+    descriptionSearch: "Search description",
+    descriptionSearchPlaceholder: "For example, Piano",
     search: "Search",
     heroAlt: "A specialist, mother, and child working at a table",
     requestsCatalog: "Request directory",
@@ -123,23 +129,17 @@ const translations = {
     requestsFound: "requests",
     activeRequests: "Active family requests",
     sortNew: "New",
-    sortBudget: "Budget",
     sortUrgent: "Urgent",
-    profileCardTitle: "Specialist profile",
-    profileCardText: "Fill in your profile, add documents, and receive relevant requests after moderation.",
-    fillProfile: "Fill profile",
-    safeChatTitle: "Safe communication",
-    safeChatText: "If a reply receives 3 unique dislikes, it is automatically removed. Reports and reviews stay in the admin panel.",
     forSpecialists: "For specialists",
     publishTitle: "Post your profile and receive family requests",
-    publishText: "After moderation, the profile appears in the catalog for people looking for a specialist. Listings must be renewed every 30 days.",
+    publishText: "After publication, the profile appears in the catalog for people looking for a specialist. Listings must be renewed every 30 days.",
     profileDraft: "Specialist profile",
     nameLabel: "Name or center",
     namePlaceholder: "For example, Anna Kovalenko",
     cityPlaceholder: "Kyiv or online",
     profileDescription: "Experience description",
     profileDescriptionPlaceholder: "Methods, documents, work format",
-    sendModeration: "Send for moderation",
+    sendModeration: "Publish profile",
     responseNote: "Reply to request",
     responseTitle: "Message the family",
     close: "Close",
@@ -147,10 +147,11 @@ const translations = {
     responsePlaceholder: "Briefly describe your experience and first available slot",
     send: "Send",
     any: "Any",
+    anyRegion: "Any region",
     anyDirection: "Any",
     allRequests: "All requests",
     noRequestsTitle: "No requests found",
-    noRequestsText: "Change the city, specialization, or work format.",
+    noRequestsText: "Change the city, specialization, work format, or search text.",
     reply: "Reply",
     budget: "Budget",
     available: "Preferred time",
@@ -158,16 +159,16 @@ const translations = {
     newRequest: "New request",
     daysLeft: "days active",
     willArchive: "Will be archived",
-    documents: "Documents under review",
+    documents: "Documents added",
     firstMessage: "Hello. I saw your request and can offer an initial consultation.",
     familyReply: "Thank you. Please write about your experience and nearest available times.",
     dislikeMessage: "Dislike message",
     allMessagesDeleted: "All messages in this conversation were automatically removed after 3 unique dislikes.",
     responseSent: "Reply sent. It will be automatically removed after 3 unique dislikes.",
-    profileSent: "Profile sent for moderation. After review, it will appear in the family catalog.",
-    inPerson: "In person",
+    profileSent: "Profile published. It will appear in the family catalog.",
+    inPerson: "At specialist",
     online: "Online",
-    homeVisit: "Home visit",
+    homeVisit: "At student",
     kyiv: "Kyiv",
     lviv: "Lviv",
     odesa: "Odesa",
@@ -178,16 +179,24 @@ const translations = {
     occupational: "Occupational therapist",
     physical: "Physical therapist",
     tutor: "Tutor",
-    early: "Early intervention"
+    early: "Early intervention",
+    other: "Other"
   }
 };
 
+const adminEmails = ["khizhny@gmail.com", "nadya.khizhnaya@gmail.com"];
+const adminVoteWeight = 100;
+const sqliteWasmUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm";
+const sqliteScriptUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js";
 const requestData = [
   {
     id: 1,
     family: { uk: "Родина К.", en: "Family K." },
     initials: { uk: "К", en: "K" },
-    city: "kyiv",
+    regionId: "UA80000000000093317",
+    region: "Київ",
+    city: "UA80000000000093317",
+    district: "Шевченківський",
     specialty: "speech",
     formats: ["inPerson", "online"],
     createdAt: "2026-06-11",
@@ -208,7 +217,10 @@ const requestData = [
     id: 2,
     family: { uk: "Родина М.", en: "Family M." },
     initials: { uk: "М", en: "M" },
-    city: "online",
+    regionId: "",
+    region: "",
+    city: "",
+    district: "",
     specialty: "psychology",
     formats: ["online"],
     createdAt: "2026-06-08",
@@ -229,7 +241,10 @@ const requestData = [
     id: 3,
     family: { uk: "Родина С.", en: "Family S." },
     initials: { uk: "С", en: "S" },
-    city: "lviv",
+    regionId: "UA46000000000026241",
+    region: "Львівська",
+    city: "UA46060250010015970",
+    district: "Галицький",
     specialty: "aba",
     formats: ["inPerson", "homeVisit"],
     createdAt: "2026-06-12",
@@ -250,7 +265,10 @@ const requestData = [
     id: 4,
     family: { uk: "Родина О.", en: "Family O." },
     initials: { uk: "О", en: "O" },
-    city: "odesa",
+    regionId: "UA51000000000030770",
+    region: "Одеська",
+    city: "UA51100270010076757",
+    district: "Приморський",
     specialty: "occupational",
     formats: ["inPerson"],
     createdAt: "2026-06-04",
@@ -271,7 +289,10 @@ const requestData = [
     id: 5,
     family: { uk: "Родина Д.", en: "Family D." },
     initials: { uk: "Д", en: "D" },
-    city: "dnipro",
+    regionId: "UA12000000000090473",
+    region: "Дніпропетровська",
+    city: "UA12020010010037010",
+    district: "Соборний",
     specialty: "tutor",
     formats: ["inPerson", "online"],
     createdAt: "2026-06-02",
@@ -287,10 +308,34 @@ const requestData = [
       uk: ["навчання", "структура", "самостійність"],
       en: ["learning", "structure", "independence"]
     }
+  },
+  {
+    id: 6,
+    family: { uk: "Родина Н.", en: "Family N." },
+    initials: { uk: "Н", en: "N" },
+    regionId: "UA80000000000093317",
+    region: "Київ",
+    city: "UA80000000000093317",
+    district: "Печерський",
+    specialty: "other",
+    formats: ["inPerson", "online"],
+    createdAt: "2026-06-01",
+    budget: 900,
+    urgent: false,
+    available: { uk: "після обіду або онлайн", en: "afternoon or online" },
+    title: { uk: "Потрібен фахівець з фортепіано", en: "Piano specialist needed" },
+    text: {
+      uk: "Шукаємо заняття з фортепіано в м'якому темпі для дитини з ООП, з короткими завданнями та підтримкою уваги.",
+      en: "Looking for gentle piano lessons for a child with SEN, with short tasks and attention support."
+    },
+    tags: {
+      uk: ["фортепіано", "музика", "індивідуальний темп"],
+      en: ["piano", "music", "individual pace"]
+    }
   }
 ];
 
-let currentLang = localStorage.getItem("siteLanguage") === "en" ? "en" : "uk";
+let currentLang = "uk";
 let selectedCategory = "all";
 let requestSort = "new";
 let messageDislikes = {};
@@ -303,9 +348,14 @@ try {
 }
 
 const elements = {
+  region: document.querySelector("#requestRegionFilter"),
   city: document.querySelector("#requestCityFilter"),
+  district: document.querySelector("#requestDistrictFilter"),
   specialty: document.querySelector("#requestSpecialtyFilter"),
-  format: document.querySelector("#requestFormatFilter"),
+  formatSelect: document.querySelector("#requestFormatFilter"),
+  formatSummary: document.querySelector("[data-request-format-summary]"),
+  formatFilters: document.querySelectorAll('input[name="requestFormatFilter"]'),
+  text: document.querySelector("#requestTextFilter"),
   categoryList: document.querySelector("#requestCategoryList"),
   requestList: document.querySelector("#requestList"),
   requestCount: document.querySelector("#requestCount"),
@@ -314,9 +364,11 @@ const elements = {
   responseThread: document.querySelector("#responseThread")
 };
 
-const cityOptions = ["all", "kyiv", "lviv", "odesa", "dnipro", "online"];
-const specialtyOptions = ["all", "speech", "psychology", "aba", "occupational", "physical", "tutor", "early"];
-const formatOptions = ["all", "inPerson", "online", "homeVisit"];
+const specialtyOptions = ["all", "speech", "psychology", "aba", "occupational", "physical", "tutor", "early", "other"];
+const categoryOptions = ["all", "speech", "psychology", "aba", "occupational", "tutor", "early", "other"];
+let regionOptions = [];
+let mapDatabasePromise = null;
+const cityNameCache = new Map();
 
 function t(key) {
   return translations[currentLang][key] || key;
@@ -334,6 +386,26 @@ function currentMessageViewerId() {
   return viewerId;
 }
 
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function currentUserEmail() {
+  return normalizeEmail(localStorage.getItem("siteUserEmail"));
+}
+
+function isAdminEmail(email) {
+  return adminEmails.includes(normalizeEmail(email));
+}
+
+function currentVoterId() {
+  return currentUserEmail() || currentMessageViewerId();
+}
+
+function voteWeightFor(voterId = currentVoterId()) {
+  return isAdminEmail(voterId) ? adminVoteWeight : 1;
+}
+
 function escapeHtml(value) {
   const replacements = {
     "&": "&amp;",
@@ -345,8 +417,301 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => replacements[char]);
 }
 
+function loadExternalScript(src, globalName) {
+  if (window[globalName]) return Promise.resolve(window[globalName]);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve(window[globalName]);
+    script.onerror = () => reject(new Error(`Cannot load ${src}`));
+    document.head.append(script);
+  });
+}
+
+async function loadSqlJs() {
+  const initSqlJs = await loadExternalScript(sqliteScriptUrl, "initSqlJs");
+  return initSqlJs({
+    locateFile: () => sqliteWasmUrl
+  });
+}
+
+async function fetchArrayBuffer(url) {
+  const noCacheUrl = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+  let lastError = null;
+  for (const requestUrl of [noCacheUrl, url]) {
+    try {
+      const response = await fetch(requestUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.arrayBuffer();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error(`Cannot load ${url}`);
+}
+
+function sqlRows(db, sql, params = []) {
+  const result = db.exec(sql, params)[0];
+  if (!result) return [];
+  return result.values.map((values) =>
+    Object.fromEntries(values.map((value, index) => [result.columns[index], value]))
+  );
+}
+
+function quoteSqlValue(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function resolveOblastId(db, oblastId) {
+  const regionValue = quoteSqlValue(oblastId);
+  try {
+    return (
+      sqlRows(
+        db,
+        `SELECT oblast_id FROM oblasti WHERE oblast_id = ${regionValue} or name = ${regionValue} LIMIT 1`
+      )[0]?.oblast_id || oblastId
+    );
+  } catch (error) {
+    console.warn("Cannot resolve oblast id from map.sqlite", error);
+    return oblastId;
+  }
+}
+
+async function loadMapDatabase() {
+  if (!mapDatabasePromise) {
+    mapDatabasePromise = (async () => {
+      const SQL = await loadSqlJs();
+      const buffer = await fetchArrayBuffer("database/map.sqlite");
+      return new SQL.Database(new Uint8Array(buffer));
+    })();
+  }
+  return mapDatabasePromise;
+}
+
+function normalizeRegionOptions(regions) {
+  const regionMap = new Map();
+  regions.forEach((item) => {
+    const name = String(typeof item === "string" ? item : item?.name || "").trim();
+    if (!name) return;
+    const oblastId = String(
+      typeof item === "string" ? item : item?.oblast_id || item?.l1_parent_id || item?.id || name
+    ).trim();
+    regionMap.set(oblastId || name, { oblastId: oblastId || name, name });
+  });
+  return [...regionMap.values()].sort((a, b) => a.name.localeCompare(b.name, "uk"));
+}
+
+function renderRegionSelect(selectedValue = "all") {
+  if (!elements.region) return;
+  const regions = normalizeRegionOptions(regionOptions);
+  elements.region.innerHTML = [
+    `<option value="all">${escapeHtml(t("anyRegion"))}</option>`,
+    ...regions.map(
+      (region) =>
+        `<option value="${escapeHtml(region.oblastId)}" data-region-name="${escapeHtml(region.name)}">${escapeHtml(region.name)}</option>`
+    )
+  ].join("");
+  const selectedRegion = regions.find((region) => region.oblastId === selectedValue || region.name === selectedValue);
+  if (selectedRegion) {
+    elements.region.value = selectedRegion.oblastId;
+  }
+}
+
+function normalizeCityOptions(cities) {
+  const cityMap = new Map();
+  cities.forEach((item) => {
+    const name = String(item?.city_name || item?.name || "").trim();
+    const cityId = String(item?.cityId || item?.city_id || item?.l4_parent_id || item?.l1_parent_id || "").trim();
+    if (!name || !cityId) return;
+    if (!cityMap.has(cityId)) {
+      cityMap.set(cityId, { cityId, name });
+      cityNameCache.set(cityId, name);
+    }
+  });
+  return [...cityMap.values()];
+}
+
+function renderCitySelect(selectedValue = "all") {
+  if (!elements.city) return;
+  elements.city.innerHTML = `<option value="all">${elements.region?.value === "all" ? "Спочатку оберіть область" : t("any")}</option>`;
+  if (selectedValue === "all") elements.city.value = "all";
+}
+
+function renderCityOptions(cities, selectedValue = "all") {
+  if (!elements.city) return;
+  const uniqueCities = normalizeCityOptions(cities);
+  elements.city.innerHTML = [
+    `<option value="all">${t("any")}</option>`,
+    ...uniqueCities.map((city) => `<option value="${escapeHtml(city.cityId)}">${escapeHtml(city.name)}</option>`)
+  ].join("");
+  elements.city.value = uniqueCities.some((city) => city.cityId === selectedValue) ? selectedValue : "all";
+}
+
+async function loadCitiesForRegion(oblastId) {
+  if (!oblastId || oblastId === "all") return [];
+  const db = await loadMapDatabase();
+  const regionValue = quoteSqlValue(resolveOblastId(db, oblastId));
+  return normalizeCityOptions(
+    sqlRows(
+      db,
+      `SELECT
+        name as city_name,
+        COALESCE(l4_parent_id, l1_parent_id) as city_id
+      FROM entries
+      WHERE type in (2, 5) and l1_parent_id = ${regionValue}
+      ORDER BY type asc, name`
+    )
+  );
+}
+
+async function updateRequestCityOptions(selectedValue = "all") {
+  const oblastId = elements.region?.value || "all";
+  if (!elements.city) return;
+  if (!oblastId || oblastId === "all") {
+    renderCitySelect("all");
+    return;
+  }
+  try {
+    const cities = await loadCitiesForRegion(oblastId);
+    renderCityOptions(cities, selectedValue);
+  } catch (error) {
+    console.warn("Cannot load cities from map.sqlite", error);
+    elements.city.innerHTML = `<option value="all">Міста не завантажено</option>`;
+  }
+}
+
+function normalizeDistrictOptions(districts) {
+  const districtMap = new Map();
+  districts.forEach((item) => {
+    const name = String(item?.district_name || item?.name || "").trim();
+    const districtId = String(item?.districtId || item?.district_id || item?.l5_parent_id || name).trim();
+    if (!name) return;
+    if (!districtMap.has(name)) {
+      districtMap.set(name, { districtId, name });
+    }
+  });
+  return [...districtMap.values()];
+}
+
+function renderDistrictSelect(selectedValue = "all") {
+  if (!elements.district) return;
+  elements.district.innerHTML = `<option value="all">${elements.city?.value === "all" ? "Спочатку оберіть місто" : "Будь-який район"}</option>`;
+  if (selectedValue === "all") elements.district.value = "all";
+}
+
+function renderDistrictOptions(districts, selectedValue = "all") {
+  if (!elements.district) return;
+  const uniqueDistricts = normalizeDistrictOptions(districts);
+  elements.district.innerHTML = [
+    `<option value="all">${uniqueDistricts.length ? "Будь-який район" : "Районів не знайдено"}</option>`,
+    ...uniqueDistricts.map(
+      (district) =>
+        `<option value="${escapeHtml(district.name)}" data-district-id="${escapeHtml(district.districtId)}">${escapeHtml(district.name)}</option>`
+    )
+  ].join("");
+  elements.district.value = uniqueDistricts.some((district) => district.name === selectedValue) ? selectedValue : "all";
+}
+
+async function loadDistrictsForCity(cityId) {
+  if (!cityId || cityId === "all") return [];
+  const db = await loadMapDatabase();
+  const cityValue = quoteSqlValue(cityId);
+  return normalizeDistrictOptions(
+    sqlRows(
+      db,
+      `SELECT
+        name as district_name,
+        l5_parent_id as district_id
+      FROM entries
+      WHERE type = 9 and l4_parent_id = ${cityValue}
+      ORDER BY name`
+    )
+  );
+}
+
+async function updateRequestDistrictOptions(selectedValue = "all") {
+  const cityId = elements.city?.value || "all";
+  if (!elements.district) return;
+  if (!cityId || cityId === "all") {
+    renderDistrictSelect("all");
+    return;
+  }
+  try {
+    const districts = await loadDistrictsForCity(cityId);
+    renderDistrictOptions(districts, selectedValue);
+  } catch (error) {
+    console.warn("Cannot load city districts from map.sqlite", error);
+    elements.district.innerHTML = `<option value="all">Райони не завантажено</option>`;
+  }
+}
+
+function cityDisplayName(cityId) {
+  const normalizedCityId = String(cityId || "").trim();
+  if (!normalizedCityId) return "";
+  return cityNameCache.get(normalizedCityId) || normalizedCityId;
+}
+
+function requestCityLabel(request) {
+  return cityDisplayName(request?.city) || ((request?.formats || []).includes("online") ? t("online") : "Не вказано");
+}
+
+function requestLocationLabel(request) {
+  const cityName = requestCityLabel(request);
+  return request?.district ? `${cityName}, ${request.district}` : cityName;
+}
+
+async function loadCityName(cityId) {
+  const normalizedCityId = String(cityId || "").trim();
+  if (!normalizedCityId || cityNameCache.has(normalizedCityId)) return;
+  try {
+    const db = await loadMapDatabase();
+    const cityValue = quoteSqlValue(normalizedCityId);
+    const row = sqlRows(
+      db,
+      `SELECT name
+      FROM entries
+      WHERE type in (2, 5, 7, 8) and (l4_parent_id = ${cityValue} or l1_parent_id = ${cityValue})
+      ORDER BY type asc
+      LIMIT 1`
+    )[0];
+    if (row?.name) cityNameCache.set(normalizedCityId, String(row.name));
+  } catch (error) {
+    console.warn("Cannot resolve city name from map.sqlite", error);
+  }
+}
+
+async function hydrateRequestCityNames() {
+  const cityIds = [...new Set(requestData.map((request) => request.city).filter(Boolean))];
+  await Promise.all(cityIds.map((cityId) => loadCityName(cityId)));
+}
+
+async function loadRegionOptions() {
+  if (!elements.region) return;
+  const selectedValue = elements.region.value || "all";
+  renderRegionSelect(selectedValue);
+  try {
+    const db = await loadMapDatabase();
+    const rows = sqlRows(db, "SELECT oblast_id, name FROM oblasti ORDER BY name");
+    if (rows.length) {
+      regionOptions = rows;
+      renderRegionSelect(selectedValue);
+    }
+    await updateRequestCityOptions(elements.city?.value || "all");
+    await updateRequestDistrictOptions(elements.district?.value || "all");
+    await hydrateRequestCityNames();
+    renderRequests();
+  } catch (error) {
+    console.warn("Cannot load regions from map.sqlite", error);
+    await updateRequestCityOptions("all");
+    await updateRequestDistrictOptions("all");
+  }
+}
+
 function messageDislikeCount(messageId) {
-  return new Set(messageDislikes[messageId] || []).size;
+  return [...new Set(messageDislikes[messageId] || [])].reduce((sum, voterId) => sum + voteWeightFor(voterId), 0);
 }
 
 function isMessageDeleted(messageId) {
@@ -355,7 +720,7 @@ function isMessageDeleted(messageId) {
 
 function renderResponseMessage(message) {
   const dislikes = messageDislikeCount(message.id);
-  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentMessageViewerId());
+  const dislikedByViewer = (messageDislikes[message.id] || []).includes(currentVoterId());
   const messageText = message.textKey ? t(message.textKey) : message.text;
 
   return `
@@ -385,7 +750,7 @@ function renderResponseMessages() {
 
 function handleResponseDislike(messageId) {
   if (!messageId) return;
-  const viewerId = currentMessageViewerId();
+  const viewerId = currentVoterId();
   const voters = new Set(messageDislikes[messageId] || []);
 
   if (voters.has(viewerId)) {
@@ -418,11 +783,6 @@ function setStaticText() {
   document.querySelectorAll("[data-status-key]").forEach((node) => {
     node.textContent = t(node.dataset.statusKey);
   });
-  document.querySelectorAll("[data-lang-switch]").forEach((button) => {
-    const active = button.dataset.langSwitch === currentLang;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
 }
 
 function renderSelect(select, options, anyKey = "any") {
@@ -432,17 +792,39 @@ function renderSelect(select, options, anyKey = "any") {
     .join("");
 }
 
+function selectedRequestFormats() {
+  return [...(elements.formatFilters || [])]
+    .filter((control) => control.checked)
+    .map((control) => control.value);
+}
+
+function updateRequestFormatSummary() {
+  if (!elements.formatSummary) return;
+  const selectedFormats = selectedRequestFormats();
+  if (!selectedFormats.length) {
+    elements.formatSummary.textContent = t("anyDirection");
+  } else if (selectedFormats.length === 1) {
+    elements.formatSummary.textContent = t(selectedFormats[0]);
+  } else {
+    elements.formatSummary.textContent = selectedFormats.map((format) => t(format)).join(", ");
+  }
+  elements.formatSelect?.classList.toggle("has-value", selectedFormats.length > 0);
+}
+
 function fillControls() {
   const previous = {
+    region: elements.region?.value || "all",
     city: elements.city?.value || "all",
+    district: elements.district?.value || "all",
     specialty: elements.specialty?.value || "all",
-    format: elements.format?.value || "all",
     profileSpecialty: elements.profileSpecialty?.value || "speech"
   };
 
-  renderSelect(elements.city, cityOptions, "any");
+  renderRegionSelect(previous.region);
+  renderCitySelect(previous.city);
+  renderDistrictSelect(previous.district);
   renderSelect(elements.specialty, specialtyOptions, "anyDirection");
-  renderSelect(elements.format, formatOptions, "anyDirection");
+  updateRequestFormatSummary();
   if (elements.profileSpecialty) {
     elements.profileSpecialty.innerHTML = specialtyOptions
       .filter((option) => option !== "all")
@@ -450,9 +832,10 @@ function fillControls() {
       .join("");
   }
 
+  if (elements.region) elements.region.value = previous.region;
   if (elements.city) elements.city.value = previous.city;
+  if (elements.district) elements.district.value = previous.district;
   if (elements.specialty) elements.specialty.value = previous.specialty;
-  if (elements.format) elements.format.value = previous.format;
   if (elements.profileSpecialty && specialtyOptions.includes(previous.profileSpecialty)) {
     elements.profileSpecialty.value = previous.profileSpecialty;
   }
@@ -464,21 +847,47 @@ function daysLeft(request) {
   return 30 - diff;
 }
 
+function normalizeSearch(value) {
+  return String(value || "").trim().toLocaleLowerCase(currentLang === "uk" ? "uk-UA" : "en-US");
+}
+
+function requestSearchText(request) {
+  return normalizeSearch([
+    request.title.uk,
+    request.title.en,
+    request.text.uk,
+    request.text.en,
+    request.family.uk,
+    request.family.en,
+    request.available.uk,
+    request.available.en,
+    requestLocationLabel(request),
+    t(request.specialty),
+    ...request.formats.map((format) => t(format)),
+    ...request.tags.uk,
+    ...request.tags.en
+  ].join(" "));
+}
+
 function filteredRequests() {
+  const region = elements.region?.value || "all";
   const city = elements.city?.value || "all";
+  const district = elements.district?.value || "all";
   const specialty = elements.specialty?.value || "all";
-  const format = elements.format?.value || "all";
+  const selectedFormats = selectedRequestFormats();
+  const textQuery = normalizeSearch(elements.text?.value);
   let result = requestData.filter((request) => {
+    if (region !== "all" && request.regionId !== region) return false;
     if (city !== "all" && request.city !== city) return false;
+    if (district !== "all" && request.district !== district) return false;
     if (specialty !== "all" && request.specialty !== specialty) return false;
     if (selectedCategory !== "all" && request.specialty !== selectedCategory) return false;
-    if (format !== "all" && !request.formats.includes(format)) return false;
+    if (selectedFormats.length && !selectedFormats.some((format) => request.formats.includes(format))) return false;
+    if (textQuery && !requestSearchText(request).includes(textQuery)) return false;
     return true;
   });
 
-  if (requestSort === "budget") {
-    result = result.sort((a, b) => b.budget - a.budget);
-  } else if (requestSort === "urgent") {
+  if (requestSort === "urgent") {
     result = result.sort((a, b) => Number(b.urgent) - Number(a.urgent) || daysLeft(a) - daysLeft(b));
   } else {
     result = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -489,8 +898,7 @@ function filteredRequests() {
 
 function renderCategories() {
   if (!elements.categoryList) return;
-  const items = ["all", "speech", "psychology", "aba", "occupational", "tutor", "early"];
-  elements.categoryList.innerHTML = items
+  elements.categoryList.innerHTML = categoryOptions
     .map((item) => {
       const count = item === "all" ? requestData.length : requestData.filter((request) => request.specialty === item).length;
       return `
@@ -529,7 +937,7 @@ function renderRequests() {
           <div class="avatar" aria-hidden="true">${request.initials[currentLang]}</div>
           <div class="listing-main">
             <h3>${request.title[currentLang]}</h3>
-            <p>${request.family[currentLang]} · ${t(request.city)} · ${t(request.specialty)} · ${request.formats.map((format) => t(format)).join(", ")}</p>
+            <p>${request.family[currentLang]} · ${requestLocationLabel(request)} · ${t(request.specialty)} · ${request.formats.map((format) => t(format)).join(", ")}</p>
             <p>${request.text[currentLang]}</p>
             <div class="tag-row">
               ${request.tags[currentLang].map((tag) => `<span class="tag">${tag}</span>`).join("")}
@@ -556,9 +964,9 @@ function renderAll() {
   renderRequests();
 }
 
-function setLanguage(lang) {
-  currentLang = lang === "en" ? "en" : "uk";
-  localStorage.setItem("siteLanguage", currentLang);
+function setLanguage() {
+  currentLang = "uk";
+  localStorage.removeItem("siteLanguage");
   renderAll();
   renderResponseMessages();
 }
@@ -598,10 +1006,6 @@ function bindEvents() {
     document.querySelector(".site-header")?.classList.toggle("is-open");
   });
 
-  document.querySelectorAll("[data-lang-switch]").forEach((button) => {
-    button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
-  });
-
   document.querySelector("#requestSearchForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     selectedCategory = "all";
@@ -609,7 +1013,22 @@ function bindEvents() {
     renderRequests();
   });
 
-  [elements.city, elements.specialty, elements.format].forEach((control) => {
+  elements.region?.addEventListener("change", async () => {
+    selectedCategory = "all";
+    await updateRequestCityOptions("all");
+    await updateRequestDistrictOptions("all");
+    renderCategories();
+    renderRequests();
+  });
+
+  elements.city?.addEventListener("change", async () => {
+    selectedCategory = "all";
+    await updateRequestDistrictOptions("all");
+    renderCategories();
+    renderRequests();
+  });
+
+  [elements.district, elements.specialty].forEach((control) => {
     control?.addEventListener("change", () => {
       selectedCategory = "all";
       renderCategories();
@@ -617,11 +1036,38 @@ function bindEvents() {
     });
   });
 
-  document.querySelector("[data-reset-filters]")?.addEventListener("click", () => {
+  elements.formatFilters?.forEach((control) => {
+    control.addEventListener("change", () => {
+      selectedCategory = "all";
+      updateRequestFormatSummary();
+      renderCategories();
+      renderRequests();
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (elements.formatSelect && !elements.formatSelect.contains(event.target)) {
+      elements.formatSelect.open = false;
+    }
+  });
+
+  document.querySelector("[data-reset-filters]")?.addEventListener("click", async () => {
     selectedCategory = "all";
-    if (elements.city) elements.city.value = "all";
+    if (elements.region) elements.region.value = "all";
     if (elements.specialty) elements.specialty.value = "all";
-    if (elements.format) elements.format.value = "all";
+    elements.formatFilters?.forEach((control) => {
+      control.checked = false;
+    });
+    updateRequestFormatSummary();
+    if (elements.text) elements.text.value = "";
+    await updateRequestCityOptions("all");
+    await updateRequestDistrictOptions("all");
+    renderCategories();
+    renderRequests();
+  });
+
+  elements.text?.addEventListener("input", () => {
+    selectedCategory = "all";
     renderCategories();
     renderRequests();
   });
@@ -689,4 +1135,5 @@ function bindEvents() {
 }
 
 renderAll();
+loadRegionOptions();
 bindEvents();
