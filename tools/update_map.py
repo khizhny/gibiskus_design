@@ -48,6 +48,7 @@ FLAT_HEADERS = {"Structure URN", "ID", "Name UK", "KATOTTG_Category", "Parent ID
 
 def parse_args() -> argparse.Namespace:
     script_dir = Path(__file__).resolve().parent
+    database_dir = script_dir.parent / "database"
     parser = argparse.ArgumentParser(
         description="Convert an official KATOTTG XLSX export to map.sqlite."
     )
@@ -55,15 +56,15 @@ def parse_args() -> argparse.Namespace:
         "xlsx",
         nargs="?",
         type=Path,
-        default=script_dir / "map.xlsx",
-        help="Input XLSX path. Defaults to map.xlsx next to this script.",
+        default=database_dir / "map.xlsx",
+        help="Input XLSX path. Defaults to database/map.xlsx.",
     )
     parser.add_argument(
         "sqlite",
         nargs="?",
         type=Path,
-        default=script_dir / "map.sqlite",
-        help="Output SQLite path. Defaults to map.sqlite next to this script.",
+        default=database_dir / "map.sqlite",
+        help="Output SQLite path. Defaults to database/map.sqlite.",
     )
     return parser.parse_args()
 
