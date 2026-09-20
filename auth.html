@@ -58,6 +58,18 @@
               <input type="password" name="password" autocomplete="current-password" minlength="8" maxlength="128" required />
             </label>
             <button class="primary-button" type="submit">Увійти</button>
+            <button class="auth-forgot-toggle" id="forgotPasswordToggle" type="button">Забули пароль?</button>
+          </form>
+
+          <form class="auth-forgot-form" id="forgotPasswordForm" aria-label="Відновлення пароля" hidden>
+            <h2>Відновлення пароля</h2>
+            <p>Введіть email акаунта. Ми надішлемо на нього тимчасовий пароль.</p>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
+            </label>
+            <button class="primary-button" type="submit">Надіслати новий пароль</button>
+            <button class="auth-forgot-toggle" id="forgotPasswordCancel" type="button">Повернутися до входу</button>
           </form>
 
           <p class="auth-status" id="authStatus" role="status"></p>
@@ -66,9 +78,9 @@
       </section>
     </main>
 
-    <script src="auth-config.js?v=ui-icons-20260913"></script>
+    <script src="auth-config.js?v=password-management-20260920"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="auth.js?v=profiles-20260920"></script>
+    <script src="auth.js?v=password-management-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

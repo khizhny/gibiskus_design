@@ -67,6 +67,30 @@
           <button class="primary-button" type="submit" form="accountProfileForm">Зберегти зміни</button>
           <p class="form-status" id="accountProfileStatus" role="status"></p>
         </div>
+        <section class="account-password-section">
+          <div>
+            <h3>Зміна пароля</h3>
+            <p>Використовуйте щонайменше 8 символів.</p>
+          </div>
+          <form class="account-password-form" id="accountPasswordForm">
+            <label id="currentPasswordField">
+              <span>Поточний пароль</span>
+              <input type="password" name="currentPassword" autocomplete="current-password" minlength="8" maxlength="128" />
+            </label>
+            <div class="field-grid">
+              <label>
+                <span>Новий пароль</span>
+                <input type="password" name="newPassword" autocomplete="new-password" minlength="8" maxlength="128" required />
+              </label>
+              <label>
+                <span>Повторіть новий пароль</span>
+                <input type="password" name="newPasswordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
+              </label>
+            </div>
+            <button class="secondary-button" type="submit">Змінити пароль</button>
+            <p class="form-status" id="accountPasswordStatus" role="status"></p>
+          </form>
+        </section>
         <section class="account-danger-zone">
           <div>
             <h3>Видалення акаунта</h3>
@@ -114,7 +138,7 @@
       </section>
     </dialog>
 
-    <script src="cabinet.js?v=single-email-profile-20260920"></script>
+    <script src="cabinet.js?v=password-management-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

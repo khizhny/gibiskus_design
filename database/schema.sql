@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS Catalog_groups;
 DROP TABLE IF EXISTS UserCredentials;
 DROP TABLE IF EXISTS EmailVerifications;
 DROP TABLE IF EXISTS AppSettings;
+DROP TABLE IF EXISTS PasswordResetRequests;
 DROP TABLE IF EXISTS Admins;
 DROP TABLE IF EXISTS Emails;
 DROP TABLE IF EXISTS Phones;
@@ -78,6 +79,12 @@ CREATE TABLE AppSettings (
   setting_key TEXT PRIMARY KEY,
   setting_value TEXT NOT NULL,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE PasswordResetRequests (
+  user_id INTEGER PRIMARY KEY,
+  last_requested_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Catalog_groups (

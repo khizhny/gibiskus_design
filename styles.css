@@ -1373,6 +1373,32 @@ h3 {
   display: none;
 }
 
+.auth-forgot-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-forgot-form[hidden] {
+  display: none;
+}
+
+.auth-forgot-form h2,
+.auth-forgot-form p {
+  margin: 0;
+}
+
+.auth-forgot-toggle {
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--teal-dark);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .google-auth-button {
   display: inline-flex;
   align-items: center;
@@ -2972,6 +2998,41 @@ a[data-publish-link].is-authorized-publish {
   margin: 0;
 }
 
+.account-password-section {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1.45fr);
+  gap: 28px;
+  margin-top: 30px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--white);
+}
+
+.account-password-section h3,
+.account-password-section p {
+  margin: 0;
+}
+
+.account-password-section > div p {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.account-password-form {
+  display: grid;
+  gap: 16px;
+}
+
+.account-password-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.account-password-form .secondary-button {
+  justify-self: start;
+}
+
 .account-contact-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3240,7 +3301,8 @@ a[data-publish-link].is-authorized-publish {
   }
 
   .account-counters,
-  .account-contact-columns {
+  .account-contact-columns,
+  .account-password-section {
     grid-template-columns: 1fr;
   }
 

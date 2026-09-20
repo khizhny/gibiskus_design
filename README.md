@@ -17,6 +17,14 @@
    composer install --no-dev --optimize-autoloader
    ```
 
+   Цю команду потрібно виконувати також після `git clone` безпосередньо на сервері. Каталог `vendor/` не зберігається в Git, але він обов'язковий для перевірки Google ID-токенів. Якщо `vendor/autoload.php` відсутній, запит `/api/auth/google.php` завершиться помилкою HTTP 500 і вхід через Google не працюватиме.
+
+   Перевірка після встановлення:
+
+   ```bash
+   test -f vendor/autoload.php && echo "Composer dependencies installed"
+   ```
+
 2. Скопіюйте конфігурацію:
 
    ```bash
@@ -63,10 +71,12 @@ Frontend використовує endpoint `/api/auth/google.php`, тому ngin
 - `POST /api/auth/register.php` — email-реєстрація;
 - `POST /api/auth/activate.php` — підтвердження email шестизначним кодом;
 - `POST /api/auth/login.php` — email-вхід;
+- `POST /api/auth/forgot-password.php` — надсилання тимчасового пароля на email;
 - `GET /api/auth/me.php` — поточна PHP-сесія;
 - `POST /api/auth/logout.php` — вихід;
 - `GET /api/account/index.php` — профіль, контакти, оголошення і сповіщення;
 - `POST /api/account/profile.php` — оновлення профілю;
+- `POST /api/account/password.php` — зміна пароля в особистому кабінеті;
 - `POST /api/account/contacts.php` — додавання контакту;
 - `POST /api/account/delete-contact.php` — видалення контакту;
 - `POST /api/account/listings.php` — створення оголошення;

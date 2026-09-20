@@ -5,7 +5,10 @@ const elements = {
   googleMount: document.querySelector("#googleAuthButton"),
   googleNote: document.querySelector("#googleAuthNote"),
   emailToggle: document.querySelector("#emailLoginToggle"),
-  emailForm: document.querySelector("#emailLoginForm")
+  emailForm: document.querySelector("#emailLoginForm"),
+  forgotToggle: document.querySelector("#forgotPasswordToggle"),
+  forgotForm: document.querySelector("#forgotPasswordForm"),
+  forgotCancel: document.querySelector("#forgotPasswordCancel")
 };
 
 let googleInitialized = false;
@@ -32,6 +35,25 @@ function toggleEmailLogin() {
   elements.emailToggle.classList.toggle("is-active", shouldOpen);
   setStatus("");
   if (shouldOpen) elements.emailForm.elements.email?.focus();
+}
+
+function showForgotPassword() {
+  const loginEmail = elements.emailForm?.elements.email?.value || "";
+  elements.emailForm.hidden = true;
+  elements.forgotForm.hidden = false;
+  elements.emailToggle.hidden = true;
+  elements.forgotForm.elements.email.value = loginEmail;
+  elements.forgotForm.elements.email.focus();
+  setStatus("");
+}
+
+function hideForgotPassword() {
+  elements.forgotForm.hidden = true;
+  elements.emailForm.hidden = false;
+  elements.emailToggle.hidden = false;
+  elements.emailToggle.setAttribute("aria-expanded", "true");
+  elements.emailForm.elements.email.focus();
+  setStatus("");
 }
 
 async function postJson(url, payload) {
@@ -140,6 +162,8 @@ function initializeGoogleLogin() {
 }
 
 elements.emailToggle?.addEventListener("click", toggleEmailLogin);
+elements.forgotToggle?.addEventListener("click", showForgotPassword);
+elements.forgotCancel?.addEventListener("click", hideForgotPassword);
 
 document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
   document.querySelector(".site-header")?.classList.toggle("is-open");
@@ -162,6 +186,26 @@ elements.emailForm?.addEventListener("submit", async (event) => {
     completeLogin(user, result.redirect);
   } catch (error) {
     setStatus(error.message || "Невірний email або пароль.", "error");
+  }
+});
+
+elements.forgotForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!event.currentTarget.checkValidity()) {
+    event.currentTarget.reportValidity();
+    return;
+  }
+  const email = String(new FormData(event.currentTarget).get("email") || "").trim().toLowerCase();
+  const submit = event.currentTarget.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  setStatus("Надсилаємо тимчасовий пароль...");
+  try {
+    await postJson(authConfig.forgotPasswordEndpoint || "/api/auth/forgot-password.php", { email });
+    setStatus("Якщо акаунт із таким email існує, тимчасовий пароль надіслано.", "success");
+  } catch (error) {
+    setStatus(error.message || "Не вдалося надіслати тимчасовий пароль.", "error");
+  } finally {
+    submit.disabled = false;
   }
 });
 

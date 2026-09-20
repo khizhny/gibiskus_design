@@ -3,5 +3,6 @@ window.AUTH_CONFIG = Object.freeze({
   googleVerifyEndpoint: "/api/auth/google.php",
   emailRegisterEndpoint: "/api/auth/register.php",
   emailActivationEndpoint: "/api/auth/activate.php",
-  emailLoginEndpoint: "/api/auth/login.php"
+  emailLoginEndpoint: "/api/auth/login.php",
+  forgotPasswordEndpoint: "/api/auth/forgot-password.php"
 });

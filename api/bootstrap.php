@@ -153,7 +153,13 @@ function database(): PDO
     }
     $path = env_value('SITE_DB_PATH', dirname(__DIR__) . '/database/site.sqlite');
     if (!is_file($path)) {
-        throw new RuntimeException('SQLite database not found: ' . $path);
+        error_log('SQLite database not found: ' . $path);
+        throw new ApiError(503, 'Database is unavailable. Check SITE_DB_PATH');
+    }
+    $directory = dirname($path);
+    if (!is_readable($path) || !is_writable($path) || !is_writable($directory)) {
+        error_log('SQLite database or its directory is not readable and writable: ' . $path);
+        throw new ApiError(503, 'Database is unavailable or read-only. Check file and directory permissions');
     }
     $connection = new PDO('sqlite:' . $path, null, null, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -197,6 +203,13 @@ function database(): PDO
           setting_key TEXT PRIMARY KEY,
           setting_value TEXT NOT NULL,
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        SQL);
+    $connection->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS PasswordResetRequests (
+          user_id INTEGER PRIMARY KEY,
+          last_requested_at INTEGER NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
         )
         SQL);
     $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
@@ -528,11 +541,7 @@ function register_email_user(array $payload): array
                 set_primary_phone($db, $userId, $phone);
             }
         }
-        $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
-        $hash = password_hash($password, $algorithm);
-        if ($hash === false) {
-            throw new RuntimeException('Password hashing failed');
-        }
+        $hash = password_hash_for_storage($password);
         execute_sql($db, <<<'SQL'
             INSERT INTO UserCredentials (user_id, password_hash)
             VALUES (?, ?)
@@ -568,17 +577,23 @@ function register_email_user(array $payload): array
 function send_activation_email(string $email, string $name, string $code): void
 {
     $siteName = clean_text(app_setting('SITE_NAME', 'Пошук фахівця'), 100);
-    $from = app_setting('MAIL_FROM', 'no-reply@' . preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'localhost')));
-    if (filter_var($from, FILTER_VALIDATE_EMAIL) === false) {
-        throw new ApiError(503, 'Email delivery is not configured. Set MAIL_FROM to a valid sender address');
-    }
     $subjectText = 'Код активації — ' . $siteName;
-    $subject = '=?UTF-8?B?' . base64_encode($subjectText) . '?=';
-    $encodedSiteName = '=?UTF-8?B?' . base64_encode($siteName) . '?=';
     $body = "Вітаємо, {$name}!\n\n"
         . "Ваш код активації: {$code}\n\n"
         . "Введіть цей код на сторінці реєстрації. Код дійсний 15 хвилин.\n"
         . "Якщо ви не створювали акаунт, просто проігноруйте цей лист.\n";
+    send_site_email($email, $subjectText, $body);
+}
+
+function send_site_email(string $email, string $subjectText, string $body): void
+{
+    $siteName = clean_text(app_setting('SITE_NAME', 'Пошук фахівця'), 100);
+    $from = app_setting('MAIL_FROM', 'no-reply@' . preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'localhost')));
+    if (filter_var($from, FILTER_VALIDATE_EMAIL) === false) {
+        throw new ApiError(503, 'Email delivery is not configured. Set MAIL_FROM to a valid sender address');
+    }
+    $subject = '=?UTF-8?B?' . base64_encode($subjectText) . '?=';
+    $encodedSiteName = '=?UTF-8?B?' . base64_encode($siteName) . '?=';
     $headers = [
         'From: ' . $encodedSiteName . ' <' . $from . '>',
         'MIME-Version: 1.0',
@@ -595,8 +610,103 @@ function send_activation_email(string $email, string $name, string $code): void
         $sent = mail($email, $subject, $body, implode("\r\n", $headers));
     }
     if (!$sent) {
-        throw new ApiError(503, 'Activation email could not be sent. Configure PHP mail delivery on the server');
+        throw new ApiError(503, 'Email could not be sent. Configure PHP mail delivery on the server');
     }
+}
+
+function password_hash_for_storage(string $password): string
+{
+    $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
+    $hash = password_hash($password, $algorithm);
+    if ($hash === false) {
+        throw new RuntimeException('Password hashing failed');
+    }
+    return $hash;
+}
+
+function change_account_password(int $userId, array $payload): array
+{
+    $currentPassword = (string) ($payload['currentPassword'] ?? '');
+    $newPassword = validate_password($payload['newPassword'] ?? '');
+    if ($newPassword !== (string) ($payload['newPasswordConfirm'] ?? '')) {
+        throw new ApiError(400, 'New passwords do not match');
+    }
+    transaction(function (PDO $db) use ($userId, $currentPassword, $newPassword): void {
+        $credential = fetch_one($db, 'SELECT password_hash FROM UserCredentials WHERE user_id = ?', [$userId]);
+        if ($credential !== null) {
+            $currentHash = (string) $credential['password_hash'];
+            if (str_starts_with($currentHash, 'scrypt$')) {
+                throw new ApiError(409, 'Use password recovery before changing this legacy password');
+            }
+            if (!password_verify($currentPassword, $currentHash)) {
+                throw new ApiError(400, 'Current password is incorrect');
+            }
+        }
+        $hash = password_hash_for_storage($newPassword);
+        execute_sql($db, <<<'SQL'
+            INSERT INTO UserCredentials (user_id, password_hash)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            SQL, [$userId, $hash]);
+    });
+    return ['message' => 'Password changed successfully'];
+}
+
+function temporary_password(int $length = 16): string
+{
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    $password = '';
+    $max = strlen($alphabet) - 1;
+    for ($index = 0; $index < $length; $index++) {
+        $password .= $alphabet[random_int(0, $max)];
+    }
+    return $password;
+}
+
+function request_password_reset(mixed $emailValue): array
+{
+    $email = normalize_email($emailValue);
+    $genericMessage = 'If an account with this email exists, a temporary password has been sent';
+    return transaction(function (PDO $db) use ($email, $genericMessage): array {
+        $account = fetch_one($db, <<<'SQL'
+            SELECT u.id, u.name, v.user_id AS verification_user_id, v.verified_at, r.last_requested_at
+            FROM Users AS u
+            JOIN Emails AS e ON e.user_id = u.id
+            LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
+            LEFT JOIN PasswordResetRequests AS r ON r.user_id = u.id
+            WHERE lower(e.email) = lower(?)
+            ORDER BY e.is_primary DESC
+            LIMIT 1
+            SQL, [$email]);
+        if ($account === null || ($account['verification_user_id'] !== null && $account['verified_at'] === null)) {
+            return ['message' => $genericMessage];
+        }
+        $lastRequestedAt = (int) ($account['last_requested_at'] ?? 0);
+        if ($lastRequestedAt > 0 && time() - $lastRequestedAt < 600) {
+            return ['message' => $genericMessage];
+        }
+        $password = temporary_password();
+        $hash = password_hash_for_storage($password);
+        $name = clean_text($account['name'] ?? '', 160);
+        $siteName = clean_text(app_setting('SITE_NAME', 'Пошук фахівця'), 100);
+        $body = "Вітаємо, {$name}!\n\n"
+            . "Ваш тимчасовий пароль: {$password}\n\n"
+            . "Увійдіть із цим паролем і відразу змініть його в особистому кабінеті.\n"
+            . "Якщо ви не запитували відновлення пароля, зверніться до адміністратора сайту.\n";
+        send_site_email($email, 'Новий пароль — ' . $siteName, $body);
+        $userId = (int) $account['id'];
+        execute_sql($db, <<<'SQL'
+            INSERT INTO UserCredentials (user_id, password_hash)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            SQL, [$userId, $hash]);
+        execute_sql($db, <<<'SQL'
+            INSERT INTO PasswordResetRequests (user_id, last_requested_at)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET last_requested_at = excluded.last_requested_at
+            SQL, [$userId, time()]);
+        return ['message' => $genericMessage];
+    });
 }
 
 /** @param resource $connection */
@@ -614,7 +724,7 @@ function smtp_read_response($connection, array $expectedCodes): string
         $code = (int) $matches[1];
         if (!in_array($code, $expectedCodes, true)) {
             error_log('SMTP server rejected a command: ' . trim($response));
-            throw new ApiError(503, 'The email server rejected the activation email');
+            throw new ApiError(503, 'The email server rejected the message');
         }
         return $response;
     }
@@ -873,6 +983,7 @@ function account_data(int $userId): array
         WHERE s.user_id = ? ORDER BY created_at DESC, id DESC LIMIT 20
         SQL, [$userId, $userId])->fetchAll();
     $user['registeredAt'] = (string) (($registered['registered_at'] ?? '') ?: ($registered['created_at'] ?? ''));
+    $user['hasPassword'] = fetch_one($db, 'SELECT user_id FROM UserCredentials WHERE user_id = ?', [$userId]) !== null;
     return ['profile' => $user, 'phones' => $phones, 'listings' => $listings, 'notifications' => $notifications];
 }
 

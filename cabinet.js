@@ -1,6 +1,9 @@
 const accountElements = {
   form: document.querySelector("#accountProfileForm"),
   formStatus: document.querySelector("#accountProfileStatus"),
+  passwordForm: document.querySelector("#accountPasswordForm"),
+  passwordStatus: document.querySelector("#accountPasswordStatus"),
+  currentPasswordField: document.querySelector("#currentPasswordField"),
   loadStatus: document.querySelector("#accountLoadStatus"),
   memberMeta: document.querySelector("#accountMemberMeta"),
   listingsCount: document.querySelector("#accountListingsCount"),
@@ -169,6 +172,10 @@ function renderAccount(data) {
   accountElements.form.elements.email.readOnly = googleAccount;
   accountElements.form.elements.email.setAttribute("aria-readonly", String(googleAccount));
   accountElements.memberMeta.textContent = `Реєстрація: ${formatAccountDate(profile.registeredAt)}`;
+  if (accountElements.currentPasswordField) {
+    accountElements.currentPasswordField.hidden = !profile.hasPassword;
+    accountElements.passwordForm.elements.currentPassword.required = Boolean(profile.hasPassword);
+  }
   if (accountElements.publishAction) {
     accountElements.publishAction.textContent = publishLabel;
     accountElements.publishAction.setAttribute("aria-label", `${publishLabel} в особистому кабінеті`);
@@ -273,6 +280,44 @@ accountElements.form?.addEventListener("submit", async (event) => {
     accountElements.formStatus.textContent = "Зміни збережено.";
   } catch (error) {
     accountElements.formStatus.textContent = error.message;
+  }
+});
+
+accountElements.passwordForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  const data = new FormData(form);
+  const newPassword = String(data.get("newPassword") || "");
+  const newPasswordConfirm = String(data.get("newPasswordConfirm") || "");
+  if (newPassword !== newPasswordConfirm) {
+    accountElements.passwordStatus.textContent = "Нові паролі не збігаються.";
+    form.elements.newPasswordConfirm.focus();
+    return;
+  }
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  accountElements.passwordStatus.textContent = "Змінюємо пароль...";
+  try {
+    await accountRequest("/api/account/password.php", {
+      method: "POST",
+      body: JSON.stringify({
+        currentPassword: String(data.get("currentPassword") || ""),
+        newPassword,
+        newPasswordConfirm
+      })
+    });
+    form.reset();
+    accountElements.currentPasswordField.hidden = false;
+    form.elements.currentPassword.required = true;
+    accountElements.passwordStatus.textContent = "Пароль успішно змінено.";
+  } catch (error) {
+    accountElements.passwordStatus.textContent = error.message;
+  } finally {
+    submit.disabled = false;
   }
 });
 
