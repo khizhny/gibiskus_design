@@ -1074,6 +1074,22 @@ function account_data(int $userId): array
         SQL, [$userId, $userId])->fetchAll();
     foreach ($listings as &$listing) {
         $listing['city'] = city_display_name((string) ($listing['city'] ?? ''));
+        $listing['editable'] = $listing['kind'] === 'specialist';
+        if ($listing['kind'] === 'specialist') {
+            $details = fetch_one($db, <<<'SQL'
+                SELECT bio, duration_minutes, formats_json, district
+                FROM Specialists
+                WHERE id = ? AND user_id = ?
+                SQL, [(int) $listing['id'], $userId]);
+            $formats = json_decode((string) ($details['formats_json'] ?? '[]'), true);
+            $listing['description'] = (string) ($details['bio'] ?? '');
+            $listing['durationMinutes'] = (int) ($details['duration_minutes'] ?? 60);
+            $listing['formats'] = is_array($formats) ? array_values(array_filter(array_map('strval', $formats))) : [];
+            $listing['districts'] = array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) ($details['district'] ?? ''))
+            )));
+        }
     }
     unset($listing);
     $notifications = execute_sql($db, <<<'SQL'
@@ -1206,6 +1222,48 @@ function create_specialist_listing(int $userId, array $payload): array
         }
         return ['id' => $specialistId, 'status' => 'active', 'name' => $name];
     });
+}
+
+function update_specialist_listing(int $userId, array $payload): array
+{
+    $listingId = filter_var($payload['id'] ?? null, FILTER_VALIDATE_INT);
+    if ($listingId === false || $listingId === null) throw new ApiError(400, 'Некоректне оголошення');
+    $description = clean_text($payload['description'] ?? '', 2000);
+    if ($description === '') throw new ApiError(400, 'Додайте короткий опис');
+    $price = max(0, (int) ((float) ($payload['price'] ?? 0)));
+    $durationMinutes = (int) ($payload['durationMinutes'] ?? 60);
+    if ($durationMinutes < 15 || $durationMinutes > 480) throw new ApiError(400, 'Некоректна тривалість заняття');
+    if (!isset($payload['formats']) || !is_array($payload['formats'])) throw new ApiError(400, 'Оберіть формат занять');
+    $allowedFormats = ['Онлайн', 'У фахівця', 'У учня'];
+    $formats = array_values(array_unique(array_filter(array_map(
+        fn(mixed $value): string => clean_text($value, 80),
+        $payload['formats']
+    ), fn(string $value): bool => in_array($value, $allowedFormats, true))));
+    if ($formats === []) throw new ApiError(400, 'Оберіть хоча б один формат занять');
+    if (!isset($payload['districts']) || !is_array($payload['districts'])) throw new ApiError(400, 'Некоректний перелік районів');
+    $districts = array_values(array_unique(array_filter(array_map(
+        fn(mixed $value): string => clean_text($value, 120),
+        $payload['districts']
+    ))));
+
+    transaction(function (PDO $db) use ($userId, $listingId, $description, $price, $durationMinutes, $formats, $districts): void {
+        $listing = fetch_one($db, 'SELECT id FROM Specialists WHERE id = ? AND user_id = ?', [(int) $listingId, $userId]);
+        if ($listing === null) throw new ApiError(404, 'Оголошення не знайдено');
+        execute_sql($db, <<<'SQL'
+            UPDATE Specialists
+            SET bio = ?, price = ?, duration_minutes = ?, formats_json = ?, district = ?
+            WHERE id = ? AND user_id = ?
+            SQL, [
+                $description,
+                $price,
+                $durationMinutes,
+                json_encode($formats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                implode(', ', $districts),
+                (int) $listingId,
+                $userId,
+            ]);
+    });
+    return account_data($userId);
 }
 
 $configPath = dirname(__DIR__) . '/config.php';

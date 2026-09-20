@@ -271,12 +271,10 @@ const ukToEn = {
   "Докладна анкета": "Detailed profile",
   "Детальніше": "Details",
   "Графік:": "Schedule:",
-  "Нозології:": "Conditions:",
   "Ціна:": "Price:",
   "Рейтинг:": "Rating:",
   "Формат роботи:": "Work format:",
   "Термін оголошення:": "Listing term:",
-  "Нозології, з якими працює": "Conditions and requests supported",
   "Освіта:": "Education:",
   "Досвід:": "Experience:",
   "Працює з:": "Works with:",
@@ -1907,13 +1905,16 @@ function renderListings() {
       const expiring = remaining <= 3;
       const visibleNosologies = listing.nosologies.slice(0, 3).map(escapeHtml).join(", ");
       const hiddenNosologyCount = listing.nosologies.length - 3;
+      const nosologyMarkup = visibleNosologies
+        ? `<span class="compact-nosologies">${visibleNosologies}${hiddenNosologyCount > 0 ? ` +${hiddenNosologyCount}` : ""}</span>`
+        : "";
       return `
         <article class="listing-card listing-card-compact ${expiring ? "is-expiring" : ""}">
           <div class="avatar" aria-hidden="true">${escapeHtml(listing.initials)}</div>
           <div class="listing-main">
             <h3>${escapeHtml(listing.name)}</h3>
             <div class="compact-stats">
-              <span class="compact-nosologies"><strong>Нозології:</strong> ${visibleNosologies}${hiddenNosologyCount > 0 ? ` +${hiddenNosologyCount}` : ""}</span>
+              ${nosologyMarkup}
               <span class="rating"><span class="star">★</span>${listing.rating.toFixed(1)} <small>(${listing.reviews})</small></span>
               <span class="price">${listing.price.toLocaleString("uk-UA")} ₴ / ${listing.duration} хв</span>
             </div>
@@ -2042,7 +2043,6 @@ function openSpecialistDetails(listingId) {
       <small>${escapeHtml(listing.offer.focus)} · ${escapeHtml(listing.offer.format)}</small>
     </div>
     <section class="nosology-block">
-      <h3>Нозології, з якими працює</h3>
       <div class="tag-row">
         ${listing.nosologies.map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
       </div>

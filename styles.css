@@ -3249,6 +3249,17 @@ a[data-publish-link].is-authorized-publish {
   background: var(--mint);
 }
 
+.account-listing-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-listing-edit {
+  min-height: 36px;
+  padding: 7px 12px;
+}
+
 .account-notification time {
   flex: 0 0 auto;
   color: var(--muted);
@@ -3340,6 +3351,30 @@ a[data-publish-link].is-authorized-publish {
   margin: 14px 0 0;
 }
 
+.account-edit-dialog {
+  width: min(680px, calc(100vw - 32px));
+}
+
+.account-edit-dialog h2 {
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.account-edit-dialog form {
+  display: grid;
+  gap: 16px;
+}
+
+.account-edit-dialog .dialog-actions {
+  margin-top: 4px;
+}
+
+.account-edit-formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+
 @media (max-width: 760px) {
   .account-main {
     margin-top: 28px;
@@ -3355,6 +3390,11 @@ a[data-publish-link].is-authorized-publish {
   .account-danger-zone {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .account-listing-actions {
+    align-items: stretch;
+    justify-content: space-between;
   }
 
   .account-counters,
