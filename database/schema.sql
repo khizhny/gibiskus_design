@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS Users;
 CREATE TABLE Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   external_id TEXT UNIQUE,
+  email TEXT,
   name TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
@@ -35,15 +36,6 @@ CREATE TABLE Phones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   phone TEXT NOT NULL,
-  is_primary INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE Emails (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  email TEXT NOT NULL,
-  is_primary INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
@@ -52,7 +44,7 @@ CREATE TABLE Admins (
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX uq_emails_email_nocase ON Emails(lower(email));
+CREATE UNIQUE INDEX uq_users_email_nocase ON Users(lower(email)) WHERE email IS NOT NULL AND trim(email) != '';
 
 CREATE TABLE UserCredentials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

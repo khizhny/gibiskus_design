@@ -5,6 +5,7 @@ import os
 import sqlite3
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 
 try:
@@ -30,12 +31,25 @@ TYPE_ROWS = [
 SOURCE_TO_TYPE_ID = {code: type_id for type_id, _, code in TYPE_ROWS}
 LEVEL_COLS = (0, 1, 2, 3, 4)
 DEFAULT_HEADER_ROW = 3
+ROOT_TYPE = "_T"
+LEVEL_BY_TYPE = {
+    "O": 1,
+    "K": 1,
+    "P": 2,
+    "H": 3,
+    "M": 4,
+    "T": 4,
+    "C": 4,
+    "X": 4,
+    "B": 5,
+}
+FLAT_HEADERS = {"Structure URN", "ID", "Name UK", "KATOTTG_Category", "Parent ID"}
 
 
 def parse_args() -> argparse.Namespace:
     script_dir = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(
-        description="Convert the decentralization.gov.ua map XLSX file to map.sqlite."
+        description="Convert an official KATOTTG XLSX export to map.sqlite."
     )
     parser.add_argument(
         "xlsx",
@@ -62,6 +76,132 @@ def find_data_start_row(ws) -> int:
     return DEFAULT_HEADER_ROW + 1
 
 
+def clean(value: object) -> str | None:
+    if value is None:
+        return None
+    text = unicodedata.normalize("NFC", str(value).strip())
+    return text or None
+
+
+def find_flat_header_row(ws) -> tuple[int, dict[str, int]] | None:
+    for row_index, row in enumerate(
+        ws.iter_rows(min_row=1, max_row=20, values_only=True), start=1
+    ):
+        headers = [clean(value) for value in row]
+        if FLAT_HEADERS.issubset(headers):
+            return row_index, {name: headers.index(name) for name in FLAT_HEADERS}
+    return None
+
+
+def build_chain(records: dict[str, dict[str, str | None]], entry_id: str):
+    chain = []
+    seen = set()
+    current_id = entry_id
+    while current_id is not None:
+        if current_id in seen:
+            raise SystemExit(f"Parent cycle detected at {current_id}")
+        seen.add(current_id)
+        item = records.get(current_id)
+        if item is None:
+            raise SystemExit(f"Missing source record for parent ID: {current_id}")
+        chain.append(item)
+        current_id = item["parent_id"]
+    return list(reversed(chain))
+
+
+def load_flat_entries(ws, header_row: int, columns: dict[str, int]):
+    records: dict[str, dict[str, str | None]] = {}
+    source_urns = set()
+    for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+        source_urn = clean(row[columns["Structure URN"]])
+        if source_urn:
+            source_urns.add(source_urn)
+        entry_id = clean(row[columns["ID"]])
+        category = clean(row[columns["KATOTTG_Category"]])
+        if not entry_id or not category:
+            continue
+        if entry_id in records:
+            raise SystemExit(f"Duplicate entry id: {entry_id}")
+        if category != ROOT_TYPE and category not in SOURCE_TO_TYPE_ID:
+            raise SystemExit(f"Unsupported KATOTTG category {category!r}: {entry_id}")
+        records[entry_id] = {
+            "id": entry_id,
+            "type": category,
+            "name": clean(row[columns["Name UK"]]) or "",
+            "parent_id": clean(row[columns["Parent ID"]]),
+        }
+
+    if not records:
+        raise SystemExit("No KATOTTG records found in the flat XLSX export")
+    roots = [item for item in records.values() if item["type"] == ROOT_TYPE]
+    if len(roots) != 1:
+        raise SystemExit(f"Expected one {ROOT_TYPE} root record, found {len(roots)}")
+    if len(source_urns) != 1:
+        raise SystemExit(f"Expected one Structure URN, found {sorted(source_urns)}")
+    for item in records.values():
+        parent_id = item["parent_id"]
+        if parent_id is not None and parent_id not in records:
+            raise SystemExit(f"Missing parent {parent_id} for {item['id']}")
+
+    entries = []
+    for entry_id, item in records.items():
+        category = item["type"]
+        if category == ROOT_TYPE:
+            continue
+        levels: list[str | None] = [None, None, None, None, None]
+        previous_id = None
+        previous_level = 0
+        for ancestor in build_chain(records, entry_id):
+            ancestor_type = ancestor["type"]
+            if ancestor_type == ROOT_TYPE:
+                continue
+            target_level = LEVEL_BY_TYPE[ancestor_type]
+            if target_level <= previous_level:
+                raise SystemExit(
+                    f"Invalid hierarchy for {entry_id}: "
+                    f"{ancestor_type} at level {target_level}"
+                )
+            if previous_id is not None:
+                for level in range(previous_level + 1, target_level):
+                    levels[level - 1] = previous_id
+            levels[target_level - 1] = ancestor["id"]
+            previous_id = ancestor["id"]
+            previous_level = target_level
+
+        populated = [value for value in levels if value]
+        if not populated or populated[-1] != entry_id:
+            raise SystemExit(f"Failed to encode hierarchy for {entry_id}: {levels}")
+        entries.append((*levels, SOURCE_TO_TYPE_ID[category], item["name"]))
+    return entries
+
+
+def load_legacy_entries(ws):
+    data_start_row = find_data_start_row(ws)
+    entries = []
+    seen_ids = set()
+    for row in ws.iter_rows(min_row=data_start_row, values_only=True):
+        source_code = str(row[5]).strip() if len(row) > 5 and row[5] is not None else ""
+        type_id = SOURCE_TO_TYPE_ID.get(source_code)
+        if type_id is None:
+            continue
+
+        levels = [
+            str(row[i]).strip() if len(row) > i and row[i] is not None else None
+            for i in LEVEL_COLS
+        ]
+        non_empty_levels = [(i, value) for i, value in enumerate(levels) if value]
+        if not non_empty_levels:
+            continue
+
+        _, entry_id = non_empty_levels[-1]
+        name = str(row[6]).strip() if len(row) > 6 and row[6] is not None else ""
+        if entry_id in seen_ids:
+            raise SystemExit(f"Duplicate entry id: {entry_id}")
+        seen_ids.add(entry_id)
+        entries.append((*levels, type_id, name))
+    return entries
+
+
 def load_entries(
     xlsx_path: Path,
 ) -> list[tuple[str | None, str | None, str | None, str | None, str | None, int, str]]:
@@ -71,32 +211,11 @@ def load_entries(
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
     try:
         ws = wb.active
-        data_start_row = find_data_start_row(ws)
-
-        entries = []
-        seen_ids = set()
-        for row in ws.iter_rows(min_row=data_start_row, values_only=True):
-            source_code = str(row[5]).strip() if len(row) > 5 and row[5] is not None else ""
-            type_id = SOURCE_TO_TYPE_ID.get(source_code)
-            if type_id is None:
-                continue
-
-            levels = [
-                str(row[i]).strip() if len(row) > i and row[i] is not None else None
-                for i in LEVEL_COLS
-            ]
-            non_empty_levels = [(i, value) for i, value in enumerate(levels) if value]
-            if not non_empty_levels:
-                continue
-
-            _, entry_id = non_empty_levels[-1]
-            name = str(row[6]).strip() if len(row) > 6 and row[6] is not None else ""
-
-            if entry_id in seen_ids:
-                raise SystemExit(f"Duplicate entry id: {entry_id}")
-
-            seen_ids.add(entry_id)
-            entries.append((*levels, type_id, name))
+        flat_header = find_flat_header_row(ws)
+        if flat_header is not None:
+            entries = load_flat_entries(ws, *flat_header)
+        else:
+            entries = load_legacy_entries(ws)
     finally:
         wb.close()
 

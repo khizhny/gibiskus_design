@@ -81,7 +81,6 @@ function rememberUser(user, provider) {
     localStorage.setItem("profilePhone", user.phone);
   }
   localStorage.setItem("siteUserName", user.name || "");
-  localStorage.setItem("siteUserRole", user.role || "user");
   localStorage.setItem("siteAuthProvider", provider);
   localStorage.setItem("siteAuthVerified", "true");
   if (user.id) localStorage.setItem("siteUserId", String(user.id));

@@ -17,7 +17,7 @@ if ($argc !== 3) {
 $email = normalize_email($argv[1]);
 $password = validate_password($argv[2]);
 $db = database();
-$user = fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) ORDER BY is_primary DESC, id LIMIT 1', [$email]);
+$user = fetch_one($db, 'SELECT id AS user_id FROM Users WHERE lower(email) = lower(?) LIMIT 1', [$email]);
 if ($user === null) {
     fwrite(STDERR, "Account not found.\n");
     exit(1);
@@ -34,4 +34,3 @@ execute_sql($db, <<<'SQL'
     ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
     SQL, [(int) $user['user_id'], $hash]);
 fwrite(STDOUT, "Password updated.\n");
-

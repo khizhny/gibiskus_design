@@ -212,14 +212,44 @@ function database(): PDO
           FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
         )
         SQL);
-    $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
-    $columnNames = array_column($columns, 'name');
-    if (in_array('role', $columnNames, true)) {
-        $connection->exec("INSERT OR IGNORE INTO Admins (user_id) SELECT id FROM Users WHERE role = 'admin'");
+    $connection->beginTransaction();
+    try {
+        $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
+        $columnNames = array_column($columns, 'name');
+        if (in_array('role', $columnNames, true)) {
+            $connection->exec("INSERT OR IGNORE INTO Admins (user_id) SELECT id FROM Users WHERE role = 'admin'");
+            $connection->exec('ALTER TABLE Users DROP COLUMN role');
+        }
+        if (!in_array('first_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN first_name TEXT');
+        if (!in_array('last_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN last_name TEXT');
+        if (!in_array('email', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN email TEXT');
+
+        $hasEmailsTable = $connection->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'Emails'")->fetchColumn() !== false;
+        if ($hasEmailsTable) {
+            $connection->exec(<<<'SQL'
+                UPDATE Users
+                SET email = (
+                  SELECT e.email FROM Emails AS e
+                  WHERE e.user_id = Users.id
+                  ORDER BY e.is_primary DESC, e.id
+                  LIMIT 1
+                )
+                WHERE email IS NULL OR trim(email) = ''
+                SQL);
+            $connection->exec('DROP INDEX IF EXISTS uq_emails_email_nocase');
+            $connection->exec('DROP TABLE Emails');
+        }
+
+        $phoneColumns = array_column($connection->query('PRAGMA table_info(Phones)')->fetchAll(), 'name');
+        if (in_array('is_primary', $phoneColumns, true)) {
+            $connection->exec('ALTER TABLE Phones DROP COLUMN is_primary');
+        }
+        $connection->exec("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email_nocase ON Users(lower(email)) WHERE email IS NOT NULL AND trim(email) != ''");
+        $connection->commit();
+    } catch (Throwable $error) {
+        if ($connection->inTransaction()) $connection->rollBack();
+        throw $error;
     }
-    if (!in_array('first_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN first_name TEXT');
-    if (!in_array('last_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN last_name TEXT');
-    $connection->exec('CREATE UNIQUE INDEX IF NOT EXISTS uq_emails_email_nocase ON Emails(lower(email))');
     return $connection;
 }
 
@@ -282,10 +312,9 @@ function landing_page_for_user(array $user): string
 function user_record(PDO $db, int $userId): array
 {
     $row = fetch_one($db, <<<'SQL'
-        SELECT u.id, u.external_id, u.name, u.first_name, u.last_name,
+        SELECT u.id, u.external_id, u.name, u.first_name, u.last_name, u.email,
           EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
-          (SELECT email FROM Emails WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS email,
-          (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS phone
+          (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY id LIMIT 1) AS phone
         FROM Users AS u
         WHERE u.id = ?
         SQL, [$userId]);
@@ -295,7 +324,6 @@ function user_record(PDO $db, int $userId): array
     return [
         'id' => (int) $row['id'],
         'externalId' => (string) ($row['external_id'] ?? ''),
-        'role' => ((int) $row['is_admin'] === 1) ? 'admin' : 'user',
         'isAdmin' => (int) $row['is_admin'] === 1,
         'name' => (string) $row['name'],
         'firstName' => (string) ($row['first_name'] ?? ''),
@@ -335,14 +363,12 @@ function require_admin(): array
     return $user;
 }
 
-function admin_users_data(int $currentAdminId): array
+function admin_users_data(): array
 {
     $rows = execute_sql(database(), <<<'SQL'
-        SELECT u.id, u.name, u.first_name, u.last_name, u.registered_at, u.last_active, u.created_at,
+        SELECT u.id, u.name, u.first_name, u.last_name, u.email, u.registered_at, u.last_active, u.created_at,
           EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
-          EXISTS(SELECT 1 FROM Specialists AS s WHERE s.user_id = u.id) AS is_specialist,
-          (SELECT email FROM Emails WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS email,
-          (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS phone,
+          (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY id LIMIT 1) AS phone,
           (SELECT count(*) FROM Specialists WHERE user_id = u.id) AS specialist_count,
           (SELECT count(*) FROM Requests WHERE user_id = u.id) AS request_count,
           (SELECT count(*) FROM Comments WHERE user_id = u.id) AS comment_count,
@@ -350,9 +376,8 @@ function admin_users_data(int $currentAdminId): array
         FROM Users AS u
         ORDER BY coalesce(u.registered_at, u.created_at) DESC, u.id DESC
         SQL)->fetchAll();
-    return array_map(static function (array $row) use ($currentAdminId): array {
+    return array_map(static function (array $row): array {
         $isAdmin = (int) $row['is_admin'] === 1;
-        $isSpecialist = (int) $row['is_specialist'] === 1;
         return [
             'id' => (int) $row['id'],
             'name' => (string) $row['name'],
@@ -360,14 +385,13 @@ function admin_users_data(int $currentAdminId): array
             'lastName' => (string) ($row['last_name'] ?? ''),
             'email' => (string) ($row['email'] ?? ''),
             'phone' => (string) ($row['phone'] ?? ''),
-            'role' => $isAdmin ? 'admin' : ($isSpecialist ? 'specialist' : 'user'),
+            'isAdmin' => $isAdmin,
             'registeredAt' => (string) (($row['registered_at'] ?? '') ?: ($row['created_at'] ?? '')),
             'lastActive' => (string) ($row['last_active'] ?? ''),
             'specialists' => (int) $row['specialist_count'],
             'requests' => (int) $row['request_count'],
             'comments' => (int) $row['comment_count'],
             'messages' => (int) $row['message_count'],
-            'isSelf' => (int) $row['id'] === $currentAdminId,
         ];
     }, $rows);
 }
@@ -382,6 +406,9 @@ function delete_user_as_admin(int $currentAdminId, mixed $targetValue): int
         throw new ApiError(400, 'You cannot delete your own active administrator account');
     }
     transaction(function (PDO $db) use ($targetId): void {
+        if (fetch_one($db, 'SELECT user_id FROM Admins WHERE user_id = ?', [(int) $targetId]) !== null) {
+            throw new ApiError(400, 'Administrator accounts cannot be deleted from the users page');
+        }
         $statement = execute_sql($db, 'DELETE FROM Users WHERE id = ?', [(int) $targetId]);
         if ($statement->rowCount() !== 1) {
             throw new ApiError(404, 'User account was not found');
@@ -418,32 +445,20 @@ function destroy_current_session(): void
     session_destroy();
 }
 
-function set_primary_email(PDO $db, int $userId, string $email): void
+function set_user_email(PDO $db, int $userId, string $email): void
 {
-    $conflict = fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) AND user_id != ? LIMIT 1', [$email, $userId]);
+    $conflict = fetch_one($db, 'SELECT id FROM Users WHERE lower(email) = lower(?) AND id != ? LIMIT 1', [$email, $userId]);
     if ($conflict !== null) {
         throw new ApiError(400, 'This email is already used by another account');
     }
-    $stored = fetch_one($db, 'SELECT id FROM Emails WHERE user_id = ? AND lower(email) = lower(?) LIMIT 1', [$userId, $email]);
-    if ($stored !== null) {
-        $emailId = (int) $stored['id'];
-        execute_sql($db, 'UPDATE Emails SET email = ? WHERE id = ?', [$email, $emailId]);
-    } else {
-        execute_sql($db, 'INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)', [$userId, $email]);
-        $emailId = (int) $db->lastInsertId();
-    }
-    execute_sql($db, 'DELETE FROM Emails WHERE user_id = ? AND id != ?', [$userId, $emailId]);
-    execute_sql($db, 'UPDATE Emails SET is_primary = 1 WHERE id = ?', [$emailId]);
+    execute_sql($db, 'UPDATE Users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$email, $userId]);
 }
 
-function set_primary_phone(PDO $db, int $userId, string $phone): void
+function add_user_phone(PDO $db, int $userId, string $phone): void
 {
-    execute_sql($db, 'UPDATE Phones SET is_primary = 0 WHERE user_id = ?', [$userId]);
     $stored = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]);
-    if ($stored !== null) {
-        execute_sql($db, 'UPDATE Phones SET is_primary = 1 WHERE id = ?', [(int) $stored['id']]);
-    } else {
-        execute_sql($db, 'INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, 1)', [$userId, $phone]);
+    if ($stored === null) {
+        execute_sql($db, 'INSERT INTO Phones (user_id, phone) VALUES (?, ?)', [$userId, $phone]);
     }
 }
 
@@ -487,11 +502,7 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
     }
     return transaction(function (PDO $db) use ($registration, $googleProfile, $mode, $subject, $email): array {
         $existing = fetch_one($db, 'SELECT id FROM Users WHERE external_id = ?', [$subject]);
-        $emailOwner = fetch_one($db, <<<'SQL'
-            SELECT u.id, u.external_id FROM Users AS u
-            JOIN Emails AS e ON e.user_id = u.id
-            WHERE lower(e.email) = lower(?) LIMIT 1
-            SQL, [$email]);
+        $emailOwner = fetch_one($db, 'SELECT id, external_id FROM Users WHERE lower(email) = lower(?) LIMIT 1', [$email]);
         if ($existing !== null && $emailOwner !== null && (int) $existing['id'] !== (int) $emailOwner['id']) {
             throw new ApiError(400, 'Google email belongs to another account');
         }
@@ -511,7 +522,7 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
             }
             $userId = (int) $existing['id'];
             execute_sql($db, 'UPDATE Users SET last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$now, $userId]);
-            set_primary_email($db, $userId, $email);
+            set_user_email($db, $userId, $email);
             return user_record($db, $userId);
         }
         if ($registration === null) {
@@ -528,17 +539,12 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
             $userId = (int) $existing['id'];
             execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $now, $userId]);
         } else {
-            $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
-            if ($legacyRole) {
-                execute_sql($db, "INSERT INTO Users (external_id, role, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, 'parent', ?, ?, ?, ?, ?, ?)", [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
-            } else {
-                execute_sql($db, 'INSERT INTO Users (external_id, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
-            }
+            execute_sql($db, 'INSERT INTO Users (external_id, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
             $userId = (int) $db->lastInsertId();
         }
-        set_primary_email($db, $userId, $email);
+        set_user_email($db, $userId, $email);
         if ($phone !== '') {
-            set_primary_phone($db, $userId, $phone);
+            add_user_phone($db, $userId, $phone);
         }
         return user_record($db, $userId);
     });
@@ -559,10 +565,10 @@ function register_email_user(array $payload): array
     $password = validate_password($payload['password'] ?? '');
     return transaction(function (PDO $db) use ($firstName, $lastName, $email, $phone, $password): array {
         $emailOwner = fetch_one($db, <<<'SQL'
-            SELECT e.user_id, v.verified_at, v.last_sent_at
-            FROM Emails AS e
-            LEFT JOIN EmailVerifications AS v ON v.user_id = e.user_id
-            WHERE lower(e.email) = lower(?)
+            SELECT u.id AS user_id, v.verified_at, v.last_sent_at
+            FROM Users AS u
+            LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
+            WHERE lower(u.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         $nowTimestamp = time();
@@ -581,19 +587,14 @@ function register_email_user(array $payload): array
             $userId = (int) $emailOwner['user_id'];
             execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $userId]);
             if ($phone !== '') {
-                set_primary_phone($db, $userId, $phone);
+                add_user_phone($db, $userId, $phone);
             }
         } else {
-            $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
-            if ($legacyRole) {
-                execute_sql($db, "INSERT INTO Users (role, name, first_name, last_name, registered_at, last_active, notes) VALUES ('parent', ?, ?, ?, ?, ?, ?)", [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
-            } else {
-                execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
-            }
+            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
             $userId = (int) $db->lastInsertId();
-            set_primary_email($db, $userId, $email);
+            set_user_email($db, $userId, $email);
             if ($phone !== '') {
-                set_primary_phone($db, $userId, $phone);
+                add_user_phone($db, $userId, $phone);
             }
         }
         $hash = password_hash_for_storage($password);
@@ -726,11 +727,9 @@ function request_password_reset(mixed $emailValue): array
         $account = fetch_one($db, <<<'SQL'
             SELECT u.id, u.name, v.user_id AS verification_user_id, v.verified_at, r.last_requested_at
             FROM Users AS u
-            JOIN Emails AS e ON e.user_id = u.id
             LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
             LEFT JOIN PasswordResetRequests AS r ON r.user_id = u.id
-            WHERE lower(e.email) = lower(?)
-            ORDER BY e.is_primary DESC
+            WHERE lower(u.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         if ($account === null || ($account['verification_user_id'] !== null && $account['verified_at'] === null)) {
@@ -945,10 +944,10 @@ function activate_email_user(mixed $emailValue, mixed $codeValue): array
 
     $result = transaction(function (PDO $db) use ($email, $code): array {
         $verification = fetch_one($db, <<<'SQL'
-            SELECT e.user_id, v.code_hash, v.expires_at, v.attempt_count, v.verified_at
-            FROM Emails AS e
-            JOIN EmailVerifications AS v ON v.user_id = e.user_id
-            WHERE lower(e.email) = lower(?)
+            SELECT u.id AS user_id, v.code_hash, v.expires_at, v.attempt_count, v.verified_at
+            FROM Users AS u
+            JOIN EmailVerifications AS v ON v.user_id = u.id
+            WHERE lower(u.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         if ($verification === null) {
@@ -985,10 +984,9 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
     $password = validate_password($passwordValue);
     $statement = execute_sql(database(), <<<'SQL'
         SELECT u.id, c.password_hash, v.verified_at, v.user_id AS verification_user_id FROM Users AS u
-        JOIN Emails AS e ON e.user_id = u.id
         JOIN UserCredentials AS c ON c.user_id = u.id
         LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
-        WHERE lower(e.email) = lower(?) ORDER BY e.is_primary DESC, u.id
+        WHERE lower(u.email) = lower(?) ORDER BY u.id
         SQL, [$email]);
     $legacyHash = false;
     while (($row = $statement->fetch()) !== false) {
@@ -1017,8 +1015,8 @@ function account_data(int $userId): array
     $db = database();
     $user = user_record($db, $userId);
     $registered = fetch_one($db, 'SELECT registered_at, created_at FROM Users WHERE id = ?', [$userId]);
-    $phones = execute_sql($db, 'SELECT id, phone AS value, is_primary FROM Phones WHERE user_id = ? ORDER BY is_primary DESC, id', [$userId])->fetchAll();
-    foreach ($phones as &$item) { $item['id'] = (int) $item['id']; $item['primary'] = (bool) $item['is_primary']; unset($item['is_primary']); }
+    $phones = execute_sql($db, 'SELECT id, phone AS value FROM Phones WHERE user_id = ? ORDER BY id', [$userId])->fetchAll();
+    foreach ($phones as &$item) { $item['id'] = (int) $item['id']; }
     unset($item);
     $listings = execute_sql($db, <<<'SQL'
         SELECT id, 'specialist' AS kind, name AS title, status, created_at, expires_at, city, price AS amount
@@ -1062,7 +1060,7 @@ function update_account_profile(int $userId, array $payload): array
     transaction(function (PDO $db) use ($userId, $firstName, $lastName, $email, $googleAccount): void {
         execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [clean_text($firstName . ' ' . $lastName, 160), $firstName, $lastName, $userId]);
         if (!$googleAccount) {
-            set_primary_email($db, $userId, $email);
+            set_user_email($db, $userId, $email);
         }
     });
     return account_data($userId);
@@ -1077,8 +1075,7 @@ function add_account_contact(int $userId, array $payload): array
             if (fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $value]) !== null) {
                 throw new ApiError(400, 'Цей номер телефону вже додано до вашого акаунта');
             }
-            $isPrimary = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? LIMIT 1', [$userId]) === null ? 1 : 0;
-            execute_sql($db, 'INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, ?)', [$userId, $value, $isPrimary]);
+            execute_sql($db, 'INSERT INTO Phones (user_id, phone) VALUES (?, ?)', [$userId, $value]);
         } else {
             throw new ApiError(400, 'Невідомий тип контакту');
         }
@@ -1094,15 +1091,9 @@ function delete_account_contact(int $userId, array $payload): array
         throw new ApiError(400, 'Некоректний контакт');
     }
     transaction(function (PDO $db) use ($userId, $contactId): void {
-        $contact = fetch_one($db, 'SELECT id, is_primary FROM Phones WHERE id = ? AND user_id = ?', [(int) $contactId, $userId]);
+        $contact = fetch_one($db, 'SELECT id FROM Phones WHERE id = ? AND user_id = ?', [(int) $contactId, $userId]);
         if ($contact === null) throw new ApiError(400, 'Контакт не знайдено');
         execute_sql($db, 'DELETE FROM Phones WHERE id = ? AND user_id = ?', [(int) $contactId, $userId]);
-        if ((bool) $contact['is_primary']) {
-            $next = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? ORDER BY id LIMIT 1', [$userId]);
-            if ($next !== null) {
-                execute_sql($db, 'UPDATE Phones SET is_primary = 1 WHERE id = ?', [(int) $next['id']]);
-            }
-        }
     });
     return account_data($userId);
 }

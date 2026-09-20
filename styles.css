@@ -2332,7 +2332,7 @@ label small {
 .all-users-head,
 .all-user-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.1fr) minmax(210px, 1.25fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(140px, 0.8fr) minmax(120px, 0.7fr);
+  grid-template-columns: minmax(180px, 1.1fr) minmax(210px, 1.25fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(120px, 0.7fr);
   gap: 14px;
   min-width: 1100px;
   align-items: start;

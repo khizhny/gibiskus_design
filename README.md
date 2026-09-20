@@ -52,6 +52,20 @@
 php -S localhost:8000
 ```
 
+## Оновлення довідника КАТОТТГ
+
+Актуальний каталог адміністративно-територіальних одиниць доступний на
+[сторінці КАТОТТГ Державної служби статистики України](https://stat.gov.ua/uk/codelists/SSSU:CL_KATOTTG%284.0.0%29).
+
+Завантажте XLSX-експорт як `database/map.xlsx`, після чого перебудуйте базу:
+
+```bash
+python database/update_map.py database/map.xlsx database/map.sqlite
+```
+
+Конвертер підтримує актуальний плоский формат Держстату з полем `Parent ID`,
+а також попередній ієрархічний формат XLSX.
+
 ## Google OAuth
 
 У Google Cloud Console додайте точні адреси до **Authorized JavaScript origins**:

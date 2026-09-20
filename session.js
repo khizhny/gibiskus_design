@@ -1,6 +1,9 @@
 const SESSION_ENDPOINT = "/api/auth/me.php";
 const PUBLISH_PAGE = "publish.html";
 
+// Remove the obsolete client-side role value left by earlier versions.
+localStorage.removeItem("siteUserRole");
+
 function enforceAdminPageAccess(isAdmin) {
   if (!window.location.pathname.endsWith("/admin.html")) return false;
   if (isAdmin) return false;
@@ -34,7 +37,6 @@ function clearRememberedSession() {
     "siteUserEmail",
     "siteUserPhone",
     "siteUserName",
-    "siteUserRole",
     "siteAuthProvider",
     "siteAuthVerified",
     "siteUserId",
@@ -45,7 +47,6 @@ function clearRememberedSession() {
 function rememberSessionUser(user) {
   if (user.id) localStorage.setItem("siteUserId", String(user.id));
   localStorage.setItem("siteUserName", user.name || "");
-  localStorage.setItem("siteUserRole", user.role || "user");
   localStorage.setItem("siteAuthVerified", "true");
   if (user.email) localStorage.setItem("siteUserEmail", user.email);
   if (user.phone) localStorage.setItem("siteUserPhone", user.phone);

@@ -3339,18 +3339,12 @@ function databaseUserDate(value) {
   return new Intl.DateTimeFormat("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
 }
 
-function databaseUserRole(role) {
-  if (role === "admin") return "Адміністратор";
-  if (role === "specialist") return "Фахівець";
-  return "Користувач";
-}
-
 function renderAllUsers() {
   if (!elements.allUsersRows) return;
   const query = String(elements.allUsersSearch?.value || "").trim().toLowerCase();
   const users = allDatabaseUsers.filter((user) => {
     if (!query) return true;
-    return [user.name, user.email, user.phone, user.role, user.id].some((value) => String(value || "").toLowerCase().includes(query));
+    return [user.name, user.email, user.phone, user.id].some((value) => String(value || "").toLowerCase().includes(query));
   });
   elements.allUsersRows.innerHTML = users.length
     ? users.map((user) => `
@@ -3359,9 +3353,8 @@ function renderAllUsers() {
           <span class="contact-stack"><small>${escapeHtml(user.email || "Email не вказано")}</small><small>${escapeHtml(user.phone || "Телефон не вказано")}</small></span>
           <span>${escapeHtml(databaseUserDate(user.registeredAt))}<small>Останній вхід: ${escapeHtml(databaseUserDate(user.lastActive))}</small></span>
           <span><small>Оголошення: ${user.specialists}</small><small>Запити: ${user.requests}</small><small>Коментарі: ${user.comments}</small><small>Повідомлення: ${user.messages}</small></span>
-          <span><span class="status">${escapeHtml(databaseUserRole(user.role))}</span></span>
-          <span>${user.isSelf
-            ? '<small>Поточний акаунт</small>'
+          <span>${user.isAdmin
+            ? ''
             : `<button class="danger-button all-user-delete" type="button" data-delete-database-user="${user.id}">Видалити</button>`}
           </span>
         </article>`).join("")
@@ -3395,7 +3388,7 @@ async function loadAllUsers(force = false) {
 
 async function deleteDatabaseUser(userId, button) {
   const user = allDatabaseUsers.find((item) => item.id === Number(userId));
-  if (!user || user.isSelf) return;
+  if (!user || user.isAdmin) return;
   const confirmed = window.confirm(`Видалити користувача «${user.name || user.email}» і всі пов'язані дані? Цю дію неможливо скасувати.`);
   if (!confirmed) return;
   button.disabled = true;

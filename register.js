@@ -62,7 +62,6 @@ function getRegistrationProfile({ report = false } = {}) {
 
 function rememberUser(user, provider, fallbackProfile = {}) {
   const name = user.name || [fallbackProfile.firstName, fallbackProfile.lastName].filter(Boolean).join(" ");
-  const role = user.role || "user";
   const phone = user.phone || fallbackProfile.phone || "";
   if (user.email) {
     localStorage.setItem("siteUserEmail", user.email);
@@ -73,7 +72,6 @@ function rememberUser(user, provider, fallbackProfile = {}) {
     localStorage.setItem("profilePhone", phone);
   }
   localStorage.setItem("siteUserName", name);
-  localStorage.setItem("siteUserRole", role);
   localStorage.setItem("siteAuthProvider", provider);
   localStorage.setItem("siteAuthVerified", "true");
   if (user.id) localStorage.setItem("siteUserId", String(user.id));

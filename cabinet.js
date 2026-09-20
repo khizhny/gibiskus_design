@@ -43,7 +43,7 @@ function closeDeleteDialog() {
 
 function clearLocalAccount() {
   [
-    "siteUserEmail", "siteUserPhone", "siteUserName", "siteUserRole",
+    "siteUserEmail", "siteUserPhone", "siteUserName",
     "siteAuthProvider", "siteAuthVerified", "siteUserId", "siteUserExternalId",
     "profileEmail", "profilePhone"
   ].forEach((key) => localStorage.removeItem(key));

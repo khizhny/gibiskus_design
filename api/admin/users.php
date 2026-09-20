@@ -5,7 +5,7 @@ run_endpoint(function (): array {
     $method = $_SERVER['REQUEST_METHOD'] ?? '';
     $admin = require_admin();
     if ($method === 'GET') {
-        return ['users' => admin_users_data((int) $admin['id'])];
+        return ['users' => admin_users_data()];
     }
     if ($method === 'POST') {
         require_same_origin();

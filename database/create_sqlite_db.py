@@ -77,6 +77,7 @@ CREATE TABLE Cities (
 CREATE TABLE Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   external_id TEXT UNIQUE,
+  email TEXT,
   name TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
@@ -91,15 +92,6 @@ CREATE TABLE Phones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   phone TEXT NOT NULL,
-  is_primary INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE Emails (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  email TEXT NOT NULL,
-  is_primary INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
@@ -108,7 +100,7 @@ CREATE TABLE Admins (
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX uq_emails_email_nocase ON Emails(lower(email));
+CREATE UNIQUE INDEX uq_users_email_nocase ON Users(lower(email)) WHERE email IS NOT NULL AND trim(email) != '';
 
 CREATE TABLE UserCredentials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -350,39 +342,36 @@ def main():
     for email in data["adminEmails"]:
         name = email.split("@")[0]
         cursor.execute(
-            "INSERT INTO Users (external_id, name, notes) VALUES (?, ?, ?)",
-            (f"admin:{email}", name, "Адміністратор сайту"),
+            "INSERT INTO Users (external_id, email, name, notes) VALUES (?, ?, ?, ?)",
+            (f"admin:{email}", email, name, "Адміністратор сайту"),
         )
         user_id = cursor.lastrowid
         cursor.execute("INSERT INTO Admins (user_id) VALUES (?)", (user_id,))
         user_ids_by_name[name] = user_id
-        cursor.execute("INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)", (user_id, email))
 
     for item in data["specialistUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, name, registered_at, last_active, notes)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Users (external_id, email, name, registered_at, last_active, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (item.get("id"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
+            (item.get("id"), item.get("email"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
         )
         user_id = cursor.lastrowid
         user_ids_by_name[item["name"]] = user_id
-        cursor.execute("INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, 1)", (user_id, item.get("phone")))
-        cursor.execute("INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)", (user_id, item.get("email")))
+        cursor.execute("INSERT INTO Phones (user_id, phone) VALUES (?, ?)", (user_id, item.get("phone")))
 
     for item in data["parentUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, name, registered_at, last_active, notes)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Users (external_id, email, name, registered_at, last_active, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (item.get("id"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
+            (item.get("id"), item.get("email"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
         )
         user_id = cursor.lastrowid
         user_ids_by_name[item["name"]] = user_id
-        cursor.execute("INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, 1)", (user_id, item.get("phone")))
-        cursor.execute("INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)", (user_id, item.get("email")))
+        cursor.execute("INSERT INTO Phones (user_id, phone) VALUES (?, ?)", (user_id, item.get("phone")))
 
     specialist_ids_by_name = {}
     for listing in data["listings"]:
