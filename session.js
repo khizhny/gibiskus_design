@@ -16,6 +16,12 @@ function updatePublishLinks(authenticated) {
   });
 }
 
+function updateRegistrationLinks(authenticated) {
+  document.querySelectorAll(".header-actions [data-registration-link]").forEach((link) => {
+    link.hidden = authenticated;
+  });
+}
+
 function updateAdminNavigation(isAdmin = false) {
   document.querySelectorAll('.nav a[href="admin.html"]').forEach((link) => {
     link.classList.toggle("is-authorized-admin", isAdmin);
@@ -91,6 +97,7 @@ function applyAuthenticatedUser(user) {
   if (enforceAdminPageAccess(Boolean(user.isAdmin))) return;
   rememberSessionUser(user);
   showCurrentUser(user);
+  updateRegistrationLinks(true);
   updatePublishLinks(true);
   updateAdminNavigation(Boolean(user.isAdmin));
 }
@@ -109,6 +116,7 @@ async function refreshSessionHeader() {
     if (!response.ok) {
       if (enforceAdminPageAccess(false)) return;
       clearRememberedSession();
+      updateRegistrationLinks(false);
       updatePublishLinks(false);
       updateAdminNavigation();
       return;
@@ -118,6 +126,7 @@ async function refreshSessionHeader() {
     if (!result.authenticated || !result.user) {
       if (enforceAdminPageAccess(false)) return;
       clearRememberedSession();
+      updateRegistrationLinks(false);
       updatePublishLinks(false);
       updateAdminNavigation();
       return;
@@ -126,6 +135,7 @@ async function refreshSessionHeader() {
     applyAuthenticatedUser(result.user);
   } catch (error) {
     if (enforceAdminPageAccess(false)) return;
+    updateRegistrationLinks(false);
     updatePublishLinks(false);
     updateAdminNavigation();
   }

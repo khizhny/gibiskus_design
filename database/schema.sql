@@ -10,6 +10,8 @@ DROP TABLE IF EXISTS Catalog_record;
 DROP TABLE IF EXISTS Catalog_subgroups;
 DROP TABLE IF EXISTS Catalog_groups;
 DROP TABLE IF EXISTS UserCredentials;
+DROP TABLE IF EXISTS EmailVerifications;
+DROP TABLE IF EXISTS AppSettings;
 DROP TABLE IF EXISTS Admins;
 DROP TABLE IF EXISTS Emails;
 DROP TABLE IF EXISTS Phones;
@@ -58,6 +60,24 @@ CREATE TABLE UserCredentials (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE EmailVerifications (
+  user_id INTEGER PRIMARY KEY,
+  code_hash TEXT,
+  expires_at INTEGER,
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  last_sent_at INTEGER,
+  verified_at TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE AppSettings (
+  setting_key TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Catalog_groups (

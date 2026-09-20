@@ -8,7 +8,7 @@
       name="description"
       content="Сторінка розміщення оголошення фахівця: анкета, документи та продовження публікації кожні 30 днів."
     />
-    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+    <link rel="stylesheet" href="styles.css?v=publish-account-contacts-20260920" />
   </head>
   <body>
     <header class="site-header">
@@ -34,33 +34,17 @@
     <main>
       <section class="workflow-band" id="publish">
         <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця" enctype="multipart/form-data">
-          <label>
-            <span>Ім'я фахівця або назва центру</span>
-            <input type="text" name="name" placeholder="Наприклад, Анна Коваленко" required />
-          </label>
           <div class="field-grid contact-fields">
-            <div class="repeatable-field" data-repeatable-group="phones">
-              <div class="repeatable-list" data-repeatable-list="phones">
-                <div class="repeatable-row">
-                  <label>
-                    <span>Номер телефону</span>
-                    <input type="tel" name="phones" placeholder="Автозаповнюється з профілю" data-profile-phone readonly aria-readonly="true" />
-                  </label>
-                  <button class="add-contact-button" type="button" data-add-contact="phone" aria-label="Додати телефон">+</button>
-                </div>
+            <fieldset class="option-group publish-phone-options">
+              <legend>Номер телефону</legend>
+              <div class="publish-phone-list" id="publishPhoneOptions" aria-live="polite">
+                <p class="account-empty-inline">Завантаження контактних номерів...</p>
               </div>
-            </div>
-            <div class="repeatable-field" data-repeatable-group="emails">
-              <div class="repeatable-list" data-repeatable-list="emails">
-                <div class="repeatable-row">
-                  <label>
-                    <span>Email</span>
-                    <input type="email" name="emails" placeholder="Автозаповнюється з профілю" data-profile-email readonly aria-readonly="true" required />
-                  </label>
-                  <button class="add-contact-button" type="button" data-add-contact="email" aria-label="Додати email">+</button>
-                </div>
-              </div>
-            </div>
+            </fieldset>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" placeholder="Автозаповнюється з акаунта" data-profile-email readonly aria-readonly="true" required />
+            </label>
           </div>
           <div class="field-grid">
             <div class="form-field publish-category-field">
@@ -234,7 +218,7 @@
       </section>
     </main>
 
-    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="script.js?v=publish-account-contacts-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

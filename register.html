@@ -9,7 +9,7 @@
       name="description"
       content="Реєстрація нового користувача через Google або email."
     />
-    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+    <link rel="stylesheet" href="styles.css?v=typography-20260920" />
   </head>
   <body>
     <header class="site-header">
@@ -36,7 +36,6 @@
       <section class="auth-layout registration-layout" id="auth">
         <div class="auth-intro">
           <h1>Створення акаунта</h1>
-          <p>Створіть профіль, щоб публікувати оголошення, писати фахівцям і зберігати контактні дані.</p>
         </div>
 
         <section class="auth-panel" aria-label="Форма реєстрації">
@@ -51,23 +50,6 @@
                 <input type="text" name="lastName" autocomplete="family-name" required />
               </label>
             </div>
-            <label>
-              <span>Номер телефону</span>
-              <span class="phone-input-group">
-                <span class="phone-prefix" aria-hidden="true">+380</span>
-                <input
-                  type="tel"
-                  name="phone"
-                  autocomplete="tel-national"
-                  inputmode="numeric"
-                  pattern="[0-9]{9}"
-                  minlength="9"
-                  maxlength="9"
-                  aria-label="Дев'ять цифр номера телефону після +380"
-                  required
-                />
-              </span>
-            </label>
             <label class="checkbox-row registration-consent">
               <input type="checkbox" name="privacyAccepted" required />
               <span>Погоджуюсь з <a href="privacy.html" target="_blank" rel="noopener">політикою конфіденційності</a>.</span>
@@ -75,43 +57,62 @@
           </form>
 
           <div class="registration-methods" id="registrationMethodSection" hidden>
-            <div class="auth-tabs auth-tabs-two" role="tablist" aria-label="Спосіб реєстрації">
-              <button class="auth-tab is-active" type="button" data-auth-tab="google" role="tab" aria-selected="true">Google account</button>
-              <button class="auth-tab" type="button" data-auth-tab="email" role="tab" aria-selected="false">Email</button>
-            </div>
+            <div class="registration-method-options">
+              <div class="registration-email-option">
+                <form class="registration-email-form" id="emailAuthForm" aria-label="Реєстрація за email">
+                  <label>
+                    <span>Email</span>
+                    <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
+                  </label>
+                  <label>
+                    <span>Пароль</span>
+                    <input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="128" required />
+                  </label>
+                  <label>
+                    <span>Повторіть пароль</span>
+                    <input type="password" name="passwordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
+                  </label>
+                </form>
 
-            <div class="auth-pane is-active" data-auth-pane="google">
-              <div class="google-auth-mount" id="googleAuthButton" aria-live="polite"></div>
-              <p class="auth-provider-note" id="googleAuthNote"></p>
-            </div>
-
-            <form class="auth-pane" data-auth-pane="email" id="emailAuthForm" aria-label="Реєстрація за email">
-              <label>
-                <span>Email</span>
-                <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
-              </label>
-              <div class="field-grid">
-                <label>
-                  <span>Пароль</span>
-                  <input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="128" required />
-                </label>
-                <label>
-                  <span>Повторіть пароль</span>
-                  <input type="password" name="passwordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
-                </label>
+                <button
+                  class="primary-button auth-email-submit"
+                  id="emailRegistrationSubmit"
+                  type="submit"
+                  form="emailAuthForm"
+                >
+                  Зареєструватися через email
+                </button>
               </div>
-            </form>
 
-            <button
-              class="primary-button auth-email-submit"
-              id="emailRegistrationSubmit"
-              type="submit"
-              form="emailAuthForm"
-              hidden
-            >
-              Зареєструватися через email
-            </button>
+              <div class="registration-method-divider" aria-hidden="true">або</div>
+
+              <div class="registration-google-option">
+                <div class="google-auth-mount" id="googleAuthButton" aria-live="polite"></div>
+                <p class="auth-provider-note" id="googleAuthNote"></p>
+              </div>
+            </div>
           </div>
+
+          <form class="activation-form" id="emailActivationForm" aria-label="Підтвердження email" hidden>
+            <h2>Підтвердіть email</h2>
+            <p>Ми надіслали шестизначний код на <strong id="activationEmail"></strong>.</p>
+            <label>
+              <span>Код активації</span>
+              <input
+                type="text"
+                name="activationCode"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                pattern="[0-9]{6}"
+                minlength="6"
+                maxlength="6"
+                placeholder="000000"
+                required
+              />
+            </label>
+            <button class="primary-button" type="submit">Підтвердити та завершити реєстрацію</button>
+            <button class="ghost-button" id="changeRegistrationEmail" type="button">Змінити дані або надіслати код ще раз</button>
+          </form>
 
           <p class="auth-status" id="authStatus" role="status"></p>
           <p class="auth-switch-link">Вже маєте акаунт? <a href="auth.php">Увійти</a></p>
@@ -119,9 +120,9 @@
       </section>
     </main>
 
-    <script src="auth-config.js?v=ui-icons-20260913"></script>
+    <script src="auth-config.js?v=email-activation-20260920"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="register.js?v=profiles-20260920"></script>
+    <script src="register.js?v=email-activation-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

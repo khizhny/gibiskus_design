@@ -7,5 +7,11 @@ declare(strict_types=1);
 return [
     'SITE_DB_PATH' => dirname(__DIR__) . '/private/site.sqlite',
     'GOOGLE_CLIENT_ID' => '151504652377-jn5pfpqgf7vc4k04ce9bkmph653d88ad.apps.googleusercontent.com',
+    'SITE_NAME' => 'Пошук фахівця',
+    'MAIL_FROM' => 'your-mailbox@example.com',
+    'SMTP_HOST' => 'mx1.mirohost.net',
+    'SMTP_PORT' => '465',
+    'SMTP_ENCRYPTION' => 'ssl',
+    'SMTP_USERNAME' => 'your-mailbox@example.com',
+    'SMTP_PASSWORD' => 'replace-with-the-mailbox-password',
 ];
-

@@ -5,6 +5,9 @@ declare(strict_types=1);
 const SESSION_COOKIE_NAME = 'site_php_session';
 const SESSION_TTL_SECONDS = 604800;
 const DEFAULT_GOOGLE_CLIENT_ID = '151504652377-jn5pfpqgf7vc4k04ce9bkmph653d88ad.apps.googleusercontent.com';
+const EMAIL_ACTIVATION_TTL_SECONDS = 900;
+const EMAIL_ACTIVATION_RESEND_SECONDS = 60;
+const EMAIL_ACTIVATION_MAX_ATTEMPTS = 5;
 
 final class ApiError extends RuntimeException
 {
@@ -121,6 +124,14 @@ function normalize_phone(mixed $value): string
     return $phone;
 }
 
+function normalize_optional_phone(mixed $value): string
+{
+    if (clean_text($value, 40) === '') {
+        return '';
+    }
+    return normalize_phone($value);
+}
+
 function validate_password(mixed $value): string
 {
     $password = (string) ($value ?? '');
@@ -166,6 +177,26 @@ function database(): PDO
           created_at TEXT DEFAULT CURRENT_TIMESTAMP,
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+        )
+        SQL);
+    $connection->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS EmailVerifications (
+          user_id INTEGER PRIMARY KEY,
+          code_hash TEXT,
+          expires_at INTEGER,
+          attempt_count INTEGER NOT NULL DEFAULT 0,
+          last_sent_at INTEGER,
+          verified_at TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+        )
+        SQL);
+    $connection->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS AppSettings (
+          setting_key TEXT PRIMARY KEY,
+          setting_value TEXT NOT NULL,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
         SQL);
     $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
@@ -325,13 +356,16 @@ function set_primary_email(PDO $db, int $userId, string $email): void
     if ($conflict !== null) {
         throw new ApiError(400, 'This email is already used by another account');
     }
-    execute_sql($db, 'UPDATE Emails SET is_primary = 0 WHERE user_id = ?', [$userId]);
     $stored = fetch_one($db, 'SELECT id FROM Emails WHERE user_id = ? AND lower(email) = lower(?) LIMIT 1', [$userId, $email]);
     if ($stored !== null) {
-        execute_sql($db, 'UPDATE Emails SET email = ?, is_primary = 1 WHERE id = ?', [$email, (int) $stored['id']]);
+        $emailId = (int) $stored['id'];
+        execute_sql($db, 'UPDATE Emails SET email = ? WHERE id = ?', [$email, $emailId]);
     } else {
         execute_sql($db, 'INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)', [$userId, $email]);
+        $emailId = (int) $db->lastInsertId();
     }
+    execute_sql($db, 'DELETE FROM Emails WHERE user_id = ? AND id != ?', [$userId, $emailId]);
+    execute_sql($db, 'UPDATE Emails SET is_primary = 1 WHERE id = ?', [$emailId]);
 }
 
 function set_primary_phone(PDO $db, int $userId, string $phone): void
@@ -417,7 +451,7 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
         }
         $firstName = clean_text($registration['firstName'] ?? '', 80);
         $lastName = clean_text($registration['lastName'] ?? '', 80);
-        $phone = normalize_phone($registration['phone'] ?? '');
+        $phone = normalize_optional_phone($registration['phone'] ?? '');
         if ($firstName === '' || $lastName === '') {
             throw new ApiError(400, 'Missing or invalid registration data');
         }
@@ -435,7 +469,9 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
             $userId = (int) $db->lastInsertId();
         }
         set_primary_email($db, $userId, $email);
-        set_primary_phone($db, $userId, $phone);
+        if ($phone !== '') {
+            set_primary_phone($db, $userId, $phone);
+        }
         return user_record($db, $userId);
     });
 }
@@ -451,31 +487,331 @@ function register_email_user(array $payload): array
         throw new ApiError(400, 'Privacy policy consent is required');
     }
     $email = normalize_email($payload['email'] ?? '');
-    $phone = normalize_phone($payload['phone'] ?? '');
+    $phone = normalize_optional_phone($payload['phone'] ?? '');
     $password = validate_password($payload['password'] ?? '');
     return transaction(function (PDO $db) use ($firstName, $lastName, $email, $phone, $password): array {
-        if (fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) LIMIT 1', [$email]) !== null) {
-            throw new ApiError(400, 'This email is already registered. Use the login page');
+        $emailOwner = fetch_one($db, <<<'SQL'
+            SELECT e.user_id, v.verified_at, v.last_sent_at
+            FROM Emails AS e
+            LEFT JOIN EmailVerifications AS v ON v.user_id = e.user_id
+            WHERE lower(e.email) = lower(?)
+            LIMIT 1
+            SQL, [$email]);
+        $nowTimestamp = time();
+        if ($emailOwner !== null) {
+            if ($emailOwner['verified_at'] !== null || $emailOwner['last_sent_at'] === null) {
+                throw new ApiError(400, 'This email is already registered. Use the login page');
+            }
+            $retryAfter = EMAIL_ACTIVATION_RESEND_SECONDS - ($nowTimestamp - (int) $emailOwner['last_sent_at']);
+            if ($retryAfter > 0) {
+                throw new ApiError(429, 'Please wait before requesting another activation code');
+            }
         }
         $now = gmdate('c');
         $fullName = clean_text($firstName . ' ' . $lastName, 160);
-        $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
-        if ($legacyRole) {
-            execute_sql($db, "INSERT INTO Users (role, name, first_name, last_name, registered_at, last_active, notes) VALUES ('parent', ?, ?, ?, ?, ?, ?)", [$fullName, $firstName, $lastName, $now, $now, 'Email registration']);
+        if ($emailOwner !== null) {
+            $userId = (int) $emailOwner['user_id'];
+            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $userId]);
+            if ($phone !== '') {
+                set_primary_phone($db, $userId, $phone);
+            }
         } else {
-            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Email registration']);
+            $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
+            if ($legacyRole) {
+                execute_sql($db, "INSERT INTO Users (role, name, first_name, last_name, registered_at, last_active, notes) VALUES ('parent', ?, ?, ?, ?, ?, ?)", [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
+            } else {
+                execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
+            }
+            $userId = (int) $db->lastInsertId();
+            set_primary_email($db, $userId, $email);
+            if ($phone !== '') {
+                set_primary_phone($db, $userId, $phone);
+            }
         }
-        $userId = (int) $db->lastInsertId();
-        set_primary_email($db, $userId, $email);
-        set_primary_phone($db, $userId, $phone);
         $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
         $hash = password_hash($password, $algorithm);
         if ($hash === false) {
             throw new RuntimeException('Password hashing failed');
         }
-        execute_sql($db, 'INSERT INTO UserCredentials (user_id, password_hash) VALUES (?, ?)', [$userId, $hash]);
+        execute_sql($db, <<<'SQL'
+            INSERT INTO UserCredentials (user_id, password_hash)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            SQL, [$userId, $hash]);
+
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $codeHash = password_hash($code, PASSWORD_DEFAULT);
+        if ($codeHash === false) {
+            throw new RuntimeException('Activation code hashing failed');
+        }
+        execute_sql($db, <<<'SQL'
+            INSERT INTO EmailVerifications (user_id, code_hash, expires_at, attempt_count, last_sent_at, verified_at)
+            VALUES (?, ?, ?, 0, ?, NULL)
+            ON CONFLICT(user_id) DO UPDATE SET
+              code_hash = excluded.code_hash,
+              expires_at = excluded.expires_at,
+              attempt_count = 0,
+              last_sent_at = excluded.last_sent_at,
+              verified_at = NULL,
+              updated_at = CURRENT_TIMESTAMP
+            SQL, [$userId, $codeHash, $nowTimestamp + EMAIL_ACTIVATION_TTL_SECONDS, $nowTimestamp]);
+
+        send_activation_email($email, $fullName, $code);
+        return [
+            'requiresActivation' => true,
+            'email' => $email,
+            'expiresIn' => EMAIL_ACTIVATION_TTL_SECONDS,
+        ];
+    });
+}
+
+function send_activation_email(string $email, string $name, string $code): void
+{
+    $siteName = clean_text(app_setting('SITE_NAME', 'Пошук фахівця'), 100);
+    $from = app_setting('MAIL_FROM', 'no-reply@' . preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'localhost')));
+    if (filter_var($from, FILTER_VALIDATE_EMAIL) === false) {
+        throw new ApiError(503, 'Email delivery is not configured. Set MAIL_FROM to a valid sender address');
+    }
+    $subjectText = 'Код активації — ' . $siteName;
+    $subject = '=?UTF-8?B?' . base64_encode($subjectText) . '?=';
+    $encodedSiteName = '=?UTF-8?B?' . base64_encode($siteName) . '?=';
+    $body = "Вітаємо, {$name}!\n\n"
+        . "Ваш код активації: {$code}\n\n"
+        . "Введіть цей код на сторінці реєстрації. Код дійсний 15 хвилин.\n"
+        . "Якщо ви не створювали акаунт, просто проігноруйте цей лист.\n";
+    $headers = [
+        'From: ' . $encodedSiteName . ' <' . $from . '>',
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+    ];
+    $transport = $GLOBALS['MAIL_TRANSPORT'] ?? null;
+    if (is_callable($transport)) {
+        $sent = (bool) $transport($email, $subject, $body, $headers);
+    } elseif (app_setting('SMTP_HOST') !== '') {
+        send_smtp_email($email, $subject, $body, $headers, $from);
+        $sent = true;
+    } else {
+        $sent = mail($email, $subject, $body, implode("\r\n", $headers));
+    }
+    if (!$sent) {
+        throw new ApiError(503, 'Activation email could not be sent. Configure PHP mail delivery on the server');
+    }
+}
+
+/** @param resource $connection */
+function smtp_read_response($connection, array $expectedCodes): string
+{
+    $response = '';
+    while (($line = fgets($connection, 2048)) !== false) {
+        $response .= $line;
+        if (preg_match('/^(\d{3})([ -])/', $line, $matches) !== 1) {
+            continue;
+        }
+        if ($matches[2] === '-') {
+            continue;
+        }
+        $code = (int) $matches[1];
+        if (!in_array($code, $expectedCodes, true)) {
+            error_log('SMTP server rejected a command: ' . trim($response));
+            throw new ApiError(503, 'The email server rejected the activation email');
+        }
+        return $response;
+    }
+    throw new ApiError(503, 'The email server closed the connection unexpectedly');
+}
+
+/** @param resource $connection */
+function smtp_command($connection, string $command, array $expectedCodes): string
+{
+    if (fwrite($connection, $command . "\r\n") === false) {
+        throw new ApiError(503, 'Could not communicate with the email server');
+    }
+    return smtp_read_response($connection, $expectedCodes);
+}
+
+function send_smtp_email(string $recipient, string $subject, string $body, array $headers, string $from): void
+{
+    $host = app_setting('SMTP_HOST');
+    $port = filter_var(app_setting('SMTP_PORT', '465'), FILTER_VALIDATE_INT, [
+        'options' => ['min_range' => 1, 'max_range' => 65535],
+    ]);
+    $username = app_setting('SMTP_USERNAME');
+    $password = app_setting('SMTP_PASSWORD');
+    $encryption = strtolower(app_setting('SMTP_ENCRYPTION', 'ssl'));
+    if ($host === '' || $port === false || $username === '' || $password === '') {
+        throw new ApiError(503, 'SMTP is not fully configured. Set SMTP_HOST, SMTP_PORT, SMTP_USERNAME and SMTP_PASSWORD');
+    }
+    if (!in_array($encryption, ['ssl', 'tls', 'none'], true)) {
+        throw new ApiError(503, 'SMTP_ENCRYPTION must be ssl, tls or none');
+    }
+
+    $context = stream_context_create([
+        'ssl' => [
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+            'peer_name' => $host,
+            'SNI_enabled' => true,
+        ],
+    ]);
+    $remote = ($encryption === 'ssl' ? 'ssl://' : 'tcp://') . $host . ':' . $port;
+    $errorNumber = 0;
+    $errorMessage = '';
+    $connection = @stream_socket_client($remote, $errorNumber, $errorMessage, 15, STREAM_CLIENT_CONNECT, $context);
+    if ($connection === false) {
+        error_log("SMTP connection failed ({$errorNumber}): {$errorMessage}");
+        throw new ApiError(503, 'Could not connect to the email server');
+    }
+
+    try {
+        stream_set_timeout($connection, 15);
+        smtp_read_response($connection, [220]);
+        $heloHost = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $helo = preg_replace('/[^a-z0-9.-]/i', '', $heloHost) ?: 'localhost';
+        smtp_command($connection, 'EHLO ' . $helo, [250]);
+        if ($encryption === 'tls') {
+            smtp_command($connection, 'STARTTLS', [220]);
+            if (stream_socket_enable_crypto($connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
+                throw new ApiError(503, 'Could not establish a secure connection to the email server');
+            }
+            smtp_command($connection, 'EHLO ' . $helo, [250]);
+        }
+        smtp_command($connection, 'AUTH LOGIN', [334]);
+        smtp_command($connection, base64_encode($username), [334]);
+        smtp_command($connection, base64_encode($password), [235]);
+        smtp_command($connection, 'MAIL FROM:<' . $from . '>', [250]);
+        smtp_command($connection, 'RCPT TO:<' . $recipient . '>', [250, 251]);
+        smtp_command($connection, 'DATA', [354]);
+
+        $messageHeaders = array_merge([
+            'Date: ' . date(DATE_RFC2822),
+            'To: <' . $recipient . '>',
+            'Subject: ' . $subject,
+        ], $headers);
+        $normalizedBody = preg_replace('/\r\n|\r|\n/', "\r\n", $body) ?? $body;
+        $normalizedBody = preg_replace('/(^|\r\n)\./', '$1..', $normalizedBody) ?? $normalizedBody;
+        $message = implode("\r\n", $messageHeaders) . "\r\n\r\n" . $normalizedBody;
+        if (fwrite($connection, $message . "\r\n.\r\n") === false) {
+            throw new ApiError(503, 'Could not send data to the email server');
+        }
+        smtp_read_response($connection, [250]);
+        smtp_command($connection, 'QUIT', [221]);
+    } finally {
+        fclose($connection);
+    }
+}
+
+function app_setting(string $key, string $default = ''): string
+{
+    $row = fetch_one(database(), 'SELECT setting_value FROM AppSettings WHERE setting_key = ?', [$key]);
+    if ($row !== null) {
+        return (string) $row['setting_value'];
+    }
+    return env_value($key, $default);
+}
+
+function smtp_settings_data(): array
+{
+    return [
+        'siteName' => app_setting('SITE_NAME', 'Пошук фахівця'),
+        'mailFrom' => app_setting('MAIL_FROM'),
+        'host' => app_setting('SMTP_HOST', 'mx1.mirohost.net'),
+        'port' => (int) app_setting('SMTP_PORT', '465'),
+        'encryption' => app_setting('SMTP_ENCRYPTION', 'ssl'),
+        'username' => app_setting('SMTP_USERNAME'),
+        'passwordConfigured' => app_setting('SMTP_PASSWORD') !== '',
+    ];
+}
+
+function save_smtp_settings(array $payload): array
+{
+    $siteName = clean_text($payload['siteName'] ?? '', 100);
+    $mailFrom = normalize_email($payload['mailFrom'] ?? '');
+    $host = strtolower(clean_text($payload['host'] ?? '', 255));
+    $port = filter_var($payload['port'] ?? null, FILTER_VALIDATE_INT, [
+        'options' => ['min_range' => 1, 'max_range' => 65535],
+    ]);
+    $encryption = strtolower(clean_text($payload['encryption'] ?? '', 10));
+    $username = clean_text($payload['username'] ?? '', 320);
+    $password = (string) ($payload['password'] ?? '');
+    if ($siteName === '' || $host === '' || preg_match('/^[a-z0-9.-]+$/', $host) !== 1 || $port === false || $username === '') {
+        throw new ApiError(400, 'Enter valid SMTP settings');
+    }
+    if (!in_array($encryption, ['ssl', 'tls', 'none'], true)) {
+        throw new ApiError(400, 'SMTP encryption must be ssl, tls or none');
+    }
+    if (str_contains($username, "\r") || str_contains($username, "\n") || strlen($password) > 1024) {
+        throw new ApiError(400, 'Enter valid SMTP credentials');
+    }
+    if ($password === '' && app_setting('SMTP_PASSWORD') === '') {
+        throw new ApiError(400, 'Enter the SMTP password');
+    }
+
+    $settings = [
+        'SITE_NAME' => $siteName,
+        'MAIL_FROM' => $mailFrom,
+        'SMTP_HOST' => $host,
+        'SMTP_PORT' => (string) $port,
+        'SMTP_ENCRYPTION' => $encryption,
+        'SMTP_USERNAME' => $username,
+    ];
+    if ($password !== '') {
+        $settings['SMTP_PASSWORD'] = $password;
+    }
+    transaction(function (PDO $db) use ($settings): void {
+        foreach ($settings as $key => $value) {
+            execute_sql($db, <<<'SQL'
+                INSERT INTO AppSettings (setting_key, setting_value)
+                VALUES (?, ?)
+                ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = CURRENT_TIMESTAMP
+                SQL, [$key, $value]);
+        }
+    });
+    return smtp_settings_data();
+}
+
+function activate_email_user(mixed $emailValue, mixed $codeValue): array
+{
+    $email = normalize_email($emailValue);
+    $code = preg_replace('/\D/', '', (string) ($codeValue ?? '')) ?? '';
+    if (!preg_match('/^\d{6}$/', $code)) {
+        throw new ApiError(400, 'Enter the six-digit activation code');
+    }
+
+    $result = transaction(function (PDO $db) use ($email, $code): array {
+        $verification = fetch_one($db, <<<'SQL'
+            SELECT e.user_id, v.code_hash, v.expires_at, v.attempt_count, v.verified_at
+            FROM Emails AS e
+            JOIN EmailVerifications AS v ON v.user_id = e.user_id
+            WHERE lower(e.email) = lower(?)
+            LIMIT 1
+            SQL, [$email]);
+        if ($verification === null) {
+            throw new ApiError(400, 'No pending registration was found for this email');
+        }
+        if ($verification['verified_at'] !== null) {
+            throw new ApiError(400, 'This email has already been activated');
+        }
+        if ((int) $verification['expires_at'] < time()) {
+            throw new ApiError(410, 'The activation code has expired. Register again to receive a new code');
+        }
+        if ((int) $verification['attempt_count'] >= EMAIL_ACTIVATION_MAX_ATTEMPTS) {
+            throw new ApiError(429, 'Too many invalid attempts. Register again to receive a new code');
+        }
+        $userId = (int) $verification['user_id'];
+        if (!password_verify($code, (string) $verification['code_hash'])) {
+            execute_sql($db, 'UPDATE EmailVerifications SET attempt_count = attempt_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [$userId]);
+            return ['activationError' => 'The activation code is incorrect'];
+        }
+        $now = gmdate('c');
+        execute_sql($db, 'UPDATE EmailVerifications SET code_hash = NULL, expires_at = NULL, verified_at = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [$now, $userId]);
+        execute_sql($db, "UPDATE Users SET notes = 'Email registration', last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$now, $userId]);
         return user_record($db, $userId);
     });
+    if (isset($result['activationError'])) {
+        throw new ApiError(400, (string) $result['activationError']);
+    }
+    return $result;
 }
 
 function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
@@ -483,9 +819,10 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
     $email = normalize_email($emailValue);
     $password = validate_password($passwordValue);
     $statement = execute_sql(database(), <<<'SQL'
-        SELECT u.id, c.password_hash FROM Users AS u
+        SELECT u.id, c.password_hash, v.verified_at, v.user_id AS verification_user_id FROM Users AS u
         JOIN Emails AS e ON e.user_id = u.id
         JOIN UserCredentials AS c ON c.user_id = u.id
+        LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
         WHERE lower(e.email) = lower(?) ORDER BY e.is_primary DESC, u.id
         SQL, [$email]);
     $legacyHash = false;
@@ -496,6 +833,9 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
             continue;
         }
         if (password_verify($password, $hash)) {
+            if ($row['verification_user_id'] !== null && $row['verified_at'] === null) {
+                throw new ApiError(403, 'Activate your account with the code sent by email before signing in');
+            }
             $userId = (int) $row['id'];
             execute_sql(database(), 'UPDATE Users SET last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [gmdate('c'), $userId]);
             return user_record(database(), $userId);
@@ -507,52 +847,12 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
     throw new ApiError(401, 'Invalid email or password');
 }
 
-function replace_primary_email(PDO $db, int $userId, string $email): void
-{
-    $primary = fetch_one($db, 'SELECT id FROM Emails WHERE user_id = ? AND is_primary = 1 ORDER BY id LIMIT 1', [$userId]);
-    $stored = fetch_one($db, 'SELECT id FROM Emails WHERE user_id = ? AND lower(email) = lower(?) ORDER BY id LIMIT 1', [$userId, $email]);
-    if ($stored === null && fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) AND user_id != ? LIMIT 1', [$email, $userId]) !== null) {
-        throw new ApiError(400, 'This email is already used by another account');
-    }
-    execute_sql($db, 'UPDATE Emails SET is_primary = 0 WHERE user_id = ?', [$userId]);
-    if ($stored !== null) {
-        execute_sql($db, 'UPDATE Emails SET email = ?, is_primary = 1 WHERE id = ?', [$email, (int) $stored['id']]);
-        if ($primary !== null && (int) $primary['id'] !== (int) $stored['id']) {
-            execute_sql($db, 'DELETE FROM Emails WHERE id = ?', [(int) $primary['id']]);
-        }
-    } elseif ($primary !== null) {
-        execute_sql($db, 'UPDATE Emails SET email = ?, is_primary = 1 WHERE id = ?', [$email, (int) $primary['id']]);
-    } else {
-        execute_sql($db, 'INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)', [$userId, $email]);
-    }
-}
-
-function replace_primary_phone(PDO $db, int $userId, string $phone): void
-{
-    $primary = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND is_primary = 1 ORDER BY id LIMIT 1', [$userId]);
-    $stored = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? ORDER BY id LIMIT 1', [$userId, $phone]);
-    execute_sql($db, 'UPDATE Phones SET is_primary = 0 WHERE user_id = ?', [$userId]);
-    if ($stored !== null) {
-        execute_sql($db, 'UPDATE Phones SET is_primary = 1 WHERE id = ?', [(int) $stored['id']]);
-        if ($primary !== null && (int) $primary['id'] !== (int) $stored['id']) {
-            execute_sql($db, 'DELETE FROM Phones WHERE id = ?', [(int) $primary['id']]);
-        }
-    } elseif ($primary !== null) {
-        execute_sql($db, 'UPDATE Phones SET phone = ?, is_primary = 1 WHERE id = ?', [$phone, (int) $primary['id']]);
-    } else {
-        execute_sql($db, 'INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, 1)', [$userId, $phone]);
-    }
-}
-
 function account_data(int $userId): array
 {
     $db = database();
     $user = user_record($db, $userId);
     $registered = fetch_one($db, 'SELECT registered_at, created_at FROM Users WHERE id = ?', [$userId]);
-    $emails = execute_sql($db, 'SELECT id, email AS value, is_primary FROM Emails WHERE user_id = ? ORDER BY is_primary DESC, id', [$userId])->fetchAll();
     $phones = execute_sql($db, 'SELECT id, phone AS value, is_primary FROM Phones WHERE user_id = ? ORDER BY is_primary DESC, id', [$userId])->fetchAll();
-    foreach ($emails as &$item) { $item['id'] = (int) $item['id']; $item['primary'] = (bool) $item['is_primary']; unset($item['is_primary']); }
-    unset($item);
     foreach ($phones as &$item) { $item['id'] = (int) $item['id']; $item['primary'] = (bool) $item['is_primary']; unset($item['is_primary']); }
     unset($item);
     $listings = execute_sql($db, <<<'SQL'
@@ -573,7 +873,14 @@ function account_data(int $userId): array
         WHERE s.user_id = ? ORDER BY created_at DESC, id DESC LIMIT 20
         SQL, [$userId, $userId])->fetchAll();
     $user['registeredAt'] = (string) (($registered['registered_at'] ?? '') ?: ($registered['created_at'] ?? ''));
-    return ['profile' => $user, 'emails' => $emails, 'phones' => $phones, 'listings' => $listings, 'notifications' => $notifications];
+    return ['profile' => $user, 'phones' => $phones, 'listings' => $listings, 'notifications' => $notifications];
+}
+
+function user_uses_google_identity(PDO $db, int $userId): bool
+{
+    $row = fetch_one($db, 'SELECT external_id FROM Users WHERE id = ?', [$userId]);
+    $externalId = clean_text($row['external_id'] ?? '', 255);
+    return $externalId !== '' && preg_match('/^(admin|specialist|parent|system):/', $externalId) !== 1;
 }
 
 function update_account_profile(int $userId, array $payload): array
@@ -583,12 +890,14 @@ function update_account_profile(int $userId, array $payload): array
     if ($firstName === '' || $lastName === '') {
         throw new ApiError(400, 'First name and last name are required');
     }
-    $email = normalize_email($payload['email'] ?? '');
-    $phone = normalize_phone($payload['phone'] ?? '');
-    transaction(function (PDO $db) use ($userId, $firstName, $lastName, $email, $phone): void {
+    $db = database();
+    $googleAccount = user_uses_google_identity($db, $userId);
+    $email = $googleAccount ? '' : normalize_email($payload['email'] ?? '');
+    transaction(function (PDO $db) use ($userId, $firstName, $lastName, $email, $googleAccount): void {
         execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [clean_text($firstName . ' ' . $lastName, 160), $firstName, $lastName, $userId]);
-        replace_primary_email($db, $userId, $email);
-        replace_primary_phone($db, $userId, $phone);
+        if (!$googleAccount) {
+            set_primary_email($db, $userId, $email);
+        }
     });
     return account_data($userId);
 }
@@ -597,19 +906,13 @@ function add_account_contact(int $userId, array $payload): array
 {
     $type = clean_text($payload['type'] ?? '', 10);
     transaction(function (PDO $db) use ($userId, $payload, $type): void {
-        if ($type === 'email') {
-            $value = normalize_email($payload['value'] ?? '');
-            $existing = fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) LIMIT 1', [$value]);
-            if ($existing !== null) {
-                throw new ApiError(400, (int) $existing['user_id'] === $userId ? 'Цей email уже додано до вашого акаунта' : 'Цей email уже використовується іншим акаунтом');
-            }
-            execute_sql($db, 'INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 0)', [$userId, $value]);
-        } elseif ($type === 'phone') {
+        if ($type === 'phone') {
             $value = normalize_phone($payload['value'] ?? '');
             if (fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $value]) !== null) {
                 throw new ApiError(400, 'Цей номер телефону вже додано до вашого акаунта');
             }
-            execute_sql($db, 'INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, 0)', [$userId, $value]);
+            $isPrimary = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? LIMIT 1', [$userId]) === null ? 1 : 0;
+            execute_sql($db, 'INSERT INTO Phones (user_id, phone, is_primary) VALUES (?, ?, ?)', [$userId, $value, $isPrimary]);
         } else {
             throw new ApiError(400, 'Невідомий тип контакту');
         }
@@ -621,22 +924,28 @@ function delete_account_contact(int $userId, array $payload): array
 {
     $type = clean_text($payload['type'] ?? '', 10);
     $contactId = filter_var($payload['id'] ?? null, FILTER_VALIDATE_INT);
-    if ($contactId === false || $contactId === null || !isset(['email' => true, 'phone' => true][$type])) {
+    if ($contactId === false || $contactId === null || $type !== 'phone') {
         throw new ApiError(400, 'Некоректний контакт');
     }
-    $table = $type === 'email' ? 'Emails' : 'Phones';
-    transaction(function (PDO $db) use ($userId, $contactId, $table): void {
-        $contact = fetch_one($db, "SELECT id, is_primary FROM {$table} WHERE id = ? AND user_id = ?", [(int) $contactId, $userId]);
+    transaction(function (PDO $db) use ($userId, $contactId): void {
+        $contact = fetch_one($db, 'SELECT id, is_primary FROM Phones WHERE id = ? AND user_id = ?', [(int) $contactId, $userId]);
         if ($contact === null) throw new ApiError(400, 'Контакт не знайдено');
-        if ((bool) $contact['is_primary']) throw new ApiError(400, 'Основний контакт не можна видалити');
-        execute_sql($db, "DELETE FROM {$table} WHERE id = ? AND user_id = ?", [(int) $contactId, $userId]);
+        execute_sql($db, 'DELETE FROM Phones WHERE id = ? AND user_id = ?', [(int) $contactId, $userId]);
+        if ((bool) $contact['is_primary']) {
+            $next = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? ORDER BY id LIMIT 1', [$userId]);
+            if ($next !== null) {
+                execute_sql($db, 'UPDATE Phones SET is_primary = 1 WHERE id = ?', [(int) $next['id']]);
+            }
+        }
     });
     return account_data($userId);
 }
 
 function create_specialist_listing(int $userId, array $payload): array
 {
-    $name = clean_text($payload['name'] ?? '', 160);
+    $db = database();
+    $user = user_record($db, $userId);
+    $name = clean_text($user['name'] ?? '', 160);
     $description = clean_text($payload['description'] ?? '', 2000);
     $city = clean_text($payload['city'] ?? '', 80);
     foreach (['specialties', 'formats', 'districts'] as $field) {
@@ -645,11 +954,20 @@ function create_specialist_listing(int $userId, array $payload): array
     $specialties = array_values(array_filter(array_map(fn($v) => clean_text($v, 160), $payload['specialties'])));
     $formats = array_values(array_filter(array_map(fn($v) => clean_text($v, 80), $payload['formats'])));
     $districts = array_values(array_filter(array_map(fn($v) => clean_text($v, 120), $payload['districts'])));
-    if ($name === '' || $description === '' || $specialties === []) throw new ApiError(400, 'Name, description and at least one specialty are required');
+    if (!isset($payload['phones']) || !is_array($payload['phones'])) throw new ApiError(400, 'Invalid phone selection');
+    $phones = array_values(array_unique(array_filter(array_map(fn($v) => normalize_phone($v), $payload['phones']))));
+    foreach ($phones as $phone) {
+        if (fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]) === null) {
+            throw new ApiError(400, 'Selected phone number does not belong to this account');
+        }
+    }
+    $email = normalize_email($payload['email'] ?? '');
+    if ($email !== normalize_email($user['email'] ?? '')) throw new ApiError(400, 'Email must match the account email');
+    if ($name === '' || $description === '' || $specialties === []) throw new ApiError(400, 'Profile name, description and at least one specialty are required');
     $price = max(0, (int) ((float) ($payload['price'] ?? 0)));
     $days = (int) ($payload['autoDeleteDays'] ?? 30);
     if (!in_array($days, [30, 60, 90], true)) throw new ApiError(400, 'Invalid listing lifetime');
-    return transaction(function (PDO $db) use ($userId, $payload, $name, $description, $city, $specialties, $formats, $districts, $price, $days): array {
+    return transaction(function (PDO $db) use ($userId, $payload, $name, $description, $city, $specialties, $formats, $districts, $phones, $email, $price, $days): array {
         $catalogIds = [];
         foreach (array_slice($specialties, 0, 20) as $title) {
             $row = fetch_one($db, 'SELECT id FROM Catalog_record WHERE enabled = 1 AND lower(title) = lower(?) ORDER BY id LIMIT 1', [$title]);
@@ -661,17 +979,22 @@ function create_specialist_listing(int $userId, array $payload): array
         $initials = '';
         foreach ($parts as $part) $initials .= function_exists('mb_substr') ? mb_substr($part, 0, 1) : substr($part, 0, 1);
         $initials = function_exists('mb_strtoupper') ? mb_strtoupper(mb_substr($initials, 0, 3)) : strtoupper(substr($initials, 0, 3));
+        $notes = json_encode([
+            'paymentType' => clean_text($payload['paymentType'] ?? '', 80),
+            'phones' => $phones,
+            'email' => $email,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
         execute_sql($db, <<<'SQL'
             INSERT INTO Specialists (user_id, catalog_record_id, city, name, initials, price, duration_minutes,
               rating, reviews_count, district, formats_json, nosologies_json, schedule, response_time, bio,
               education, experience, created_at, expires_at, status, notes)
             VALUES (?, ?, ?, ?, ?, ?, 60, 0, 0, ?, ?, '[]', '', '', ?, '', '', ?, ?, 'active', ?)
-            SQL, [$userId, $catalogIds[0] ?? null, $city, $name, $initials, $price, implode(', ', array_values(array_unique($districts))), json_encode($formats, JSON_UNESCAPED_UNICODE), $description, $now->format(DateTimeInterface::ATOM), $expires->format(DateTimeInterface::ATOM), clean_text($payload['paymentType'] ?? '', 80)]);
+            SQL, [$userId, $catalogIds[0] ?? null, $city, $name, $initials, $price, implode(', ', array_values(array_unique($districts))), json_encode($formats, JSON_UNESCAPED_UNICODE), $description, $now->format(DateTimeInterface::ATOM), $expires->format(DateTimeInterface::ATOM), $notes]);
         $specialistId = (int) $db->lastInsertId();
         foreach ($catalogIds as $index => $catalogId) {
             execute_sql($db, 'INSERT INTO SpecialistRecords (specialist_id, catalog_record_id, is_primary, sort_order) VALUES (?, ?, ?, ?)', [$specialistId, $catalogId, $index === 0 ? 1 : 0, $index + 1]);
         }
-        return ['id' => $specialistId, 'status' => 'active'];
+        return ['id' => $specialistId, 'status' => 'active', 'name' => $name];
     });
 }
 

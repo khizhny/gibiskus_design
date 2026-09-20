@@ -8,7 +8,7 @@
       name="description"
       content="Панель адміністратора для керування оголошеннями, скаргами, відгуками і контролю автоматичного зняття публікацій."
     />
-    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+    <link rel="stylesheet" href="styles.css?v=typography-20260920" />
   </head>
   <body>
     <header class="site-header">
@@ -45,6 +45,7 @@
             <button class="admin-nav" type="button" data-admin-view="catalog-updates">Оновлення каталогу <span class="nav-badge" id="catalogUpdatesCount">0</span></button>
             <button class="admin-nav" type="button" data-admin-view="specialist-users">Фахівці</button>
             <button class="admin-nav" type="button" data-admin-view="parent-users">Батьки</button>
+            <button class="admin-nav" type="button" data-admin-view="email-settings">Email та SMTP</button>
           </nav>
           <a class="ghost-button full" href="index.html">Вийти з панелі</a>
         </aside>
@@ -189,11 +190,57 @@
               <div id="parentUserRows"></div>
             </section>
           </div>
+
+          <div class="admin-view" data-admin-view-panel="email-settings" hidden>
+            <div>
+              <p class="section-note">Налаштування</p>
+              <h1>Email та SMTP</h1>
+            </div>
+            <form class="smtp-settings-form" id="smtpSettingsForm" aria-label="Налаштування SMTP">
+              <label>
+                <span>Назва сайту у листах</span>
+                <input type="text" name="siteName" maxlength="100" required />
+              </label>
+              <label>
+                <span>Email відправника</span>
+                <input type="email" name="mailFrom" autocomplete="email" required />
+              </label>
+              <label>
+                <span>SMTP сервер</span>
+                <input type="text" name="host" value="mx1.mirohost.net" maxlength="255" required />
+              </label>
+              <div class="field-grid">
+                <label>
+                  <span>Порт</span>
+                  <input type="number" name="port" value="465" min="1" max="65535" required />
+                </label>
+                <label>
+                  <span>Шифрування</span>
+                  <select name="encryption" required>
+                    <option value="ssl">SSL/TLS</option>
+                    <option value="tls">STARTTLS</option>
+                    <option value="none">Без шифрування</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>SMTP логін</span>
+                <input type="text" name="username" autocomplete="username" maxlength="320" required />
+              </label>
+              <label>
+                <span>SMTP пароль</span>
+                <input type="password" name="password" autocomplete="new-password" maxlength="1024" />
+                <small id="smtpPasswordHint">Введіть пароль поштової скриньки.</small>
+              </label>
+              <button class="primary-button" type="submit">Зберегти налаштування</button>
+              <p class="form-status" id="smtpSettingsStatus" role="status"></p>
+            </form>
+          </div>
         </div>
       </section>
     </main>
 
-    <script src="script.js?v=ui-icons-20260913"></script>
+    <script src="script.js?v=smtp-settings-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

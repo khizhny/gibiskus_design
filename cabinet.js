@@ -5,7 +5,6 @@ const accountElements = {
   memberMeta: document.querySelector("#accountMemberMeta"),
   listingsCount: document.querySelector("#accountListingsCount"),
   notificationsCount: document.querySelector("#accountNotificationsCount"),
-  emails: document.querySelector("#accountEmails"),
   phones: document.querySelector("#accountPhones"),
   listings: document.querySelector("#accountListings"),
   notifications: document.querySelector("#accountNotifications"),
@@ -73,7 +72,7 @@ function contactStatus(type) {
   return document.querySelector(`[data-contact-status="${type}"]`);
 }
 
-function renderContacts(container, contacts, emptyText, type) {
+function renderContacts(container, contacts, emptyText) {
   container.replaceChildren();
   if (!contacts.length) {
     const empty = document.createElement("p");
@@ -88,26 +87,19 @@ function renderContacts(container, contacts, emptyText, type) {
     const value = document.createElement("span");
     value.textContent = contact.value;
     row.append(value);
-    if (contact.primary) {
-      const badge = document.createElement("small");
-      badge.textContent = "Основний";
-      row.append(badge);
-    } else {
-      const removeButton = document.createElement("button");
-      removeButton.className = "account-contact-remove delete-action delete-action--icon-only";
-      removeButton.type = "button";
-      removeButton.title = `Видалити ${type === "email" ? "email" : "номер телефону"}`;
-      removeButton.setAttribute("aria-label", removeButton.title);
-      removeButton.addEventListener("click", () => removeAccountContact(type, contact.id, removeButton));
-      row.append(removeButton);
-    }
+    const removeButton = document.createElement("button");
+    removeButton.className = "account-contact-remove delete-action delete-action--icon-only";
+    removeButton.type = "button";
+    removeButton.title = "Видалити номер телефону";
+    removeButton.setAttribute("aria-label", removeButton.title);
+    removeButton.addEventListener("click", () => removeAccountContact(contact.id, removeButton));
+    row.append(removeButton);
     container.append(row);
   });
 }
 
 function renderContactData(data) {
-  renderContacts(accountElements.emails, data.emails, "Email не додано", "email");
-  renderContacts(accountElements.phones, data.phones, "Телефон не додано", "phone");
+  renderContacts(accountElements.phones, data.phones, "Контактні номери не додано");
 }
 
 function emptyFeed(text) {
@@ -173,7 +165,9 @@ function renderAccount(data) {
   accountElements.form.elements.firstName.value = profile.firstName || "";
   accountElements.form.elements.lastName.value = profile.lastName || "";
   accountElements.form.elements.email.value = profile.email || "";
-  accountElements.form.elements.phone.value = profile.phone || "";
+  const googleAccount = Boolean(profile.externalId) && !/^(admin|specialist|parent|system):/.test(profile.externalId);
+  accountElements.form.elements.email.readOnly = googleAccount;
+  accountElements.form.elements.email.setAttribute("aria-readonly", String(googleAccount));
   accountElements.memberMeta.textContent = `Реєстрація: ${formatAccountDate(profile.registeredAt)}`;
   if (accountElements.publishAction) {
     accountElements.publishAction.textContent = publishLabel;
@@ -230,7 +224,7 @@ accountElements.contactForms.forEach((form) => {
       });
       renderContactData(result);
       form.reset();
-      status.textContent = type === "email" ? "Email додано." : "Номер телефону додано.";
+      status.textContent = "Номер телефону додано.";
     } catch (error) {
       status.textContent = error.message;
     } finally {
@@ -239,17 +233,17 @@ accountElements.contactForms.forEach((form) => {
   });
 });
 
-async function removeAccountContact(type, id, button) {
-  const status = contactStatus(type);
+async function removeAccountContact(id, button) {
+  const status = contactStatus("phone");
   button.disabled = true;
   status.textContent = "Видаляємо...";
   try {
     const result = await accountRequest("/api/account/delete-contact.php", {
       method: "POST",
-      body: JSON.stringify({ type, id })
+      body: JSON.stringify({ type: "phone", id })
     });
     renderContactData(result);
-    status.textContent = type === "email" ? "Email видалено." : "Номер телефону видалено.";
+    status.textContent = "Номер телефону видалено.";
   } catch (error) {
     status.textContent = error.message;
     button.disabled = false;
@@ -270,8 +264,7 @@ accountElements.form?.addEventListener("submit", async (event) => {
       body: JSON.stringify({
         firstName: data.get("firstName"),
         lastName: data.get("lastName"),
-        email: data.get("email"),
-        phone: data.get("phone")
+        email: data.get("email")
       })
     });
     renderAccount(result);

@@ -23,7 +23,7 @@
    cp config.example.php config.php
    ```
 
-3. Відредагуйте `config.php`. Вкажіть абсолютний шлях до SQLite та Google Client ID.
+3. Відредагуйте `config.php`. Вкажіть абсолютний шлях до SQLite, Google Client ID, адресу відправника `MAIL_FROM` і параметри SMTP. Для Mirohost використовуйте `mx1.mirohost.net`, порт `465` та шифрування `ssl`; `SMTP_USERNAME` і `SMTP_PASSWORD` мають відповідати поштовій скриньці відправника. Якщо `SMTP_HOST` порожній, застосунок використовує стандартну PHP-функцію `mail()`.
 
 4. Перенесіть `site.sqlite` за межі публічного каталогу сайту. Це важливо для nginx, тому що nginx ігнорує правила `.htaccess`:
 
@@ -61,6 +61,7 @@ Frontend використовує endpoint `/api/auth/google.php`, тому ngin
 
 - `POST /api/auth/google.php` — Google-реєстрація або вхід;
 - `POST /api/auth/register.php` — email-реєстрація;
+- `POST /api/auth/activate.php` — підтвердження email шестизначним кодом;
 - `POST /api/auth/login.php` — email-вхід;
 - `GET /api/auth/me.php` — поточна PHP-сесія;
 - `POST /api/auth/logout.php` — вихід;
@@ -72,6 +73,8 @@ Frontend використовує endpoint `/api/auth/google.php`, тому ngin
 - `POST /api/account/delete.php` — видалення акаунта.
 
 POST-запити приймаються лише з того самого origin. Сесія зберігається стандартним механізмом PHP у cookie `site_php_session` з `HttpOnly`, `SameSite=Lax` і `Secure` на HTTPS.
+
+Під час email-реєстрації акаунт залишається неактивним, доки користувач не введе код із листа. Код діє 15 хвилин, повторне надсилання доступне через 60 секунд, а після п'яти невдалих спроб потрібно запросити новий код. Google-реєстрація вже використовує підтверджену Google-адресу й не потребує додаткового коду.
 
 ## Старі паролі Python
 

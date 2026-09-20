@@ -1,22 +1,20 @@
 const authConfig = window.AUTH_CONFIG || {};
 
 const elements = {
-  tabs: document.querySelectorAll("[data-auth-tab]"),
-  panes: document.querySelectorAll("[data-auth-pane]"),
   status: document.querySelector("#authStatus"),
   googleMount: document.querySelector("#googleAuthButton"),
   googleNote: document.querySelector("#googleAuthNote"),
   profileForm: document.querySelector("#registrationProfileForm"),
   methodSection: document.querySelector("#registrationMethodSection"),
   privacyAccepted: document.querySelector('[name="privacyAccepted"]'),
-  firstName: document.querySelector('[name="firstName"]'),
-  lastName: document.querySelector('[name="lastName"]'),
-  phone: document.querySelector('[name="phone"]'),
   emailForm: document.querySelector("#emailAuthForm"),
-  emailSubmit: document.querySelector("#emailRegistrationSubmit")
+  activationForm: document.querySelector("#emailActivationForm"),
+  activationEmail: document.querySelector("#activationEmail"),
+  changeRegistrationEmail: document.querySelector("#changeRegistrationEmail")
 };
 
 let googleInitialized = false;
+let pendingActivationEmail = "";
 
 function requestedDestination(isAdmin = false) {
   const next = new URLSearchParams(window.location.search).get("next");
@@ -32,20 +30,6 @@ function setStatus(message, type = "info") {
   elements.status.dataset.status = type;
 }
 
-function activatePane(name) {
-  elements.tabs.forEach((tab) => {
-    const active = tab.dataset.authTab === name;
-    tab.classList.toggle("is-active", active);
-    tab.setAttribute("aria-selected", String(active));
-  });
-  elements.panes.forEach((pane) => {
-    pane.classList.toggle("is-active", pane.dataset.authPane === name);
-  });
-  if (elements.emailSubmit) elements.emailSubmit.hidden = name !== "email";
-  syncGoogleAvailability();
-  setStatus("");
-}
-
 function syncRegistrationMethodVisibility() {
   if (!elements.methodSection || !elements.privacyAccepted) return;
   const accepted = elements.privacyAccepted.checked;
@@ -53,17 +37,9 @@ function syncRegistrationMethodVisibility() {
   if (!accepted) setStatus("");
 }
 
-function syncRegistrationState(event) {
-  if (event?.target === elements.phone) sanitizePhoneInput();
+function syncRegistrationState() {
   syncRegistrationMethodVisibility();
   syncGoogleAvailability();
-}
-
-function sanitizePhoneInput() {
-  if (!elements.phone) return;
-  let digits = elements.phone.value.replace(/\D/g, "");
-  if (digits.startsWith("380") && digits.length > 9) digits = digits.slice(3);
-  elements.phone.value = digits.slice(0, 9);
 }
 
 function getRegistrationProfile({ report = false } = {}) {
@@ -71,7 +47,7 @@ function getRegistrationProfile({ report = false } = {}) {
   if (!elements.profileForm.checkValidity()) {
     if (report) {
       elements.profileForm.reportValidity();
-      setStatus("Заповніть ім'я, прізвище, дев'ять цифр номера телефону та прийміть політику конфіденційності.", "error");
+      setStatus("Заповніть ім'я, прізвище та прийміть політику конфіденційності.", "error");
     }
     return null;
   }
@@ -80,7 +56,6 @@ function getRegistrationProfile({ report = false } = {}) {
   return {
     firstName: String(data.get("firstName") || "").trim(),
     lastName: String(data.get("lastName") || "").trim(),
-    phone: `+380${String(data.get("phone") || "").trim()}`,
     privacyAccepted: data.get("privacyAccepted") === "on"
   };
 }
@@ -111,6 +86,27 @@ function completeRegistration(message, user, redirectUrl = "") {
   window.setTimeout(() => {
     window.location.href = destination;
   }, 700);
+}
+
+function showActivationStep(email) {
+  pendingActivationEmail = email;
+  sessionStorage.setItem("pendingActivationEmail", email);
+  elements.profileForm.hidden = true;
+  elements.methodSection.hidden = true;
+  elements.activationForm.hidden = false;
+  elements.activationEmail.textContent = email;
+  elements.activationForm.elements.activationCode.value = "";
+  elements.activationForm.elements.activationCode.focus();
+  setStatus("Перевірте пошту та введіть код протягом 15 хвилин.", "success");
+}
+
+function showRegistrationStep() {
+  pendingActivationEmail = "";
+  sessionStorage.removeItem("pendingActivationEmail");
+  elements.activationForm.hidden = true;
+  elements.profileForm.hidden = false;
+  syncRegistrationMethodVisibility();
+  setStatus("Ви можете повторно надіслати код через 60 секунд.");
 }
 
 async function postJson(url, payload) {
@@ -197,13 +193,9 @@ function syncGoogleAvailability() {
   elements.googleMount?.classList.toggle("is-disabled", !profileReady);
   elements.googleMount?.setAttribute("aria-disabled", String(!profileReady));
   if (elements.googleNote && authConfig.googleClientId) {
-    elements.googleNote.textContent = profileReady ? "" : "Спочатку заповніть дані профілю та прийміть політику конфіденційності.";
+    elements.googleNote.textContent = "";
   }
 }
-
-elements.tabs.forEach((tab) => {
-  tab.addEventListener("click", () => activatePane(tab.dataset.authTab));
-});
 
 document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
   document.querySelector(".site-header")?.classList.toggle("is-open");
@@ -239,16 +231,39 @@ elements.emailForm?.addEventListener("submit", async (event) => {
       password,
       ...profile
     });
-    const user = result.user || {};
-    rememberUser(user, "email", profile);
-    completeRegistration("Акаунт створено.", user, result.redirect);
+    showActivationStep(result.email || email);
   } catch (error) {
     setStatus(error.message || "Не вдалося створити акаунт.", "error");
   }
 });
 
+elements.activationForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!event.currentTarget.checkValidity()) {
+    event.currentTarget.reportValidity();
+    return;
+  }
+  const data = new FormData(event.currentTarget);
+  setStatus("Перевіряємо код...");
+  try {
+    const result = await postJson(authConfig.emailActivationEndpoint || "/api/auth/activate.php", {
+      email: pendingActivationEmail,
+      code: String(data.get("activationCode") || "").trim()
+    });
+    const user = result.user || {};
+    sessionStorage.removeItem("pendingActivationEmail");
+    rememberUser(user, "email");
+    completeRegistration("Email підтверджено. Реєстрацію завершено.", user, result.redirect);
+  } catch (error) {
+    setStatus(error.message || "Не вдалося підтвердити код.", "error");
+  }
+});
+
+elements.changeRegistrationEmail?.addEventListener("click", showRegistrationStep);
+
 const googleScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
 googleScript?.addEventListener("load", initializeGoogleRegistration);
 window.addEventListener("load", initializeGoogleRegistration);
-activatePane("google");
 syncRegistrationMethodVisibility();
+const savedActivationEmail = sessionStorage.getItem("pendingActivationEmail");
+if (savedActivationEmail) showActivationStep(savedActivationEmail);

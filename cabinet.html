@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Пошук фахівця - особистий кабінет</title>
     <meta name="description" content="Особистий кабінет користувача сайту Пошук фахівця." />
-    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+    <link rel="stylesheet" href="styles.css?v=contact-fields-aligned-20260920" />
   </head>
   <body>
     <header class="site-header">
@@ -47,35 +47,17 @@
             <label><span>Ім'я</span><input name="firstName" autocomplete="given-name" required /></label>
             <label><span>Прізвище</span><input name="lastName" autocomplete="family-name" required /></label>
           </div>
-          <div class="field-grid">
-            <label><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
-            <label>
-              <span>Номер телефону</span>
-              <input name="phone" type="tel" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" title="Введіть номер у форматі +380XXXXXXXXX" required />
-            </label>
-          </div>
+          <label><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
         </form>
         <div class="account-contact-columns">
           <section class="account-contact-manager">
-            <h3>Збережені email</h3>
-            <form class="account-contact-add-form" data-contact-form="email">
-              <label>
-                <span>Новий email</span>
-                <input type="email" name="value" autocomplete="email" required />
-              </label>
-              <button class="add-contact-button" type="submit" aria-label="Додати email" title="Додати email">+</button>
-            </form>
-            <p class="form-status account-contact-status" data-contact-status="email" role="status"></p>
-            <div class="account-contact-list" id="accountEmails"></div>
-          </section>
-          <section class="account-contact-manager">
-            <h3>Збережені телефони</h3>
+            <h3>Контактні номери</h3>
             <form class="account-contact-add-form" data-contact-form="phone">
               <label>
                 <span>Новий номер телефону</span>
                 <input type="tel" name="value" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" placeholder="+380XXXXXXXXX" title="Введіть номер у форматі +380XXXXXXXXX" required />
               </label>
-              <button class="add-contact-button" type="submit" aria-label="Додати номер телефону" title="Додати номер телефону">+</button>
+              <button class="add-contact-button account-contact-add" type="submit" aria-label="Додати номер телефону" title="Додати номер телефону">+</button>
             </form>
             <p class="form-status account-contact-status" data-contact-status="phone" role="status"></p>
             <div class="account-contact-list" id="accountPhones"></div>
@@ -132,7 +114,7 @@
       </section>
     </dialog>
 
-    <script src="cabinet.js?v=profiles-20260920"></script>
+    <script src="cabinet.js?v=single-email-profile-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

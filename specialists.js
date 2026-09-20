@@ -17,8 +17,6 @@ const translations = {
     login: "Увійти",
     postProfile: "Розмістити анкету",
     heroTitle: "Каталог заявок для фахівців",
-    heroText:
-      "Переглядайте запити родин, фільтруйте за містом, напрямом, форматом роботи й описом та відповідайте на ті заявки, які відповідають вашому досвіду.",
     requestSearch: "Пошук заявок",
     region: "Область",
     city: "Місто",
@@ -27,12 +25,7 @@ const translations = {
     descriptionSearch: "Пошук по опису",
     descriptionSearchPlaceholder: "Наприклад, Фортепіано",
     search: "Знайти",
-    heroAlt: "Фахівчиня, мама і дитина займаються за столом",
     requestsCatalog: "Каталог заявок",
-    requestCategories: "Напрями запитів",
-    showAll: "Показати всі",
-    thirtyDays: "30 днів",
-    requestExpiry: "Заявка родини активна 30 днів. Після цього вона автоматично переходить в архів.",
     found: "Знайдено",
     requestsFound: "заявок",
     activeRequests: "Актуальні запити родин",
@@ -58,7 +51,6 @@ const translations = {
     any: "Будь-яке",
     anyRegion: "Будь-яка область",
     anyDirection: "Будь-який",
-    allRequests: "Усі заявки",
     noRequestsTitle: "Заявок не знайдено",
     noRequestsText: "Змініть місто, напрям, формат роботи або текст пошуку.",
     reply: "Відгукнутися",
@@ -109,8 +101,6 @@ const translations = {
     login: "Log in",
     postProfile: "Post a profile",
     heroTitle: "Request directory for specialists",
-    heroText:
-      "Browse family requests, filter by city, specialization, work format, and description, and reply to requests that match your experience.",
     requestSearch: "Request search",
     region: "Region",
     city: "City",
@@ -119,12 +109,7 @@ const translations = {
     descriptionSearch: "Search description",
     descriptionSearchPlaceholder: "For example, Piano",
     search: "Search",
-    heroAlt: "A specialist, mother, and child working at a table",
     requestsCatalog: "Request directory",
-    requestCategories: "Request areas",
-    showAll: "Show all",
-    thirtyDays: "30 days",
-    requestExpiry: "A family request is active for 30 days. After that it automatically moves to archive.",
     found: "Found",
     requestsFound: "requests",
     activeRequests: "Active family requests",
@@ -149,7 +134,6 @@ const translations = {
     any: "Any",
     anyRegion: "Any region",
     anyDirection: "Any",
-    allRequests: "All requests",
     noRequestsTitle: "No requests found",
     noRequestsText: "Change the city, specialization, work format, or search text.",
     reply: "Reply",
@@ -336,7 +320,6 @@ const requestData = [
 ];
 
 let currentLang = "uk";
-let selectedCategory = "all";
 let requestSort = "new";
 let messageDislikes = {};
 let activeResponseMessages = [];
@@ -356,7 +339,6 @@ const elements = {
   formatSummary: document.querySelector("[data-request-format-summary]"),
   formatFilters: document.querySelectorAll('input[name="requestFormatFilter"]'),
   text: document.querySelector("#requestTextFilter"),
-  categoryList: document.querySelector("#requestCategoryList"),
   requestList: document.querySelector("#requestList"),
   requestCount: document.querySelector("#requestCount"),
   profileSpecialty: document.querySelector("#profileSpecialty"),
@@ -365,7 +347,6 @@ const elements = {
 };
 
 const specialtyOptions = ["all", "speech", "psychology", "aba", "occupational", "physical", "tutor", "early", "other"];
-const categoryOptions = ["all", "speech", "psychology", "aba", "occupational", "tutor", "early", "other"];
 let regionOptions = [];
 let mapDatabasePromise = null;
 const cityNameCache = new Map();
@@ -881,7 +862,6 @@ function filteredRequests() {
     if (city !== "all" && request.city !== city) return false;
     if (district !== "all" && request.district !== district) return false;
     if (specialty !== "all" && request.specialty !== specialty) return false;
-    if (selectedCategory !== "all" && request.specialty !== selectedCategory) return false;
     if (selectedFormats.length && !selectedFormats.some((format) => request.formats.includes(format))) return false;
     if (textQuery && !requestSearchText(request).includes(textQuery)) return false;
     return true;
@@ -894,21 +874,6 @@ function filteredRequests() {
   }
 
   return result;
-}
-
-function renderCategories() {
-  if (!elements.categoryList) return;
-  elements.categoryList.innerHTML = categoryOptions
-    .map((item) => {
-      const count = item === "all" ? requestData.length : requestData.filter((request) => request.specialty === item).length;
-      return `
-        <button class="category-item ${selectedCategory === item ? "is-active" : ""}" type="button" data-category="${item}">
-          <span>${item === "all" ? t("allRequests") : t(item)}</span>
-          <span>${count}</span>
-        </button>
-      `;
-    })
-    .join("");
 }
 
 function renderRequests() {
@@ -960,7 +925,6 @@ function renderRequests() {
 function renderAll() {
   setStaticText();
   fillControls();
-  renderCategories();
   renderRequests();
 }
 
@@ -1008,39 +972,29 @@ function bindEvents() {
 
   document.querySelector("#requestSearchForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    selectedCategory = "all";
-    renderCategories();
     renderRequests();
   });
 
   elements.region?.addEventListener("change", async () => {
-    selectedCategory = "all";
     await updateRequestCityOptions("all");
     await updateRequestDistrictOptions("all");
-    renderCategories();
     renderRequests();
   });
 
   elements.city?.addEventListener("change", async () => {
-    selectedCategory = "all";
     await updateRequestDistrictOptions("all");
-    renderCategories();
     renderRequests();
   });
 
   [elements.district, elements.specialty].forEach((control) => {
     control?.addEventListener("change", () => {
-      selectedCategory = "all";
-      renderCategories();
       renderRequests();
     });
   });
 
   elements.formatFilters?.forEach((control) => {
     control.addEventListener("change", () => {
-      selectedCategory = "all";
       updateRequestFormatSummary();
-      renderCategories();
       renderRequests();
     });
   });
@@ -1051,33 +1005,7 @@ function bindEvents() {
     }
   });
 
-  document.querySelector("[data-reset-filters]")?.addEventListener("click", async () => {
-    selectedCategory = "all";
-    if (elements.region) elements.region.value = "all";
-    if (elements.specialty) elements.specialty.value = "all";
-    elements.formatFilters?.forEach((control) => {
-      control.checked = false;
-    });
-    updateRequestFormatSummary();
-    if (elements.text) elements.text.value = "";
-    await updateRequestCityOptions("all");
-    await updateRequestDistrictOptions("all");
-    renderCategories();
-    renderRequests();
-  });
-
   elements.text?.addEventListener("input", () => {
-    selectedCategory = "all";
-    renderCategories();
-    renderRequests();
-  });
-
-  elements.categoryList?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-category]");
-    if (!button) return;
-    selectedCategory = button.dataset.category;
-    if (elements.specialty) elements.specialty.value = "all";
-    renderCategories();
     renderRequests();
   });
 

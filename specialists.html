@@ -8,7 +8,7 @@
       name="description"
       content="Окремий каталог заявок для фахівців: запити родин, фільтри, відповіді та розміщення анкети спеціаліста."
     />
-    <link rel="stylesheet" href="styles.css?v=ui-icons-20260913" />
+    <link rel="stylesheet" href="styles.css?v=requests-full-width-20260920" />
   </head>
   <body>
     <header class="site-header">
@@ -35,10 +35,6 @@
       <section class="hero" id="requests">
         <div class="hero-copy">
           <h1 data-i18n="heroTitle">Каталог заявок для фахівців</h1>
-          <p data-i18n="heroText">
-            Переглядайте запити родин, фільтруйте за містом, напрямом і форматом роботи та відповідайте на ті заявки,
-            які відповідають вашому досвіду.
-          </p>
           <form class="search-panel" id="requestSearchForm" data-i18n-aria-label="requestSearch" aria-label="Пошук заявок">
             <label>
               <span data-i18n="region">Область</span>
@@ -85,27 +81,9 @@
             <button class="primary-button search-button" type="submit" data-i18n="search">Знайти</button>
           </form>
         </div>
-        <figure class="hero-media">
-          <img src="assets/hero-consultation.png" data-i18n-alt="heroAlt" alt="Фахівчиня, мама і дитина займаються за столом" />
-        </figure>
       </section>
 
       <section class="catalog-layout catalog-layout-requests" aria-label="Каталог заявок" data-i18n-aria-label="requestsCatalog">
-        <aside class="category-panel">
-          <div class="panel-heading">
-            <h2 data-i18n="requestCategories">Напрями запитів</h2>
-            <button class="text-button" type="button" data-reset-filters data-i18n="showAll">Показати всі</button>
-          </div>
-          <div class="category-list" id="requestCategoryList"></div>
-          <div class="expiry-card">
-            <div class="calendar-icon" aria-hidden="true">
-              <span></span>
-            </div>
-            <strong data-i18n="thirtyDays">30 днів</strong>
-            <p data-i18n="requestExpiry">Заявка родини активна 30 днів. Після цього вона автоматично переходить в архів.</p>
-          </div>
-        </aside>
-
         <section class="results-panel">
           <div class="results-head">
             <div>
@@ -140,7 +118,7 @@
       </div>
     </div>
 
-    <script src="specialists.js?v=ui-icons-20260913"></script>
+    <script src="specialists.js?v=requests-full-width-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

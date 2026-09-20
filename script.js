@@ -1671,6 +1671,9 @@ const elements = {
   catalogSubmitButton: document.querySelector("#catalogSubmitButton"),
   catalogCancelEdit: document.querySelector("#catalogCancelEdit"),
   catalogStatus: document.querySelector("#catalogStatus"),
+  smtpSettingsForm: document.querySelector("#smtpSettingsForm"),
+  smtpSettingsStatus: document.querySelector("#smtpSettingsStatus"),
+  smtpPasswordHint: document.querySelector("#smtpPasswordHint"),
   specialistUserRows: document.querySelector("#specialistUserRows"),
   parentUserRows: document.querySelector("#parentUserRows"),
   metricPending: document.querySelector("#metricPending"),
@@ -1680,9 +1683,7 @@ const elements = {
   adminSearch: document.querySelector("#adminSearch"),
   adminContactForm: document.querySelector("#adminContactForm"),
   profileEmailFields: document.querySelectorAll("[data-profile-email]"),
-  profilePhoneFields: document.querySelectorAll("[data-profile-phone]"),
-  phoneList: document.querySelector('[data-repeatable-list="phones"]'),
-  emailList: document.querySelector('[data-repeatable-list="emails"]'),
+  publishPhoneOptions: document.querySelector("#publishPhoneOptions"),
   selectedSpecialties: document.querySelector("[data-selected-specialties]"),
   placeDistrictPanels: document.querySelectorAll("[data-district-panel]"),
   publishSubmit: document.querySelector("[data-publish-submit]"),
@@ -1731,49 +1732,59 @@ function currentUserEmail() {
 function currentProfileEmail() {
   return (
     normalizeEmail(localStorage.getItem("profileEmail")) ||
-    currentUserEmail() ||
-    "user@example.com"
+    currentUserEmail()
   );
 }
 
-function normalizePhone(value) {
-  return String(value || "").trim();
-}
-
-function currentProfilePhone() {
-  return normalizePhone(localStorage.getItem("profilePhone")) || normalizePhone(localStorage.getItem("siteUserPhone"));
-}
-
-function fillProfileContactFields() {
+function fillProfileEmail(email = currentProfileEmail()) {
   elements.profileEmailFields.forEach((input) => {
-    input.value = currentProfileEmail();
-  });
-  elements.profilePhoneFields.forEach((input) => {
-    input.value = currentProfilePhone();
+    input.value = normalizeEmail(email);
   });
 }
 
-function createContactField(type) {
-  const isPhone = type === "phone";
-  const row = document.createElement("div");
-  row.className = "repeatable-row";
-  row.innerHTML = `
-    <label>
-      <span>${isPhone ? "Додатковий номер телефону" : "Додатковий email"}</span>
-      <input
-        type="${isPhone ? "tel" : "email"}"
-        name="${isPhone ? "phones" : "emails"}"
-        placeholder="${isPhone ? "+380 ..." : "name@example.com"}"
-      />
-    </label>
-    <button class="mini-button reject delete-action" type="button" data-remove-contact>Прибрати</button>
-  `;
-  applyLanguage(row);
-  return row;
+function renderPublishPhoneOptions(phones = []) {
+  if (!elements.publishPhoneOptions) return;
+  elements.publishPhoneOptions.replaceChildren();
+  if (!phones.length) {
+    const empty = document.createElement("p");
+    empty.className = "account-empty-inline";
+    empty.textContent = "Додайте контактний номер в особистому кабінеті.";
+    elements.publishPhoneOptions.append(empty);
+    return;
+  }
+  phones.forEach((phone) => {
+    const label = document.createElement("label");
+    label.className = "checkbox-row publish-phone-option";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "phones";
+    input.value = String(phone.value || "");
+    const text = document.createElement("span");
+    text.textContent = input.value;
+    label.append(input, text);
+    elements.publishPhoneOptions.append(label);
+  });
 }
 
-function resetAdditionalContactFields() {
-  document.querySelectorAll("[data-remove-contact]").forEach((button) => button.closest(".repeatable-row")?.remove());
+async function loadPublishAccountContacts() {
+  fillProfileEmail();
+  if (!elements.publishPhoneOptions) return;
+  try {
+    const response = await fetch("/api/account/index.php", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    });
+    if (response.status === 401) {
+      window.location.href = `auth.php?next=${encodeURIComponent("publish.html")}`;
+      return;
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Не вдалося завантажити контакти акаунта.");
+    fillProfileEmail(data.profile?.email || "");
+    renderPublishPhoneOptions(Array.isArray(data.phones) ? data.phones : []);
+  } catch (error) {
+    renderPublishPhoneOptions([]);
+  }
 }
 
 function renderSelectedPublishSpecialties() {
@@ -3305,6 +3316,86 @@ function setAdminView(viewName) {
   if (activeView === "catalog") renderAdminCatalog();
   if (activeView === "catalog-updates") renderCatalogUpdates();
   if (activeView === "specialist-users" || activeView === "parent-users") renderAdminUsers();
+  if (activeView === "email-settings") loadSmtpSettings();
+}
+
+let smtpSettingsLoaded = false;
+
+function setSmtpSettingsStatus(message, type = "") {
+  if (!elements.smtpSettingsStatus) return;
+  elements.smtpSettingsStatus.textContent = message;
+  elements.smtpSettingsStatus.dataset.status = type;
+}
+
+async function smtpSettingsRequest(options = {}) {
+  const response = await fetch("/api/admin/email-settings.php", {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
+    ...options
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Не вдалося зберегти налаштування SMTP.");
+  return result.settings || {};
+}
+
+function fillSmtpSettings(settings) {
+  const form = elements.smtpSettingsForm;
+  if (!form) return;
+  form.elements.siteName.value = settings.siteName || "Пошук фахівця";
+  form.elements.mailFrom.value = settings.mailFrom || "";
+  form.elements.host.value = settings.host || "mx1.mirohost.net";
+  form.elements.port.value = settings.port || 465;
+  form.elements.encryption.value = settings.encryption || "ssl";
+  form.elements.username.value = settings.username || "";
+  form.elements.password.value = "";
+  if (elements.smtpPasswordHint) {
+    elements.smtpPasswordHint.textContent = settings.passwordConfigured
+      ? "Пароль уже збережено. Залиште поле порожнім, щоб не змінювати його."
+      : "Введіть пароль поштової скриньки.";
+  }
+}
+
+async function loadSmtpSettings() {
+  if (!elements.smtpSettingsForm || smtpSettingsLoaded) return;
+  setSmtpSettingsStatus("Завантажуємо налаштування...");
+  try {
+    const settings = await smtpSettingsRequest();
+    fillSmtpSettings(settings);
+    smtpSettingsLoaded = true;
+    setSmtpSettingsStatus("");
+  } catch (error) {
+    setSmtpSettingsStatus(error.message || "Не вдалося завантажити налаштування SMTP.", "error");
+  }
+}
+
+async function saveSmtpSettings(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  const data = new FormData(form);
+  setSmtpSettingsStatus("Зберігаємо...");
+  try {
+    const settings = await smtpSettingsRequest({
+      method: "POST",
+      body: JSON.stringify({
+        siteName: String(data.get("siteName") || "").trim(),
+        mailFrom: String(data.get("mailFrom") || "").trim(),
+        host: String(data.get("host") || "").trim(),
+        port: Number(data.get("port")),
+        encryption: String(data.get("encryption") || ""),
+        username: String(data.get("username") || "").trim(),
+        password: String(data.get("password") || "")
+      })
+    });
+    fillSmtpSettings(settings);
+    smtpSettingsLoaded = true;
+    setSmtpSettingsStatus("Налаштування SMTP збережено.", "success");
+  } catch (error) {
+    setSmtpSettingsStatus(error.message || "Не вдалося зберегти налаштування SMTP.", "error");
+  }
 }
 
 function renderMetrics() {
@@ -3525,6 +3616,7 @@ function bindEvents() {
     updateCatalogSelectors();
   });
   elements.catalogEditorForm?.addEventListener("submit", submitCatalogRecord);
+  elements.smtpSettingsForm?.addEventListener("submit", saveSmtpSettings);
   elements.catalogCancelEdit?.addEventListener("click", () => {
     resetCatalogEditor();
     setCatalogStatus("");
@@ -3541,19 +3633,11 @@ function bindEvents() {
     }
   });
   elements.catalogUpdatesRows?.addEventListener("click", handleCatalogUpdateClick);
-  fillProfileContactFields();
+  loadPublishAccountContacts();
   elements.publishConsents?.forEach((control) => {
     control.addEventListener("change", updatePublishSubmitState);
   });
   updatePublishSubmitState();
-
-  document.querySelectorAll("[data-add-contact]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const type = button.dataset.addContact;
-      const list = type === "phone" ? elements.phoneList : elements.emailList;
-      list?.append(createContactField(type));
-    });
-  });
 
   document.querySelector("#publishForm")?.addEventListener("click", (event) => {
     const removeSpecialtyButton = event.target.closest("[data-remove-specialty]");
@@ -3562,9 +3646,6 @@ function bindEvents() {
       updatePublishSpecialtyOptions(false);
       return;
     }
-    const removeButton = event.target.closest("[data-remove-contact]");
-    if (!removeButton) return;
-    removeButton.closest(".repeatable-row")?.remove();
   });
 
   document.querySelectorAll("[data-scroll-to]").forEach((button) => {
@@ -3594,7 +3675,7 @@ function bindEvents() {
     const data = new FormData(event.currentTarget);
     const formats = data.getAll("formats");
     const phones = data.getAll("phones").map((value) => String(value).trim()).filter(Boolean);
-    const emails = data.getAll("emails").map((value) => String(value).trim()).filter(Boolean);
+    const email = normalizeEmail(data.get("email"));
     const specialistDistricts = data.getAll("specialistDistricts").map((value) => String(value).trim()).filter(Boolean);
     const studentDistricts = data.getAll("studentDistricts").map((value) => String(value).trim()).filter(Boolean);
     const allDistricts = [...new Set([...specialistDistricts, ...studentDistricts])];
@@ -3623,7 +3704,7 @@ function bindEvents() {
       `Категорія: ${specialtyCategory}`,
       `Спеціальності: ${selectedSpecialties.join(", ")}`,
       `Телефони: ${phones.length ? phones.join(", ") : "не вказано"}`,
-      `Email: ${emails.length ? emails.join(", ") : "не вказано"}`,
+      `Email: ${email || "не вказано"}`,
       `Область: ${regionName || "не вказано"}`,
       `ID області: ${regionId || "не вказано"}`,
       `Місто: ${cityName || "не вказано"}`,
@@ -3644,11 +3725,12 @@ function bindEvents() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          name: data.get("name"),
           city: cityId,
           specialties: selectedSpecialties,
           formats,
           districts: allDistricts,
+          phones,
+          email,
           price: rawPaymentAmount || 0,
           paymentType,
           autoDeleteDays,
@@ -3670,7 +3752,7 @@ function bindEvents() {
     }
     moderationItems.unshift({
       id: Date.now(),
-      name: data.get("name"),
+      name: localStorage.getItem("siteUserName") || "Фахівець",
       specialty: primarySpecialty,
       specialties: selectedSpecialties,
       regionId,
@@ -3693,8 +3775,7 @@ function bindEvents() {
     updatePublishSpecialtyOptions();
     updatePublishCityOptions("");
     updatePlaceDistrictPanel();
-    resetAdditionalContactFields();
-    fillProfileContactFields();
+    loadPublishAccountContacts();
     updatePublishSubmitState();
     setCatalogSuggestionStatus("");
     renderModeration();
