@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 vendor/
 config.php
+tools/php/
+tools/php-*.zip
