@@ -23,12 +23,6 @@ const accountElements = {
   views: document.querySelectorAll("[data-account-view]")
 };
 
-const roleLabels = {
-  admin: "Адміністратор",
-  specialist: "Фахівець",
-  parent: "Користувач"
-};
-
 function setDeleteStep(step) {
   const second = step === "second";
   accountElements.deleteFirstStep.hidden = second;
@@ -175,13 +169,12 @@ function renderNotifications(notifications) {
 
 function renderAccount(data) {
   const profile = data.profile;
-  const publishLabel = profile.role === "specialist" ? "Розмістити анкету" : "Розмістити оголошення";
+  const publishLabel = "Розмістити оголошення";
   accountElements.form.elements.firstName.value = profile.firstName || "";
   accountElements.form.elements.lastName.value = profile.lastName || "";
   accountElements.form.elements.email.value = profile.email || "";
   accountElements.form.elements.phone.value = profile.phone || "";
-  accountElements.form.elements.role.value = roleLabels[profile.role] || profile.role;
-  accountElements.memberMeta.textContent = `${roleLabels[profile.role] || profile.role} · Реєстрація: ${formatAccountDate(profile.registeredAt)}`;
+  accountElements.memberMeta.textContent = `Реєстрація: ${formatAccountDate(profile.registeredAt)}`;
   if (accountElements.publishAction) {
     accountElements.publishAction.textContent = publishLabel;
     accountElements.publishAction.setAttribute("aria-label", `${publishLabel} в особистому кабінеті`);

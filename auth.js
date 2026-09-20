@@ -10,11 +10,11 @@ const elements = {
 
 let googleInitialized = false;
 
-function requestedDestination(role = "") {
+function requestedDestination(isAdmin = false) {
   const next = new URLSearchParams(window.location.search).get("next");
   if (next === "publish.html") return next;
   if (next === "cabinet.html") return next;
-  if (next === "admin.html" && role === "admin") return next;
+  if (next === "admin.html" && isAdmin) return next;
   return "";
 }
 
@@ -59,7 +59,7 @@ function rememberUser(user, provider) {
     localStorage.setItem("profilePhone", user.phone);
   }
   localStorage.setItem("siteUserName", user.name || "");
-  localStorage.setItem("siteUserRole", user.role || "parent");
+  localStorage.setItem("siteUserRole", user.role || "user");
   localStorage.setItem("siteAuthProvider", provider);
   localStorage.setItem("siteAuthVerified", "true");
   if (user.id) localStorage.setItem("siteUserId", String(user.id));
@@ -69,15 +69,15 @@ function rememberUser(user, provider) {
 function completeLogin(user, redirectUrl = "") {
   setStatus("Вхід виконано.", "success");
   window.dispatchEvent(new CustomEvent("site:authenticated", { detail: { user } }));
-  const destination = requestedDestination(user.role) || redirectUrl || (user.role === "specialist" ? "specialists.html" : "index.html");
+  const destination = requestedDestination(Boolean(user.isAdmin)) || redirectUrl || "index.html";
   window.setTimeout(() => {
     window.location.href = destination;
   }, 600);
 }
 
 const registrationLink = document.querySelector('.auth-switch-link a[href="register.php"]');
-if (registrationLink && requestedDestination()) {
-  registrationLink.href = `register.php?next=${encodeURIComponent(requestedDestination())}`;
+if (registrationLink && requestedDestination(false)) {
+  registrationLink.href = `register.php?next=${encodeURIComponent(requestedDestination(false))}`;
 }
 
 function renderGoogleUnavailable(message) {

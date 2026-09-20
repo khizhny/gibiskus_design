@@ -52,6 +52,7 @@ DROP TABLE IF EXISTS Catalog_record;
 DROP TABLE IF EXISTS Catalog_subgroups;
 DROP TABLE IF EXISTS Catalog_groups;
 DROP TABLE IF EXISTS UserCredentials;
+DROP TABLE IF EXISTS Admins;
 DROP TABLE IF EXISTS Emails;
 DROP TABLE IF EXISTS Phones;
 DROP TABLE IF EXISTS Users;
@@ -76,7 +77,6 @@ CREATE TABLE Cities (
 CREATE TABLE Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   external_id TEXT UNIQUE,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'specialist', 'parent', 'system')),
   name TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
@@ -100,6 +100,11 @@ CREATE TABLE Emails (
   user_id INTEGER NOT NULL,
   email TEXT NOT NULL,
   is_primary INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Admins (
+  user_id INTEGER PRIMARY KEY,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
@@ -345,18 +350,19 @@ def main():
     for email in data["adminEmails"]:
         name = email.split("@")[0]
         cursor.execute(
-            "INSERT INTO Users (external_id, role, name, notes) VALUES (?, 'admin', ?, ?)",
+            "INSERT INTO Users (external_id, name, notes) VALUES (?, ?, ?)",
             (f"admin:{email}", name, "Адміністратор сайту"),
         )
         user_id = cursor.lastrowid
+        cursor.execute("INSERT INTO Admins (user_id) VALUES (?)", (user_id,))
         user_ids_by_name[name] = user_id
         cursor.execute("INSERT INTO Emails (user_id, email, is_primary) VALUES (?, ?, 1)", (user_id, email))
 
     for item in data["specialistUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, role, name, registered_at, last_active, notes)
-            VALUES (?, 'specialist', ?, ?, ?, ?)
+            INSERT INTO Users (external_id, name, registered_at, last_active, notes)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (item.get("id"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
         )
@@ -368,8 +374,8 @@ def main():
     for item in data["parentUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, role, name, registered_at, last_active, notes)
-            VALUES (?, 'parent', ?, ?, ?, ?)
+            INSERT INTO Users (external_id, name, registered_at, last_active, notes)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (item.get("id"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
         )
@@ -469,7 +475,7 @@ def main():
         user_id = user_ids_by_name.get(family_name)
         if not user_id:
             cursor.execute(
-                "INSERT INTO Users (external_id, role, name, notes) VALUES (?, 'parent', ?, ?)",
+                "INSERT INTO Users (external_id, name, notes) VALUES (?, ?, ?)",
                 (f"request-family:{request.get('id')}", family_name, "Створено з заявки родини"),
             )
             user_id = cursor.lastrowid

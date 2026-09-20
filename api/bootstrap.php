@@ -153,6 +153,12 @@ function database(): PDO
     $connection->exec('PRAGMA foreign_keys = ON');
     $connection->exec('PRAGMA busy_timeout = 10000');
     $connection->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS Admins (
+          user_id INTEGER PRIMARY KEY,
+          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+        )
+        SQL);
+    $connection->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS UserCredentials (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL UNIQUE,
@@ -164,6 +170,9 @@ function database(): PDO
         SQL);
     $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
     $columnNames = array_column($columns, 'name');
+    if (in_array('role', $columnNames, true)) {
+        $connection->exec("INSERT OR IGNORE INTO Admins (user_id) SELECT id FROM Users WHERE role = 'admin'");
+    }
     if (!in_array('first_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN first_name TEXT');
     if (!in_array('last_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN last_name TEXT');
     $connection->exec('CREATE UNIQUE INDEX IF NOT EXISTS uq_emails_email_nocase ON Emails(lower(email))');
@@ -221,19 +230,16 @@ function initialise_session(): void
     session_start();
 }
 
-function landing_page_for_role(string $role): string
+function landing_page_for_user(array $user): string
 {
-    return match ($role) {
-        'admin' => 'admin.html',
-        'specialist' => 'specialists.html',
-        default => 'index.html',
-    };
+    return ($user['isAdmin'] ?? false) === true ? 'admin.html' : 'index.html';
 }
 
 function user_record(PDO $db, int $userId): array
 {
     $row = fetch_one($db, <<<'SQL'
-        SELECT u.id, u.external_id, u.role, u.name, u.first_name, u.last_name,
+        SELECT u.id, u.external_id, u.name, u.first_name, u.last_name,
+          EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
           (SELECT email FROM Emails WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS email,
           (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS phone
         FROM Users AS u
@@ -245,7 +251,8 @@ function user_record(PDO $db, int $userId): array
     return [
         'id' => (int) $row['id'],
         'externalId' => (string) ($row['external_id'] ?? ''),
-        'role' => (string) $row['role'],
+        'role' => ((int) $row['is_admin'] === 1) ? 'admin' : 'user',
+        'isAdmin' => (int) $row['is_admin'] === 1,
         'name' => (string) $row['name'],
         'firstName' => (string) ($row['first_name'] ?? ''),
         'lastName' => (string) ($row['last_name'] ?? ''),
@@ -267,7 +274,7 @@ function current_user(bool $required = false): ?array
     try {
         return user_record(database(), (int) $userId);
     } catch (ApiError) {
-        unset($_SESSION['user_id'], $_SESSION['role']);
+        unset($_SESSION['user_id'], $_SESSION['is_admin']);
         if ($required) {
             throw new ApiError(401, 'Authentication required');
         }
@@ -275,14 +282,23 @@ function current_user(bool $required = false): ?array
     }
 }
 
+function require_admin(): array
+{
+    $user = current_user(true);
+    if (($user['isAdmin'] ?? false) !== true) {
+        throw new ApiError(403, 'Administrator permission required');
+    }
+    return $user;
+}
+
 function authenticated_response(array $user): array
 {
     initialise_session();
     session_regenerate_id(true);
     $_SESSION['user_id'] = (int) $user['id'];
-    $_SESSION['role'] = (string) $user['role'];
+    $_SESSION['is_admin'] = ($user['isAdmin'] ?? false) === true;
     $_SESSION['authenticated_at'] = time();
-    return ['user' => $user, 'redirect' => landing_page_for_role((string) $user['role'])];
+    return ['user' => $user, 'redirect' => landing_page_for_user($user)];
 }
 
 function destroy_current_session(): void
@@ -368,9 +384,9 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
         throw new ApiError(400, 'Google account must provide a verified email address');
     }
     return transaction(function (PDO $db) use ($registration, $googleProfile, $mode, $subject, $email): array {
-        $existing = fetch_one($db, 'SELECT id, role FROM Users WHERE external_id = ?', [$subject]);
+        $existing = fetch_one($db, 'SELECT id FROM Users WHERE external_id = ?', [$subject]);
         $emailOwner = fetch_one($db, <<<'SQL'
-            SELECT u.id, u.role, u.external_id FROM Users AS u
+            SELECT u.id, u.external_id FROM Users AS u
             JOIN Emails AS e ON e.user_id = u.id
             WHERE lower(e.email) = lower(?) LIMIT 1
             SQL, [$email]);
@@ -384,7 +400,7 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
                 throw new ApiError(400, 'Google email belongs to another account');
             }
             execute_sql($db, 'UPDATE Users SET external_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$subject, (int) $emailOwner['id']]);
-            $existing = fetch_one($db, 'SELECT id, role FROM Users WHERE id = ?', [(int) $emailOwner['id']]);
+            $existing = fetch_one($db, 'SELECT id FROM Users WHERE id = ?', [(int) $emailOwner['id']]);
         }
         $now = gmdate('c');
         if ($mode === 'login') {
@@ -401,19 +417,21 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
         }
         $firstName = clean_text($registration['firstName'] ?? '', 80);
         $lastName = clean_text($registration['lastName'] ?? '', 80);
-        $role = clean_text($registration['role'] ?? '', 20);
         $phone = normalize_phone($registration['phone'] ?? '');
-        if ($firstName === '' || $lastName === '' || !in_array($role, ['parent', 'specialist'], true)) {
+        if ($firstName === '' || $lastName === '') {
             throw new ApiError(400, 'Missing or invalid registration data');
         }
         $fullName = clean_text($firstName . ' ' . $lastName, 160);
         if ($existing !== null) {
             $userId = (int) $existing['id'];
-            $storedRole = (string) $existing['role'];
-            $effectiveRole = in_array($storedRole, ['admin', 'system'], true) ? $storedRole : $role;
-            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, role = ?, last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $effectiveRole, $now, $userId]);
+            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $now, $userId]);
         } else {
-            execute_sql($db, 'INSERT INTO Users (external_id, role, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$subject, $role, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
+            $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
+            if ($legacyRole) {
+                execute_sql($db, "INSERT INTO Users (external_id, role, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, 'parent', ?, ?, ?, ?, ?, ?)", [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
+            } else {
+                execute_sql($db, 'INSERT INTO Users (external_id, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
+            }
             $userId = (int) $db->lastInsertId();
         }
         set_primary_email($db, $userId, $email);
@@ -426,8 +444,7 @@ function register_email_user(array $payload): array
 {
     $firstName = clean_text($payload['firstName'] ?? '', 80);
     $lastName = clean_text($payload['lastName'] ?? '', 80);
-    $role = clean_text($payload['role'] ?? '', 20);
-    if ($firstName === '' || $lastName === '' || !in_array($role, ['parent', 'specialist'], true)) {
+    if ($firstName === '' || $lastName === '') {
         throw new ApiError(400, 'Missing or invalid registration data');
     }
     if (($payload['privacyAccepted'] ?? false) !== true) {
@@ -436,13 +453,18 @@ function register_email_user(array $payload): array
     $email = normalize_email($payload['email'] ?? '');
     $phone = normalize_phone($payload['phone'] ?? '');
     $password = validate_password($payload['password'] ?? '');
-    return transaction(function (PDO $db) use ($firstName, $lastName, $role, $email, $phone, $password): array {
+    return transaction(function (PDO $db) use ($firstName, $lastName, $email, $phone, $password): array {
         if (fetch_one($db, 'SELECT user_id FROM Emails WHERE lower(email) = lower(?) LIMIT 1', [$email]) !== null) {
             throw new ApiError(400, 'This email is already registered. Use the login page');
         }
         $now = gmdate('c');
         $fullName = clean_text($firstName . ' ' . $lastName, 160);
-        execute_sql($db, 'INSERT INTO Users (role, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [$role, $fullName, $firstName, $lastName, $now, $now, 'Email registration']);
+        $legacyRole = in_array('role', array_column($db->query('PRAGMA table_info(Users)')->fetchAll(), 'name'), true);
+        if ($legacyRole) {
+            execute_sql($db, "INSERT INTO Users (role, name, first_name, last_name, registered_at, last_active, notes) VALUES ('parent', ?, ?, ?, ?, ?, ?)", [$fullName, $firstName, $lastName, $now, $now, 'Email registration']);
+        } else {
+            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Email registration']);
+        }
         $userId = (int) $db->lastInsertId();
         set_primary_email($db, $userId, $email);
         set_primary_phone($db, $userId, $phone);

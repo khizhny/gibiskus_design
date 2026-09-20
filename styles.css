@@ -85,22 +85,20 @@ img {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--green);
+  flex: 0 0 auto;
 }
 
-.brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  background: var(--green);
-  color: #fff;
-  font-size: 18px;
-  line-height: 1;
+.brand-logo {
+  display: block;
+  width: 215px;
+  height: 52px;
+  overflow: hidden;
+}
+
+.brand-logo img {
+  width: 308px;
+  max-width: none;
+  transform: translate(-14px, -26px);
 }
 
 .nav {
@@ -1320,44 +1318,8 @@ h3 {
   box-shadow: none;
 }
 
-.account-type-group {
-  padding: 9px 10px 10px;
-}
-
-.account-type-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.account-type-option {
-  display: flex;
-  min-height: 38px;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: #fff;
-  color: var(--ink-2);
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.account-type-option input {
-  width: 17px;
-  height: 17px;
-}
-
 .auth-email-submit {
   width: 100%;
-}
-
-.account-type-option:has(input:checked) {
-  border-color: var(--teal);
-  background: var(--mint);
-  color: var(--teal-dark);
 }
 
 .registration-consent {
@@ -1957,12 +1919,21 @@ label small {
 }
 
 .admin-brand {
-  color: #fff;
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  background: #fff;
 }
 
-.admin-brand .brand-mark {
-  background: #fff;
-  color: var(--green);
+.admin-brand .brand-logo {
+  width: 198px;
+  height: 48px;
+}
+
+.admin-brand .brand-logo img {
+  width: 284px;
+  transform: translate(-13px, -24px);
 }
 
 .admin-sidebar p {
@@ -2601,6 +2572,16 @@ label small {
 }
 
 @media (max-width: 1180px) {
+  .admin-brand .brand-logo {
+    width: 160px;
+    height: 42px;
+  }
+
+  .admin-brand .brand-logo img {
+    width: 230px;
+    transform: translate(-10px, -19px);
+  }
+
   .hero {
     grid-template-columns: 1fr;
   }
@@ -2750,10 +2731,6 @@ label small {
     grid-template-columns: 1fr;
   }
 
-  .account-type-options {
-    grid-template-columns: 1fr;
-  }
-
   .specialty-card-grid,
   .support-panel,
   .admin-metrics {
@@ -2782,6 +2759,16 @@ label small {
 }
 
 @media (max-width: 560px) {
+  .brand-logo {
+    width: 181px;
+    height: 44px;
+  }
+
+  .brand-logo img {
+    width: 260px;
+    transform: translate(-12px, -22px);
+  }
+
   .privacy-page {
     width: min(100vw - 24px, 920px);
     margin-top: 28px;

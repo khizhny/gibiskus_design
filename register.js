@@ -18,11 +18,11 @@ const elements = {
 
 let googleInitialized = false;
 
-function requestedDestination(role = "") {
+function requestedDestination(isAdmin = false) {
   const next = new URLSearchParams(window.location.search).get("next");
   if (next === "publish.html") return next;
   if (next === "cabinet.html") return next;
-  if (next === "admin.html" && role === "admin") return next;
+  if (next === "admin.html" && isAdmin) return next;
   return "";
 }
 
@@ -71,7 +71,7 @@ function getRegistrationProfile({ report = false } = {}) {
   if (!elements.profileForm.checkValidity()) {
     if (report) {
       elements.profileForm.reportValidity();
-      setStatus("Заповніть ім'я, прізвище, дев'ять цифр номера телефону, тип профілю та прийміть політику конфіденційності.", "error");
+      setStatus("Заповніть ім'я, прізвище, дев'ять цифр номера телефону та прийміть політику конфіденційності.", "error");
     }
     return null;
   }
@@ -81,14 +81,13 @@ function getRegistrationProfile({ report = false } = {}) {
     firstName: String(data.get("firstName") || "").trim(),
     lastName: String(data.get("lastName") || "").trim(),
     phone: `+380${String(data.get("phone") || "").trim()}`,
-    role: String(data.get("role") || "parent"),
     privacyAccepted: data.get("privacyAccepted") === "on"
   };
 }
 
 function rememberUser(user, provider, fallbackProfile = {}) {
   const name = user.name || [fallbackProfile.firstName, fallbackProfile.lastName].filter(Boolean).join(" ");
-  const role = user.role || fallbackProfile.role || "parent";
+  const role = user.role || "user";
   const phone = user.phone || fallbackProfile.phone || "";
   if (user.email) {
     localStorage.setItem("siteUserEmail", user.email);
@@ -108,7 +107,7 @@ function rememberUser(user, provider, fallbackProfile = {}) {
 
 function completeRegistration(message, user, redirectUrl = "") {
   setStatus(message, "success");
-  const destination = requestedDestination(user.role) || redirectUrl || (user.role === "specialist" ? "specialists.html" : "index.html");
+  const destination = requestedDestination(Boolean(user.isAdmin)) || redirectUrl || "index.html";
   window.setTimeout(() => {
     window.location.href = destination;
   }, 700);

@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS Catalog_record;
 DROP TABLE IF EXISTS Catalog_subgroups;
 DROP TABLE IF EXISTS Catalog_groups;
 DROP TABLE IF EXISTS UserCredentials;
+DROP TABLE IF EXISTS Admins;
 DROP TABLE IF EXISTS Emails;
 DROP TABLE IF EXISTS Phones;
 DROP TABLE IF EXISTS Users;
@@ -17,7 +18,6 @@ DROP TABLE IF EXISTS Users;
 CREATE TABLE Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   external_id TEXT UNIQUE,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'specialist', 'parent', 'system')),
   name TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
@@ -41,6 +41,11 @@ CREATE TABLE Emails (
   user_id INTEGER NOT NULL,
   email TEXT NOT NULL,
   is_primary INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Admins (
+  user_id INTEGER PRIMARY KEY,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 

@@ -1,6 +1,13 @@
 const SESSION_ENDPOINT = "/api/auth/me.php";
 const PUBLISH_PAGE = "publish.html";
 
+function enforceAdminPageAccess(isAdmin) {
+  if (!window.location.pathname.endsWith("/admin.html")) return false;
+  if (isAdmin) return false;
+  window.location.replace(`auth.php?next=${encodeURIComponent("admin.html")}`);
+  return true;
+}
+
 function updatePublishLinks(authenticated) {
   document.querySelectorAll(`a[href="${PUBLISH_PAGE}"], a[data-publish-link]`).forEach((link) => {
     link.dataset.publishLink = "true";
@@ -9,10 +16,10 @@ function updatePublishLinks(authenticated) {
   });
 }
 
-function updateAdminNavigation(role = "") {
+function updateAdminNavigation(isAdmin = false) {
   document.querySelectorAll('.nav a[href="admin.html"]').forEach((link) => {
-    link.classList.toggle("is-authorized-admin", role === "admin");
-    link.setAttribute("aria-hidden", String(role !== "admin"));
+    link.classList.toggle("is-authorized-admin", isAdmin);
+    link.setAttribute("aria-hidden", String(!isAdmin));
   });
 }
 
@@ -32,7 +39,7 @@ function clearRememberedSession() {
 function rememberSessionUser(user) {
   if (user.id) localStorage.setItem("siteUserId", String(user.id));
   localStorage.setItem("siteUserName", user.name || "");
-  localStorage.setItem("siteUserRole", user.role || "parent");
+  localStorage.setItem("siteUserRole", user.role || "user");
   localStorage.setItem("siteAuthVerified", "true");
   if (user.email) localStorage.setItem("siteUserEmail", user.email);
   if (user.phone) localStorage.setItem("siteUserPhone", user.phone);
@@ -81,10 +88,11 @@ function showCurrentUser(user) {
 }
 
 function applyAuthenticatedUser(user) {
+  if (enforceAdminPageAccess(Boolean(user.isAdmin))) return;
   rememberSessionUser(user);
   showCurrentUser(user);
   updatePublishLinks(true);
-  updateAdminNavigation(user.role);
+  updateAdminNavigation(Boolean(user.isAdmin));
 }
 
 window.addEventListener("site:authenticated", (event) => {
@@ -99,6 +107,7 @@ async function refreshSessionHeader() {
       headers: { Accept: "application/json" }
     });
     if (!response.ok) {
+      if (enforceAdminPageAccess(false)) return;
       clearRememberedSession();
       updatePublishLinks(false);
       updateAdminNavigation();
@@ -107,6 +116,7 @@ async function refreshSessionHeader() {
 
     const result = await response.json();
     if (!result.authenticated || !result.user) {
+      if (enforceAdminPageAccess(false)) return;
       clearRememberedSession();
       updatePublishLinks(false);
       updateAdminNavigation();
@@ -115,6 +125,7 @@ async function refreshSessionHeader() {
 
     applyAuthenticatedUser(result.user);
   } catch (error) {
+    if (enforceAdminPageAccess(false)) return;
     updatePublishLinks(false);
     updateAdminNavigation();
   }
