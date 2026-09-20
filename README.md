@@ -81,6 +81,8 @@ Frontend використовує endpoint `/api/auth/google.php`, тому ngin
 - `POST /api/account/delete-contact.php` — видалення контакту;
 - `POST /api/account/listings.php` — створення оголошення;
 - `POST /api/account/delete.php` — видалення акаунта.
+- `GET /api/admin/users.php` — список усіх користувачів для адміністратора;
+- `POST /api/admin/users.php` — видалення користувача та пов'язаних даних.
 
 POST-запити приймаються лише з того самого origin. Сесія зберігається стандартним механізмом PHP у cookie `site_php_session` з `HttpOnly`, `SameSite=Lax` і `Secure` на HTTPS.
 

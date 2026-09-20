@@ -1676,6 +1676,9 @@ const elements = {
   smtpPasswordHint: document.querySelector("#smtpPasswordHint"),
   specialistUserRows: document.querySelector("#specialistUserRows"),
   parentUserRows: document.querySelector("#parentUserRows"),
+  allUsersRows: document.querySelector("#allUsersRows"),
+  allUsersStatus: document.querySelector("#allUsersStatus"),
+  allUsersSearch: document.querySelector("#allUsersSearch"),
   metricPending: document.querySelector("#metricPending"),
   metricExpiring: document.querySelector("#metricExpiring"),
   metricReports: document.querySelector("#metricReports"),
@@ -3316,7 +3319,99 @@ function setAdminView(viewName) {
   if (activeView === "catalog") renderAdminCatalog();
   if (activeView === "catalog-updates") renderCatalogUpdates();
   if (activeView === "specialist-users" || activeView === "parent-users") renderAdminUsers();
+  if (activeView === "all-users") loadAllUsers();
   if (activeView === "email-settings") loadSmtpSettings();
+}
+
+let allDatabaseUsers = [];
+let allUsersLoaded = false;
+
+function setAllUsersStatus(message, type = "") {
+  if (!elements.allUsersStatus) return;
+  elements.allUsersStatus.textContent = message;
+  elements.allUsersStatus.dataset.status = type;
+}
+
+function databaseUserDate(value) {
+  if (!value) return "Не вказано";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+}
+
+function databaseUserRole(role) {
+  if (role === "admin") return "Адміністратор";
+  if (role === "specialist") return "Фахівець";
+  return "Користувач";
+}
+
+function renderAllUsers() {
+  if (!elements.allUsersRows) return;
+  const query = String(elements.allUsersSearch?.value || "").trim().toLowerCase();
+  const users = allDatabaseUsers.filter((user) => {
+    if (!query) return true;
+    return [user.name, user.email, user.phone, user.role, user.id].some((value) => String(value || "").toLowerCase().includes(query));
+  });
+  elements.allUsersRows.innerHTML = users.length
+    ? users.map((user) => `
+        <article class="all-user-row" data-database-user="${user.id}">
+          <span><strong>${escapeHtml(user.name || "Без імені")}</strong><small>ID: ${user.id}</small></span>
+          <span class="contact-stack"><small>${escapeHtml(user.email || "Email не вказано")}</small><small>${escapeHtml(user.phone || "Телефон не вказано")}</small></span>
+          <span>${escapeHtml(databaseUserDate(user.registeredAt))}<small>Останній вхід: ${escapeHtml(databaseUserDate(user.lastActive))}</small></span>
+          <span><small>Оголошення: ${user.specialists}</small><small>Запити: ${user.requests}</small><small>Коментарі: ${user.comments}</small><small>Повідомлення: ${user.messages}</small></span>
+          <span><span class="status">${escapeHtml(databaseUserRole(user.role))}</span></span>
+          <span>${user.isSelf
+            ? '<small>Поточний акаунт</small>'
+            : `<button class="danger-button all-user-delete" type="button" data-delete-database-user="${user.id}">Видалити</button>`}
+          </span>
+        </article>`).join("")
+    : '<article class="all-user-row all-user-row-empty"><strong>Користувачів не знайдено</strong></article>';
+}
+
+async function adminUsersRequest(options = {}) {
+  const response = await fetch("/api/admin/users.php", {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
+    ...options
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Не вдалося завантажити користувачів.");
+  return result;
+}
+
+async function loadAllUsers(force = false) {
+  if (!elements.allUsersRows || (allUsersLoaded && !force)) return;
+  setAllUsersStatus("Завантажуємо користувачів...");
+  try {
+    const result = await adminUsersRequest();
+    allDatabaseUsers = Array.isArray(result.users) ? result.users : [];
+    allUsersLoaded = true;
+    renderAllUsers();
+    setAllUsersStatus(`Усього користувачів: ${allDatabaseUsers.length}`, "success");
+  } catch (error) {
+    setAllUsersStatus(error.message || "Не вдалося завантажити користувачів.", "error");
+  }
+}
+
+async function deleteDatabaseUser(userId, button) {
+  const user = allDatabaseUsers.find((item) => item.id === Number(userId));
+  if (!user || user.isSelf) return;
+  const confirmed = window.confirm(`Видалити користувача «${user.name || user.email}» і всі пов'язані дані? Цю дію неможливо скасувати.`);
+  if (!confirmed) return;
+  button.disabled = true;
+  setAllUsersStatus("Видаляємо користувача...");
+  try {
+    await adminUsersRequest({
+      method: "POST",
+      body: JSON.stringify({ userId: user.id, confirmation: "DELETE_USER" })
+    });
+    allDatabaseUsers = allDatabaseUsers.filter((item) => item.id !== user.id);
+    renderAllUsers();
+    setAllUsersStatus("Користувача та всі пов'язані дані видалено.", "success");
+  } catch (error) {
+    button.disabled = false;
+    setAllUsersStatus(error.message || "Не вдалося видалити користувача.", "error");
+  }
 }
 
 let smtpSettingsLoaded = false;
@@ -3611,6 +3706,11 @@ function bindEvents() {
   elements.moderationDetail?.addEventListener("click", handleModerationClick);
   elements.adminNavButtons.forEach((button) => {
     button.addEventListener("click", () => setAdminView(button.dataset.adminView));
+  });
+  elements.allUsersSearch?.addEventListener("input", renderAllUsers);
+  elements.allUsersRows?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-delete-database-user]");
+    if (button) deleteDatabaseUser(button.dataset.deleteDatabaseUser, button);
   });
   elements.catalogSectionSelect?.addEventListener("change", () => {
     updateCatalogSelectors();

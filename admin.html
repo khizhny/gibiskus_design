@@ -42,6 +42,7 @@
             <button class="admin-nav" type="button" data-admin-view="catalog-updates">Оновлення каталогу <span class="nav-badge" id="catalogUpdatesCount">0</span></button>
             <button class="admin-nav" type="button" data-admin-view="specialist-users">Фахівці</button>
             <button class="admin-nav" type="button" data-admin-view="parent-users">Батьки</button>
+            <button class="admin-nav" type="button" data-admin-view="all-users">Усі користувачі</button>
             <button class="admin-nav" type="button" data-admin-view="email-settings">Email та SMTP</button>
           </nav>
           <a class="ghost-button full" href="index.html">Вийти з панелі</a>
@@ -233,11 +234,37 @@
               <p class="form-status" id="smtpSettingsStatus" role="status"></p>
             </form>
           </div>
+
+          <div class="admin-view" data-admin-view-panel="all-users" hidden>
+            <div class="admin-top">
+              <div>
+                <p class="section-note">База даних</p>
+                <h1>Усі користувачі</h1>
+              </div>
+              <label class="admin-search">
+                <span>Пошук</span>
+                <input type="search" id="allUsersSearch" placeholder="Ім'я, email або телефон" />
+              </label>
+            </div>
+            <p class="admin-users-warning">Видалення користувача також назавжди видаляє його email, телефони, оголошення, запити, коментарі, повідомлення та дані входу.</p>
+            <section class="moderation-table all-users-table" aria-label="Усі користувачі сайту">
+              <div class="all-users-head">
+                <span>Користувач</span>
+                <span>Контакти</span>
+                <span>Реєстрація</span>
+                <span>Активність</span>
+                <span>Роль</span>
+                <span>Дії</span>
+              </div>
+              <div id="allUsersRows"></div>
+            </section>
+            <p class="form-status" id="allUsersStatus" role="status"></p>
+          </div>
         </div>
       </section>
     </main>
 
-    <script src="script.js?v=smtp-settings-20260920"></script>
+    <script src="script.js?v=database-users-20260920"></script>
     <script src="session.js?v=profiles-20260920"></script>
   </body>
 </html>

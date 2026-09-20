@@ -335,6 +335,61 @@ function require_admin(): array
     return $user;
 }
 
+function admin_users_data(int $currentAdminId): array
+{
+    $rows = execute_sql(database(), <<<'SQL'
+        SELECT u.id, u.name, u.first_name, u.last_name, u.registered_at, u.last_active, u.created_at,
+          EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
+          EXISTS(SELECT 1 FROM Specialists AS s WHERE s.user_id = u.id) AS is_specialist,
+          (SELECT email FROM Emails WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS email,
+          (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY is_primary DESC, id LIMIT 1) AS phone,
+          (SELECT count(*) FROM Specialists WHERE user_id = u.id) AS specialist_count,
+          (SELECT count(*) FROM Requests WHERE user_id = u.id) AS request_count,
+          (SELECT count(*) FROM Comments WHERE user_id = u.id) AS comment_count,
+          (SELECT count(*) FROM Messages WHERE sender_user_id = u.id OR recipient_user_id = u.id) AS message_count
+        FROM Users AS u
+        ORDER BY coalesce(u.registered_at, u.created_at) DESC, u.id DESC
+        SQL)->fetchAll();
+    return array_map(static function (array $row) use ($currentAdminId): array {
+        $isAdmin = (int) $row['is_admin'] === 1;
+        $isSpecialist = (int) $row['is_specialist'] === 1;
+        return [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'firstName' => (string) ($row['first_name'] ?? ''),
+            'lastName' => (string) ($row['last_name'] ?? ''),
+            'email' => (string) ($row['email'] ?? ''),
+            'phone' => (string) ($row['phone'] ?? ''),
+            'role' => $isAdmin ? 'admin' : ($isSpecialist ? 'specialist' : 'user'),
+            'registeredAt' => (string) (($row['registered_at'] ?? '') ?: ($row['created_at'] ?? '')),
+            'lastActive' => (string) ($row['last_active'] ?? ''),
+            'specialists' => (int) $row['specialist_count'],
+            'requests' => (int) $row['request_count'],
+            'comments' => (int) $row['comment_count'],
+            'messages' => (int) $row['message_count'],
+            'isSelf' => (int) $row['id'] === $currentAdminId,
+        ];
+    }, $rows);
+}
+
+function delete_user_as_admin(int $currentAdminId, mixed $targetValue): int
+{
+    $targetId = filter_var($targetValue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if ($targetId === false) {
+        throw new ApiError(400, 'Select a valid user');
+    }
+    if ((int) $targetId === $currentAdminId) {
+        throw new ApiError(400, 'You cannot delete your own active administrator account');
+    }
+    transaction(function (PDO $db) use ($targetId): void {
+        $statement = execute_sql($db, 'DELETE FROM Users WHERE id = ?', [(int) $targetId]);
+        if ($statement->rowCount() !== 1) {
+            throw new ApiError(404, 'User account was not found');
+        }
+    });
+    return (int) $targetId;
+}
+
 function authenticated_response(array $user): array
 {
     initialise_session();
