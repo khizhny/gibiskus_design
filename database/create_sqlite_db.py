@@ -376,6 +376,8 @@ def main():
     specialist_ids_by_name = {}
     for listing in data["listings"]:
         user_id = user_ids_by_name.get(listing["name"])
+        if user_id is None:
+            continue
         city = listing.get("city") or None
         record_id = catalog_record_ids.get(listing.get("specialty"))
         cursor.execute(

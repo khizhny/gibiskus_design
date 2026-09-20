@@ -392,7 +392,6 @@ const ukToEn = {
   "ОЗ": "OZ",
   "Катерина Смирнова": "Kateryna Smyrnova",
   "Анна Кузнєцова": "Anna Kuznietsova",
-  "Ігор Лебедєв": "Ihor Lebediev",
   "Ольга Захарова": "Olha Zakharova",
   "Марія Воронцова": "Mariia Vorontsova",
   "Олексій Фролов": "Oleksii Frolov",
@@ -777,283 +776,8 @@ const specialtySections = [
   }
 ];
 
-const listings = [
-  {
-    id: 1,
-    name: "Катерина Смирнова",
-    initials: "КС",
-    specialty: "Логопед",
-    specialties: ["Логопед", "Логопед-дефектолог", "Педагог раннього розвитку"],
-    regionId: "UA80000000000093317",
-    region: "Київ",
-    city: "UA80000000000093317",
-    district: "Шевченківський",
-    formats: ["У фахівця", "Онлайн"],
-    rating: 4.9,
-    reviews: 56,
-    price: 1200,
-    duration: 50,
-    next: "сьогодні, 16:30",
-    createdAt: "2026-05-25",
-    status: "active",
-    verified: true,
-    headline: "Запуск мовлення, звуковимова та домашня програма для родини",
-    education: "НПУ ім. Драгоманова, логопедія; сертифікат із запуску мовлення",
-    experience: "7 років практики",
-    worksWith: "ЗМР, ЗНМ, дизартрія, ехолалія",
-    nosologies: ["ЗМР", "ЗНМ", "дизартрія", "ехолалія", "алалія", "афазія", "фонетико-фонематичні порушення"],
-    audience: "дошкільнята, молодші школярі",
-    response: "відповідає до 2 год",
-    offer: {
-      title: "Заняття з мовлення + план вправ для дому",
-      focus: "запуск мовлення, звуковимова, комунікація",
-      format: "онлайн або кабінет"
-    },
-    tags: ["ЗМР", "дизартрія", "ЗНМ"],
-    about:
-      "На першій зустрічі визначає мовленнєвий профіль, узгоджує цілі та дає батькам зрозумілий план між заняттями.",
-    reviewItems: [
-      {
-        id: "r1-1",
-        author: "Ірина",
-        date: "2026-06-03",
-        rating: 5.0,
-        text: "Після першої зустрічі отримали короткий план вправ і зрозуміли, як займатися вдома без перевантаження.",
-        likes: 18,
-        dislikes: 1
-      },
-      {
-        id: "r1-2",
-        author: "Андрій",
-        date: "2026-05-28",
-        rating: 4.9,
-        text: "Сподобалося, що фахівець пояснив цілі простими словами й уточнив, які зміни відстежувати щотижня.",
-        likes: 12,
-        dislikes: 0
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Анна Кузнєцова",
-    initials: "АК",
-    specialty: "Клінічний психолог",
-    specialties: ["Клінічний психолог", "Дитячий психолог", "Нейропсихолог"],
-    regionId: "",
-    region: "",
-    city: "",
-    district: "Онлайн",
-    formats: ["Онлайн"],
-    rating: 4.8,
-    reviews: 34,
-    price: 1500,
-    duration: 50,
-    next: "завтра, 10:00",
-    createdAt: "2026-05-15",
-    status: "active",
-    verified: true,
-    headline: "Психологічна підтримка родини, адаптація до школи та емоційна регуляція",
-    education: "КНУ ім. Шевченка, клінічна психологія; навчання з КПТ для дітей",
-    experience: "9 років практики",
-    worksWith: "тривожність, аутизм, СДУГ, поведінкові труднощі",
-    nosologies: ["РАС (аутизм)", "СДУГ", "тривожність", "шкільна дезадаптація", "селективний мутизм", "емоційна дисрегуляція", "розлади навчання"],
-    audience: "діти, підлітки, батьки",
-    response: "відповідає протягом дня",
-    offer: {
-      title: "Консультація психолога для родини",
-      focus: "емоції, адаптація, підтримка школи",
-      format: "онлайн"
-    },
-    tags: ["тривожність", "аутизм", "СДУГ"],
-    about:
-      "Після консультації надсилає короткий підсумок, рекомендації для дому та питання для узгодження зі школою.",
-    reviewItems: [
-      {
-        id: "r2-1",
-        author: "Світлана",
-        date: "2026-06-05",
-        rating: 4.8,
-        text: "Консультація допомогла узгодити дії родини та школи. Окремо ціную спокійний тон спілкування.",
-        likes: 15,
-        dislikes: 1
-      },
-      {
-        id: "r2-2",
-        author: "Наталя",
-        date: "2026-05-22",
-        rating: 4.7,
-        text: "Побачили чітку структуру занять і домашніх кроків. Дитині було комфортно, без тиску.",
-        likes: 10,
-        dislikes: 0
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: "Ігор Лебедєв",
-    initials: "ІЛ",
-    specialty: "ABA-терапевт",
-    specialties: ["ABA-терапевт", "Поведінковий аналітик", "Ігровий терапевт"],
-    regionId: "UA46000000000026241",
-    region: "Львівська",
-    city: "UA46060250010015970",
-    district: "Галицький",
-    formats: ["У фахівця", "У учня"],
-    rating: 5.0,
-    reviews: 42,
-    price: 1400,
-    duration: 60,
-    next: "сьогодні, 18:00",
-    createdAt: "2026-06-01",
-    status: "active",
-    verified: true,
-    headline: "ABA-програма, розвиток комунікації та навчання батьків",
-    education: "Сертифікована ABA-підготовка; супервізії з поведінковим аналітиком",
-    experience: "6 років практики",
-    worksWith: "аутизм, функціональна комунікація, небажана поведінка",
-    nosologies: ["РАС (аутизм)", "СДУГ", "функціональна комунікація", "опозиційна поведінка", "самоушкоджувальна поведінка", "сенсомоторні труднощі"],
-    audience: "дошкільнята, школярі, родини",
-    response: "відповідає до 3 год",
-    offer: {
-      title: "Індивідуальна ABA-сесія з планом навичок",
-      focus: "комунікація, самостійність, поведінковий аналіз",
-      format: "кабінет або виїзд"
-    },
-    tags: ["аутизм", "навички спілкування", "ABC-аналіз"],
-    about:
-      "Перед стартом збирає дані від родини, формує цілі навичок і показує, як відстежувати прогрес між зустрічами.",
-    reviewItems: [
-      {
-        id: "r3-1",
-        author: "Юлія",
-        date: "2026-06-01",
-        rating: 5.0,
-        text: "Фахівець уважно зібрав дані перед стартом і показав, як фіксувати прогрес у побутових ситуаціях.",
-        likes: 21,
-        dislikes: 2
-      },
-      {
-        id: "r3-2",
-        author: "Максим",
-        date: "2026-05-26",
-        rating: 4.9,
-        text: "Добре, що батьків включають у процес: після сесії є конкретні вправи й зрозумілі критерії успіху.",
-        likes: 17,
-        dislikes: 1
-      }
-    ]
-  },
-  {
-    id: 4,
-    name: "Ольга Захарова",
-    initials: "ОЗ",
-    specialty: "Ерготерапевт",
-    specialties: ["Ерготерапевт", "Фахівець із сенсорної інтеграції", "Орально-моторний терапевт"],
-    regionId: "UA51000000000030770",
-    region: "Одеська",
-    city: "UA51100270010076757",
-    district: "Приморський",
-    formats: ["У фахівця"],
-    rating: 4.9,
-    reviews: 27,
-    price: 1300,
-    duration: 45,
-    next: "післязавтра, 09:30",
-    createdAt: "2026-06-08",
-    status: "active",
-    verified: true,
-    headline: "Ерготерапія, сенсорна регуляція та побутова самостійність",
-    education: "НУФВСУ, ерготерапія; курси із сенсорної інтеграції",
-    experience: "5 років практики",
-    worksWith: "сенсорна регуляція, моторика, самообслуговування",
-    nosologies: ["порушення сенсорної обробки", "ДЦП", "затримка моторного розвитку", "гіперчутливість до звуків", "сенсомоторні труднощі", "побутові навички"],
-    audience: "дошкільнята, молодші школярі, батьки",
-    response: "відповідає до 4 год",
-    offer: {
-      title: "Ерготерапевтичне заняття + домашня адаптація",
-      focus: "сенсорний профіль, моторика, побутові навички",
-      format: "кабінет"
-    },
-    tags: ["сенсорна інтеграція", "моторика", "побутові навички"],
-    about:
-      "Пояснює, як адаптувати побутові задачі, робоче місце та сенсорні паузи без перевантаження родини.",
-    reviewItems: [
-      {
-        id: "r4-1",
-        author: "Олена",
-        date: "2026-06-07",
-        rating: 4.9,
-        text: "Отримали корисні поради для дому: як організувати сенсорні паузи, робоче місце й побутові задачі.",
-        likes: 14,
-        dislikes: 0
-      },
-      {
-        id: "r4-2",
-        author: "Тарас",
-        date: "2026-05-30",
-        rating: 4.8,
-        text: "Пояснення були практичними. Частину рекомендацій змогли застосувати вже наступного дня.",
-        likes: 9,
-        dislikes: 1
-      }
-    ]
-  },
-  {
-    id: 5,
-    name: "Центр Гармонія",
-    initials: "ЦГ",
-    specialty: "Центр раннього втручання",
-    specialties: ["Центр раннього втручання", "Координатор раннього втручання", "Кейс-менеджер"],
-    regionId: "UA12000000000090473",
-    region: "Дніпропетровська",
-    city: "UA12020010010037010",
-    district: "Соборний",
-    formats: ["У фахівця", "У учня"],
-    rating: 4.7,
-    reviews: 88,
-    price: 1800,
-    duration: 60,
-    next: "п'ятниця, 12:00",
-    createdAt: "2026-05-10",
-    status: "active",
-    verified: true,
-    headline: "Командна оцінка розвитку та маршрут раннього втручання",
-    education: "Мультидисциплінарна команда: психолог, логопед, ерготерапевт, координатор",
-    experience: "12 років роботи центру",
-    worksWith: "раннє втручання, діагностика, супровід родини",
-    nosologies: ["затримка загального розвитку", "РАС (аутизм)", "ДЦП", "генетичні синдроми", "порушення харчування", "затримка психомовленнєвого розвитку"],
-    audience: "родини з дітьми раннього та дошкільного віку",
-    response: "відповідає до 1 робочого дня",
-    offer: {
-      title: "Первинна командна консультація",
-      focus: "оцінка розвитку, план занять, координація послуг",
-      format: "центр або виїзд"
-    },
-    tags: ["команда", "діагностика", "раннє втручання"],
-    about:
-      "Після зустрічі родина отримує короткий висновок, пріоритети підтримки та пропозицію наступних фахівців.",
-    reviewItems: [
-      {
-        id: "r5-1",
-        author: "Вікторія",
-        date: "2026-06-04",
-        rating: 4.8,
-        text: "Команда подивилася на запит комплексно й запропонувала пріоритети без зайвих призначень.",
-        likes: 24,
-        dislikes: 2
-      },
-      {
-        id: "r5-2",
-        author: "Роман",
-        date: "2026-05-24",
-        rating: 4.7,
-        text: "Сподобалося, що після консультації був короткий висновок і зрозумілий маршрут наступних кроків.",
-        likes: 16,
-        dislikes: 1
-      }
-    ]
-  }
-];
+
+const listings = [];
 
 let moderationItems = [
   {
@@ -2135,6 +1859,30 @@ function filteredListings() {
   return result;
 }
 
+async function loadListingsFromDatabase() {
+  if (!elements.listingList) return;
+  try {
+    const response = await fetch("/api/listings.php", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(result.listings)) {
+      throw new Error(result.message || "Не вдалося завантажити оголошення.");
+    }
+    listings.splice(0, listings.length, ...result.listings);
+    await hydrateCityNames();
+    renderCategories();
+    renderListings();
+  } catch (error) {
+    listings.splice(0, listings.length);
+    renderCategories();
+    renderListings();
+    console.warn("Cannot load listings from the database", error);
+  }
+}
+
 function renderListings() {
   if (!elements.listingList || !elements.resultCount) return;
   const data = filteredListings();
@@ -2157,13 +1905,13 @@ function renderListings() {
     .map((listing) => {
       const remaining = daysLeft(listing);
       const expiring = remaining <= 3;
-      const visibleNosologies = listing.nosologies.slice(0, 3).join(", ");
+      const visibleNosologies = listing.nosologies.slice(0, 3).map(escapeHtml).join(", ");
       const hiddenNosologyCount = listing.nosologies.length - 3;
       return `
         <article class="listing-card listing-card-compact ${expiring ? "is-expiring" : ""}">
-          <div class="avatar" aria-hidden="true">${listing.initials}</div>
+          <div class="avatar" aria-hidden="true">${escapeHtml(listing.initials)}</div>
           <div class="listing-main">
-            <h3>${listing.name}</h3>
+            <h3>${escapeHtml(listing.name)}</h3>
             <div class="compact-stats">
               <span class="compact-nosologies"><strong>Нозології:</strong> ${visibleNosologies}${hiddenNosologyCount > 0 ? ` +${hiddenNosologyCount}` : ""}</span>
               <span class="rating"><span class="star">★</span>${listing.rating.toFixed(1)} <small>(${listing.reviews})</small></span>
@@ -2231,12 +1979,12 @@ function renderSpecialistReviews(listing) {
               <article class="profile-review">
                 <div class="profile-review-top">
                   <div>
-                    <strong>${review.author}</strong>
+                    <strong>${escapeHtml(review.author)}</strong>
                     <span>Дата: ${formatReviewDate(review.date)}</span>
                   </div>
                   <span class="rating"><span class="star">★</span>${review.rating.toFixed(1)}</span>
                 </div>
-                <p>${review.text}</p>
+                <p>${escapeHtml(review.text)}</p>
                 <div class="review-reactions" aria-label="Оцінка коментаря">
                   <button class="reaction-button ${counts.vote === "like" ? "is-active" : ""}" type="button" data-review-vote data-review-id="${review.id}" data-vote="like" aria-label="Вподобати відгук">
                     <span aria-hidden="true">&#128077;</span>
@@ -2264,44 +2012,44 @@ function openSpecialistDetails(listingId) {
   elements.specialistDetail.dataset.listingId = listing.id;
   elements.specialistDetail.innerHTML = `
     <div class="specialist-detail-head">
-      <div class="avatar" aria-hidden="true">${listing.initials}</div>
+      <div class="avatar" aria-hidden="true">${escapeHtml(listing.initials)}</div>
       <div>
         <p class="section-note">Анкета фахівця</p>
-        <h2 id="specialistDetailTitle">${listing.name}</h2>
-        <p>${formatListingSpecialties(listing)} · ${listingCityLabel(listing)} · ${listing.formats.join(", ")}</p>
+        <h2 id="specialistDetailTitle">${escapeHtml(listing.name)}</h2>
+        <p>${escapeHtml(formatListingSpecialties(listing))} · ${escapeHtml(listingCityLabel(listing))} · ${listing.formats.map(escapeHtml).join(", ")}</p>
       </div>
     </div>
     <div class="specialist-summary">
       <span><strong>Рейтинг:</strong> <span class="star">★</span>${listing.rating.toFixed(1)} (${listing.reviews})</span>
       <span><strong>Ціна:</strong> ${listing.price.toLocaleString("uk-UA")} ₴ / ${listing.duration} хв</span>
-      <span><strong>Графік:</strong> ${listing.next}</span>
+      <span><strong>Графік:</strong> ${escapeHtml(listing.next)}</span>
       <span><strong>Термін оголошення:</strong> ${remaining > 0 ? `${remaining} дн. до зняття` : "Буде знято"}</span>
     </div>
-    <p class="listing-subtitle">${listing.headline}</p>
-    <p>${listing.about}</p>
+    <p class="listing-subtitle">${escapeHtml(listing.headline)}</p>
+    <p>${escapeHtml(listing.about)}</p>
     <div class="listing-facts" aria-label="Деталі анкети">
-      <span><strong>Освіта:</strong> ${listing.education}</span>
-      <span><strong>Досвід:</strong> ${listing.experience}</span>
-      <span><strong>Працює з:</strong> ${listing.worksWith}</span>
-      <span><strong>Для кого:</strong> ${listing.audience}</span>
-      <span><strong>Відповідає:</strong> ${listing.response}</span>
-      <span><strong>Формат роботи:</strong> ${listing.formats.join(", ")}</span>
-      <span><strong>Спеціальності:</strong> ${listingSpecialties.join(", ")}</span>
+      <span><strong>Освіта:</strong> ${escapeHtml(listing.education)}</span>
+      <span><strong>Досвід:</strong> ${escapeHtml(listing.experience)}</span>
+      <span><strong>Працює з:</strong> ${escapeHtml(listing.worksWith)}</span>
+      <span><strong>Для кого:</strong> ${escapeHtml(listing.audience)}</span>
+      <span><strong>Відповідає:</strong> ${escapeHtml(listing.response)}</span>
+      <span><strong>Формат роботи:</strong> ${listing.formats.map(escapeHtml).join(", ")}</span>
+      <span><strong>Спеціальності:</strong> ${listingSpecialties.map(escapeHtml).join(", ")}</span>
     </div>
     <div class="listing-offer">
       <strong>Оголошення:</strong>
-      <span>${listing.offer.title}</span>
-      <small>${listing.offer.focus} · ${listing.offer.format}</small>
+      <span>${escapeHtml(listing.offer.title)}</span>
+      <small>${escapeHtml(listing.offer.focus)} · ${escapeHtml(listing.offer.format)}</small>
     </div>
     <section class="nosology-block">
       <h3>Нозології, з якими працює</h3>
       <div class="tag-row">
-        ${listing.nosologies.map((item) => `<span class="tag">${item}</span>`).join("")}
+        ${listing.nosologies.map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
       </div>
     </section>
     ${renderSpecialistReviews(listing)}
     <div class="tag-row">
-      ${listing.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+      ${listing.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
       ${listing.verified ? `<span class="tag">Документи додані</span>` : ""}
     </div>
     <div class="detail-actions">
@@ -3934,6 +3682,7 @@ function init() {
   updateFormatSummary();
   updatePublishSubmitState();
   renderListings();
+  loadListingsFromDatabase();
   renderSpecialtyGrid();
   renderModeration();
   renderAdminReviews();
