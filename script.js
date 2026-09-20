@@ -979,6 +979,8 @@ let mapDatabasePromise = null;
 let siteDatabasePromise = null;
 let searchCatalogTree = [];
 const cityNameCache = new Map();
+const serviceOfferEditId = Number(new URLSearchParams(window.location.search).get("edit")) || 0;
+let serviceOfferDependenciesPromise = Promise.resolve();
 
 try {
   reviewVotes = JSON.parse(localStorage.getItem("reviewVotes") || "{}");
@@ -1414,6 +1416,9 @@ const elements = {
   placeDistrictPanels: document.querySelectorAll("[data-district-panel]"),
   publishSubmit: document.querySelector("[data-publish-submit]"),
   publishConsents: document.querySelectorAll("[data-publish-consent]"),
+  serviceOfferTitle: document.querySelector("#serviceOfferTitle"),
+  serviceOfferEyebrow: document.querySelector("#serviceOfferEyebrow"),
+  serviceOfferCancel: document.querySelector("#serviceOfferCancel"),
   adminContactStatus: document.querySelector("#adminContactStatus")
 };
 
@@ -1468,8 +1473,9 @@ function fillProfileEmail(email = currentProfileEmail()) {
   });
 }
 
-function renderPublishPhoneOptions(phones = []) {
+function renderPublishPhoneOptions(phones = [], selectedPhones = []) {
   if (!elements.publishPhoneOptions) return;
+  const selected = new Set(selectedPhones.map((phone) => String(phone)));
   elements.publishPhoneOptions.replaceChildren();
   if (!phones.length) {
     const empty = document.createElement("p");
@@ -1485,6 +1491,7 @@ function renderPublishPhoneOptions(phones = []) {
     input.type = "checkbox";
     input.name = "phones";
     input.value = String(phone.value || "");
+    input.checked = selected.has(input.value);
     const text = document.createElement("span");
     text.textContent = input.value;
     label.append(input, text);
@@ -1501,16 +1508,96 @@ async function loadPublishAccountContacts() {
       headers: { Accept: "application/json" }
     });
     if (response.status === 401) {
-      window.location.href = `auth.php?next=${encodeURIComponent("publish.html")}`;
+      const nextPage = serviceOfferEditId ? `service_offer.html?edit=${serviceOfferEditId}` : "service_offer.html";
+      window.location.href = `auth.php?next=${encodeURIComponent(nextPage)}`;
       return;
     }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.message || "Не вдалося завантажити контакти акаунта.");
+    const editListing = serviceOfferEditId
+      ? (data.listings || []).find((listing) => listing.kind === "specialist" && Number(listing.id) === serviceOfferEditId)
+      : null;
     fillProfileEmail(data.profile?.email || "");
-    renderPublishPhoneOptions(Array.isArray(data.phones) ? data.phones : []);
+    renderPublishPhoneOptions(Array.isArray(data.phones) ? data.phones : [], editListing?.phones || []);
+    if (serviceOfferEditId) {
+      if (!editListing) throw new Error("Оголошення не знайдено або воно належить іншому користувачу.");
+      await serviceOfferDependenciesPromise;
+      await populateServiceOfferEditForm(editListing);
+    }
   } catch (error) {
     renderPublishPhoneOptions([]);
+    const status = document.querySelector("#publishStatus");
+    if (status) status.textContent = error.message || "Не вдалося завантажити оголошення.";
+    if (serviceOfferEditId && elements.publishSubmit) elements.publishSubmit.disabled = true;
   }
+}
+
+function activeCatalogGroupForSpecialties(specialties = []) {
+  const selected = new Set(specialties);
+  for (const section of activeCatalogTree()) {
+    for (const group of section.groups || []) {
+      if ((group.items || []).some((item) => selected.has(item))) return group;
+    }
+  }
+  return null;
+}
+
+async function regionIdForCity(cityId) {
+  if (!cityId) return "";
+  const db = await loadMapDatabase();
+  const value = quoteSqlValue(cityId);
+  const row = sqlRows(
+    db,
+    `SELECT l1_parent_id
+     FROM entries
+     WHERE type in (2, 5, 7, 8) and (l4_parent_id = ${value} or l1_parent_id = ${value})
+     ORDER BY type asc
+     LIMIT 1`
+  )[0];
+  return String(row?.l1_parent_id || "").trim();
+}
+
+async function populateServiceOfferEditForm(listing) {
+  const form = document.querySelector("#publishForm");
+  if (!form) return;
+  document.title = "Пошук фахівця - редагувати оголошення";
+  form.setAttribute("aria-label", "Редагування оголошення фахівця");
+  if (elements.serviceOfferTitle) elements.serviceOfferTitle.textContent = "Редагувати оголошення";
+  if (elements.serviceOfferEyebrow) elements.serviceOfferEyebrow.textContent = "Ваше оголошення";
+  if (elements.serviceOfferCancel) elements.serviceOfferCancel.hidden = false;
+  if (elements.publishSubmit) elements.publishSubmit.textContent = "Зберегти зміни";
+
+  selectedPublishSpecialties.clear();
+  (listing.specialties || []).forEach((specialty) => selectedPublishSpecialties.add(specialty));
+  const group = activeCatalogGroupForSpecialties(listing.specialties || []);
+  if (group && elements.publishCategory) {
+    elements.publishCategory.value = group.title;
+    renderPublishCategoryTree(group.title);
+  }
+  updatePublishSpecialtyOptions(false);
+
+  const cityId = String(listing.cityId || "");
+  const regionId = await regionIdForCity(cityId);
+  if (elements.regionSelect) elements.regionSelect.value = regionId;
+  await updatePublishCityOptions(cityId);
+
+  const selectedFormats = new Set(listing.formats || []);
+  form.querySelectorAll('input[name="formats"]').forEach((control) => {
+    control.checked = selectedFormats.has(control.value);
+  });
+  updatePlaceDistrictPanel();
+  const selectedDistricts = new Set(listing.districts || []);
+  form.querySelectorAll('input[name="specialistDistricts"], input[name="studentDistricts"]').forEach((control) => {
+    control.checked = selectedDistricts.has(control.value) && !control.closest(".is-hidden");
+  });
+  form.elements.autoDeleteDays.value = String(listing.autoDeleteDays || 30);
+  form.elements.paymentAmount.value = String(listing.amount ?? 0);
+  form.elements.durationMinutes.value = String(listing.durationMinutes || 60);
+  form.elements.description.value = listing.description || "";
+  elements.publishConsents.forEach((control) => {
+    control.checked = true;
+  });
+  updatePublishSubmitState();
 }
 
 function renderSelectedPublishSpecialties() {
@@ -3560,7 +3647,8 @@ function bindEvents() {
     ].join(" · ");
     const publishStatus = document.querySelector("#publishStatus");
     try {
-      const response = await fetch("/api/account/listings.php", {
+      const endpoint = serviceOfferEditId ? "/api/account/update-listing.php" : "/api/account/listings.php";
+      const response = await fetch(endpoint, {
         method: "POST",
         credentials: "same-origin",
         headers: {
@@ -3568,6 +3656,7 @@ function bindEvents() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          ...(serviceOfferEditId ? { id: serviceOfferEditId } : {}),
           city: cityId,
           specialties: selectedSpecialties,
           formats,
@@ -3582,13 +3671,21 @@ function bindEvents() {
       });
       const result = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        window.location.href = `auth.php?next=${encodeURIComponent("publish.html")}`;
+        const nextPage = serviceOfferEditId ? `service_offer.html?edit=${serviceOfferEditId}` : "service_offer.html";
+        window.location.href = `auth.php?next=${encodeURIComponent(nextPage)}`;
         return;
       }
-      if (!response.ok) throw new Error(result.message || "Не вдалося опублікувати оголошення.");
+      if (!response.ok) throw new Error(result.message || (serviceOfferEditId ? "Не вдалося зберегти зміни." : "Не вдалося опублікувати оголошення."));
     } catch (error) {
       if (publishStatus) {
-        publishStatus.textContent = error.message || "Не вдалося опублікувати оголошення.";
+        publishStatus.textContent = error.message || (serviceOfferEditId ? "Не вдалося зберегти зміни." : "Не вдалося опублікувати оголошення.");
+        applyLanguage(publishStatus);
+      }
+      return;
+    }
+    if (serviceOfferEditId) {
+      if (publishStatus) {
+        publishStatus.textContent = "Зміни збережено.";
         applyLanguage(publishStatus);
       }
       return;
@@ -3675,8 +3772,7 @@ function handleModerationClick(event) {
 
 function init() {
   fillSelects();
-  loadSearchCatalogTree();
-  loadRegionOptions();
+  serviceOfferDependenciesPromise = Promise.all([loadSearchCatalogTree(), loadRegionOptions()]);
   runExpirationSweep();
   renderCategories();
   updateFormatSummary();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Пошук фахівця - особистий кабінет</title>
     <meta name="description" content="Особистий кабінет користувача сайту Пошук фахівця." />
-    <link rel="stylesheet" href="styles.css?v=listing-editor-20260921" />
+    <link rel="stylesheet" href="styles.css?v=service-offer-edit-20260921" />
   </head>
   <body>
     <header class="site-header">
@@ -103,7 +103,7 @@
       <section class="account-view" data-account-view="listings" hidden>
         <div class="account-section-heading">
           <div><h2>Мої оголошення</h2></div>
-          <a class="primary-button" id="accountPublishAction" href="publish.html" data-publish-link>Розмістити оголошення</a>
+          <a class="primary-button" id="accountPublishAction" href="service_offer.html" data-publish-link>Розмістити оголошення</a>
         </div>
         <div class="account-feed" id="accountListings"></div>
       </section>
@@ -117,42 +117,6 @@
 
       <p class="account-load-status" id="accountLoadStatus" role="status">Завантаження...</p>
     </main>
-
-    <dialog class="account-delete-dialog account-edit-dialog" id="editListingDialog" aria-labelledby="editListingTitle">
-      <form id="editListingForm">
-        <h2 id="editListingTitle">Редагувати оголошення</h2>
-        <input type="hidden" name="id" />
-        <label>
-          <span>Короткий опис</span>
-          <textarea name="description" rows="5" maxlength="2000" required></textarea>
-        </label>
-        <div class="field-grid">
-          <label>
-            <span>Вартість заняття</span>
-            <input type="number" name="price" min="0" step="50" required />
-          </label>
-          <label>
-            <span>Тривалість заняття</span>
-            <input type="number" name="durationMinutes" min="15" max="480" step="5" required />
-          </label>
-        </div>
-        <fieldset class="option-group account-edit-formats">
-          <legend>Місце занять</legend>
-          <label class="checkbox-row"><input type="checkbox" name="formats" value="Онлайн" /><span>Онлайн</span></label>
-          <label class="checkbox-row"><input type="checkbox" name="formats" value="У фахівця" /><span>У фахівця</span></label>
-          <label class="checkbox-row"><input type="checkbox" name="formats" value="У учня" /><span>У учня</span></label>
-        </fieldset>
-        <label>
-          <span>Райони через кому</span>
-          <input type="text" name="districts" maxlength="1000" placeholder="Наприклад, Шевченківський, Подільський" />
-        </label>
-        <p class="form-status" id="editListingStatus" role="status"></p>
-        <div class="dialog-actions">
-          <button class="ghost-button" type="button" data-edit-listing-cancel>Скасувати</button>
-          <button class="primary-button" type="submit">Зберегти зміни</button>
-        </div>
-      </form>
-    </dialog>
 
     <dialog class="account-delete-dialog" id="deleteAccountDialog" aria-labelledby="deleteAccountTitle">
       <section data-delete-step="first">
@@ -174,7 +138,7 @@
       </section>
     </dialog>
 
-    <script src="cabinet.js?v=listing-editor-20260921"></script>
-    <script src="session.js?v=roleless-users-20260920"></script>
+    <script src="cabinet.js?v=service-offer-edit-20260921"></script>
+    <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

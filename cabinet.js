@@ -12,9 +12,6 @@ const accountElements = {
   listings: document.querySelector("#accountListings"),
   notifications: document.querySelector("#accountNotifications"),
   publishAction: document.querySelector("#accountPublishAction"),
-  editListingDialog: document.querySelector("#editListingDialog"),
-  editListingForm: document.querySelector("#editListingForm"),
-  editListingStatus: document.querySelector("#editListingStatus"),
   contactForms: document.querySelectorAll("[data-contact-form]"),
   deleteDialog: document.querySelector("#deleteAccountDialog"),
   deleteFirstStep: document.querySelector('[data-delete-step="first"]'),
@@ -27,8 +24,6 @@ const accountElements = {
   tabs: document.querySelectorAll("[data-account-tab]"),
   views: document.querySelectorAll("[data-account-view]")
 };
-
-let accountListings = [];
 
 function setDeleteStep(step) {
   const second = step === "second";
@@ -120,7 +115,6 @@ function emptyFeed(text) {
 }
 
 function renderListings(listings) {
-  accountListings = listings;
   accountElements.listings.replaceChildren();
   if (!listings.length) {
     accountElements.listings.append(emptyFeed("У вас ще немає оголошень"));
@@ -145,47 +139,15 @@ function renderListings(listings) {
     actions.className = "account-listing-actions";
     actions.append(status);
     if (listing.editable) {
-      const editButton = document.createElement("button");
-      editButton.className = "secondary-button account-listing-edit";
-      editButton.type = "button";
-      editButton.dataset.editListing = String(listing.id);
-      editButton.textContent = "Редагувати";
-      actions.append(editButton);
+      const editLink = document.createElement("a");
+      editLink.className = "secondary-button account-listing-edit";
+      editLink.href = `service_offer.html?edit=${encodeURIComponent(listing.id)}`;
+      editLink.textContent = "Редагувати";
+      actions.append(editLink);
     }
     article.append(main, actions);
     accountElements.listings.append(article);
   });
-}
-
-function closeEditListingDialog() {
-  if (!accountElements.editListingDialog) return;
-  if (typeof accountElements.editListingDialog.close === "function") {
-    accountElements.editListingDialog.close();
-  } else {
-    accountElements.editListingDialog.removeAttribute("open");
-  }
-  accountElements.editListingStatus.textContent = "";
-}
-
-function openEditListingDialog(listingId) {
-  const listing = accountListings.find((item) => item.kind === "specialist" && item.id === Number(listingId));
-  const form = accountElements.editListingForm;
-  if (!listing || !form || !accountElements.editListingDialog) return;
-  form.elements.id.value = String(listing.id);
-  form.elements.description.value = listing.description || "";
-  form.elements.price.value = String(listing.amount ?? 0);
-  form.elements.durationMinutes.value = String(listing.durationMinutes || 60);
-  form.elements.districts.value = (listing.districts || []).join(", ");
-  const selectedFormats = new Set(listing.formats || []);
-  form.querySelectorAll('input[name="formats"]').forEach((control) => {
-    control.checked = selectedFormats.has(control.value);
-  });
-  accountElements.editListingStatus.textContent = "";
-  if (typeof accountElements.editListingDialog.showModal === "function") {
-    accountElements.editListingDialog.showModal();
-  } else {
-    accountElements.editListingDialog.setAttribute("open", "");
-  }
 }
 
 function renderNotifications(notifications) {
@@ -258,56 +220,6 @@ async function loadAccount() {
 }
 
 accountElements.tabs.forEach((tab) => tab.addEventListener("click", () => activateAccountView(tab.dataset.accountTab)));
-
-accountElements.listings?.addEventListener("click", (event) => {
-  const editButton = event.target.closest("[data-edit-listing]");
-  if (editButton) openEditListingDialog(editButton.dataset.editListing);
-});
-
-document.querySelectorAll("[data-edit-listing-cancel]").forEach((button) => {
-  button.addEventListener("click", closeEditListingDialog);
-});
-
-accountElements.editListingForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-  const data = new FormData(form);
-  const submit = form.querySelector('button[type="submit"]');
-  const formats = data.getAll("formats").map((value) => String(value));
-  if (!formats.length) {
-    accountElements.editListingStatus.textContent = "Оберіть хоча б один формат занять.";
-    return;
-  }
-  submit.disabled = true;
-  accountElements.editListingStatus.textContent = "Зберігаємо...";
-  try {
-    const result = await accountRequest("/api/account/update-listing.php", {
-      method: "POST",
-      body: JSON.stringify({
-        id: Number(data.get("id")),
-        description: String(data.get("description") || ""),
-        price: Number(data.get("price") || 0),
-        durationMinutes: Number(data.get("durationMinutes") || 60),
-        formats,
-        districts: String(data.get("districts") || "")
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
-      })
-    });
-    renderAccount(result);
-    accountElements.editListingStatus.textContent = "Зміни збережено.";
-    setTimeout(closeEditListingDialog, 450);
-  } catch (error) {
-    accountElements.editListingStatus.textContent = error.message;
-  } finally {
-    submit.disabled = false;
-  }
-});
 
 accountElements.contactForms.forEach((form) => {
   form.addEventListener("submit", async (event) => {

@@ -18,7 +18,7 @@ let pendingActivationEmail = "";
 
 function requestedDestination(isAdmin = false) {
   const next = new URLSearchParams(window.location.search).get("next");
-  if (next === "publish.html") return next;
+  if (next === "service_offer.html" || /^service_offer\.html\?edit=\d+$/.test(next)) return next;
   if (next === "cabinet.html") return next;
   if (next === "admin.html" && isAdmin) return next;
   return "";

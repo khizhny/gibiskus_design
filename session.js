@@ -1,5 +1,5 @@
 const SESSION_ENDPOINT = "/api/auth/me.php";
-const PUBLISH_PAGE = "publish.html";
+const PUBLISH_PAGE = "service_offer.html";
 
 // Remove the obsolete client-side role value left by earlier versions.
 localStorage.removeItem("siteUserRole");

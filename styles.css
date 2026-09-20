@@ -1523,6 +1523,21 @@ h3 {
   margin: 0 auto;
 }
 
+.service-offer-heading {
+  width: min(760px, 100%);
+  margin: 0 auto 20px;
+}
+
+.service-offer-heading h1 {
+  margin: 4px 0 0;
+}
+
+.service-offer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .workflow-band h2,
 .specialists-section h2 {
   font-size: clamp(22px, 2vw, 32px);
@@ -2929,12 +2944,12 @@ label small {
   display: inline-flex;
 }
 
-a[href="publish.html"],
+a[href="service_offer.html"],
 a[data-publish-link] {
   display: none;
 }
 
-a[href="publish.html"].is-authorized-publish,
+a[href="service_offer.html"].is-authorized-publish,
 a[data-publish-link].is-authorized-publish {
   display: inline-flex;
 }
@@ -3349,30 +3364,6 @@ a[data-publish-link].is-authorized-publish {
 
 .account-delete-dialog .form-status {
   margin: 14px 0 0;
-}
-
-.account-edit-dialog {
-  width: min(680px, calc(100vw - 32px));
-}
-
-.account-edit-dialog h2 {
-  color: var(--ink);
-  margin-bottom: 20px;
-}
-
-.account-edit-dialog form {
-  display: grid;
-  gap: 16px;
-}
-
-.account-edit-dialog .dialog-actions {
-  margin-top: 4px;
-}
-
-.account-edit-formats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 22px;
 }
 
 @media (max-width: 760px) {

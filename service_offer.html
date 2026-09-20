@@ -8,7 +8,7 @@
       name="description"
       content="Сторінка розміщення оголошення фахівця: анкета, документи та продовження публікації кожні 30 днів."
     />
-    <link rel="stylesheet" href="styles.css?v=publish-account-contacts-20260920" />
+    <link rel="stylesheet" href="styles.css?v=service-offer-edit-20260921" />
   </head>
   <body>
     <header class="site-header">
@@ -33,6 +33,10 @@
 
     <main>
       <section class="workflow-band" id="publish">
+        <div class="service-offer-heading">
+          <p class="section-note" id="serviceOfferEyebrow">Нова пропозиція</p>
+          <h1 id="serviceOfferTitle">Розмістити оголошення</h1>
+        </div>
         <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця" enctype="multipart/form-data">
           <div class="field-grid contact-fields">
             <fieldset class="option-group publish-phone-options">
@@ -208,13 +212,16 @@
               <span>Погоджуюсь з <a href="privacy.html" target="_blank" rel="noopener">політикою конфіденційності</a>.</span>
             </label>
           </fieldset>
-          <button class="primary-button" type="submit" disabled data-publish-submit>Опублікувати оголошення</button>
+          <div class="service-offer-actions">
+            <a class="ghost-button" id="serviceOfferCancel" href="cabinet.html" hidden>Скасувати</a>
+            <button class="primary-button" type="submit" disabled data-publish-submit>Опублікувати оголошення</button>
+          </div>
           <p class="form-status" id="publishStatus" role="status"></p>
         </form>
       </section>
     </main>
 
-    <script src="script.js?v=lesson-price-duration-20260920"></script>
-    <script src="session.js?v=roleless-users-20260920"></script>
+    <script src="script.js?v=service-offer-edit-20260921"></script>
+    <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

@@ -1073,22 +1073,41 @@ function account_data(int $userId): array
         FROM Requests WHERE user_id = ? ORDER BY created_at DESC, id DESC
         SQL, [$userId, $userId])->fetchAll();
     foreach ($listings as &$listing) {
-        $listing['city'] = city_display_name((string) ($listing['city'] ?? ''));
+        $listing['cityId'] = (string) ($listing['city'] ?? '');
+        $listing['city'] = city_display_name($listing['cityId']);
         $listing['editable'] = $listing['kind'] === 'specialist';
         if ($listing['kind'] === 'specialist') {
             $details = fetch_one($db, <<<'SQL'
-                SELECT bio, duration_minutes, formats_json, district
+                SELECT bio, duration_minutes, formats_json, district, notes
                 FROM Specialists
                 WHERE id = ? AND user_id = ?
                 SQL, [(int) $listing['id'], $userId]);
             $formats = json_decode((string) ($details['formats_json'] ?? '[]'), true);
+            $notes = json_decode((string) ($details['notes'] ?? '{}'), true);
+            $specialtyRows = execute_sql($db, <<<'SQL'
+                SELECT r.title
+                FROM SpecialistRecords AS sr
+                INNER JOIN Catalog_record AS r ON r.id = sr.catalog_record_id
+                WHERE sr.specialist_id = ? AND r.enabled = 1
+                ORDER BY sr.is_primary DESC, sr.sort_order, sr.id
+                SQL, [(int) $listing['id']])->fetchAll();
             $listing['description'] = (string) ($details['bio'] ?? '');
             $listing['durationMinutes'] = (int) ($details['duration_minutes'] ?? 60);
             $listing['formats'] = is_array($formats) ? array_values(array_filter(array_map('strval', $formats))) : [];
+            $listing['specialties'] = array_values(array_filter(array_map(
+                fn(array $item): string => clean_text($item['title'] ?? '', 160),
+                $specialtyRows
+            )));
             $listing['districts'] = array_values(array_filter(array_map(
                 'trim',
                 explode(',', (string) ($details['district'] ?? ''))
             )));
+            $listing['phones'] = is_array($notes) && isset($notes['phones']) && is_array($notes['phones'])
+                ? array_values(array_map('strval', $notes['phones']))
+                : [];
+            $listing['autoDeleteDays'] = is_array($notes) && in_array((int) ($notes['autoDeleteDays'] ?? 0), [30, 60, 90], true)
+                ? (int) $notes['autoDeleteDays']
+                : 30;
         }
     }
     unset($listing);
@@ -1207,6 +1226,7 @@ function create_specialist_listing(int $userId, array $payload): array
         $initials = function_exists('mb_strtoupper') ? mb_strtoupper(mb_substr($initials, 0, 3)) : strtoupper(substr($initials, 0, 3));
         $notes = json_encode([
             'durationMinutes' => $durationMinutes,
+            'autoDeleteDays' => $days,
             'phones' => $phones,
             'email' => $email,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
@@ -1228,8 +1248,18 @@ function update_specialist_listing(int $userId, array $payload): array
 {
     $listingId = filter_var($payload['id'] ?? null, FILTER_VALIDATE_INT);
     if ($listingId === false || $listingId === null) throw new ApiError(400, 'Некоректне оголошення');
+    $user = user_record(database(), $userId);
+    $name = clean_text($user['name'] ?? '', 160);
     $description = clean_text($payload['description'] ?? '', 2000);
     if ($description === '') throw new ApiError(400, 'Додайте короткий опис');
+    $city = clean_text($payload['city'] ?? '', 80);
+    if ($city === '') throw new ApiError(400, 'Оберіть місто');
+    if (!isset($payload['specialties']) || !is_array($payload['specialties'])) throw new ApiError(400, 'Оберіть спеціальність');
+    $specialties = array_values(array_unique(array_filter(array_map(
+        fn(mixed $value): string => clean_text($value, 160),
+        $payload['specialties']
+    ))));
+    if ($specialties === []) throw new ApiError(400, 'Оберіть хоча б одну спеціальність');
     $price = max(0, (int) ((float) ($payload['price'] ?? 0)));
     $durationMinutes = (int) ($payload['durationMinutes'] ?? 60);
     if ($durationMinutes < 15 || $durationMinutes > 480) throw new ApiError(400, 'Некоректна тривалість заняття');
@@ -1245,23 +1275,57 @@ function update_specialist_listing(int $userId, array $payload): array
         fn(mixed $value): string => clean_text($value, 120),
         $payload['districts']
     ))));
+    if (!isset($payload['phones']) || !is_array($payload['phones'])) throw new ApiError(400, 'Оберіть номер телефону');
+    $phones = array_values(array_unique(array_filter(array_map(fn(mixed $value): string => normalize_phone($value), $payload['phones']))));
+    foreach ($phones as $phone) {
+        if (fetch_one(database(), 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]) === null) {
+            throw new ApiError(400, 'Вибраний номер не належить цьому акаунту');
+        }
+    }
+    $email = normalize_email($payload['email'] ?? '');
+    if ($email !== normalize_email($user['email'] ?? '')) throw new ApiError(400, 'Email не відповідає акаунту');
+    $days = (int) ($payload['autoDeleteDays'] ?? 30);
+    if (!in_array($days, [30, 60, 90], true)) throw new ApiError(400, 'Некоректний строк оголошення');
 
-    transaction(function (PDO $db) use ($userId, $listingId, $description, $price, $durationMinutes, $formats, $districts): void {
+    transaction(function (PDO $db) use ($userId, $listingId, $name, $description, $city, $specialties, $price, $durationMinutes, $formats, $districts, $phones, $email, $days): void {
         $listing = fetch_one($db, 'SELECT id FROM Specialists WHERE id = ? AND user_id = ?', [(int) $listingId, $userId]);
         if ($listing === null) throw new ApiError(404, 'Оголошення не знайдено');
+        $catalogIds = [];
+        foreach (array_slice($specialties, 0, 20) as $title) {
+            $row = fetch_one($db, 'SELECT id FROM Catalog_record WHERE enabled = 1 AND lower(title) = lower(?) ORDER BY id LIMIT 1', [$title]);
+            if ($row !== null && !in_array((int) $row['id'], $catalogIds, true)) $catalogIds[] = (int) $row['id'];
+        }
+        if ($catalogIds === []) throw new ApiError(400, 'Оберіть спеціальність із каталогу');
+        $expires = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->modify('+' . $days . ' days');
+        $notes = json_encode([
+            'durationMinutes' => $durationMinutes,
+            'autoDeleteDays' => $days,
+            'phones' => $phones,
+            'email' => $email,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
         execute_sql($db, <<<'SQL'
             UPDATE Specialists
-            SET bio = ?, price = ?, duration_minutes = ?, formats_json = ?, district = ?
+            SET name = ?, city = ?, catalog_record_id = ?, bio = ?, price = ?, duration_minutes = ?,
+                formats_json = ?, district = ?, expires_at = ?, status = 'active', notes = ?
             WHERE id = ? AND user_id = ?
             SQL, [
+                $name,
+                $city,
+                $catalogIds[0],
                 $description,
                 $price,
                 $durationMinutes,
                 json_encode($formats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 implode(', ', $districts),
+                $expires->format(DateTimeInterface::ATOM),
+                $notes,
                 (int) $listingId,
                 $userId,
             ]);
+        execute_sql($db, 'DELETE FROM SpecialistRecords WHERE specialist_id = ?', [(int) $listingId]);
+        foreach ($catalogIds as $index => $catalogId) {
+            execute_sql($db, 'INSERT INTO SpecialistRecords (specialist_id, catalog_record_id, is_primary, sort_order) VALUES (?, ?, ?, ?)', [(int) $listingId, $catalogId, $index === 0 ? 1 : 0, $index + 1]);
+        }
     });
     return account_data($userId);
 }
