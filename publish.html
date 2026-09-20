@@ -175,28 +175,24 @@
               <span>Сихівський</span>
             </label>
           </fieldset>
+          <label>
+            <span>Автовидалення оголошення через</span>
+            <select name="autoDeleteDays">
+              <option value="30">30 днів</option>
+              <option value="60">60 днів</option>
+              <option value="90">90 днів</option>
+            </select>
+          </label>
           <div class="field-grid">
             <label>
-              <span>Автовидалення оголошення через</span>
-              <select name="autoDeleteDays">
-                <option value="30">30 днів</option>
-                <option value="60">60 днів</option>
-                <option value="90">90 днів</option>
-              </select>
+              <span>Вартість заняття</span>
+              <input type="number" name="paymentAmount" min="0" step="50" placeholder="Наприклад, 1200" />
             </label>
             <label>
-              <span>Оплата</span>
-              <select name="paymentType">
-                <option value="Помісячна">Помісячна</option>
-                <option value="Разова">Разова</option>
-                <option value="Погодинна">Погодинна</option>
-              </select>
+              <span>Тривалість заняття</span>
+              <input type="number" name="durationMinutes" min="15" max="480" step="5" value="60" required />
             </label>
           </div>
-          <label>
-            <span>Сума оплати</span>
-            <input type="number" name="paymentAmount" min="0" step="50" placeholder="Наприклад, 1200" />
-          </label>
           <label>
             <span>Короткий опис</span>
             <textarea name="description" rows="3" placeholder="Досвід, методи роботи, формат занять" required></textarea>
@@ -218,7 +214,7 @@
       </section>
     </main>
 
-    <script src="script.js?v=publish-account-contacts-20260920"></script>
+    <script src="script.js?v=lesson-price-duration-20260920"></script>
     <script src="session.js?v=roleless-users-20260920"></script>
   </body>
 </html>

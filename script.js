@@ -132,7 +132,8 @@ const ukToEn = {
   "Помісячна": "Monthly",
   "Разова": "One-time",
   "Погодинна": "Hourly",
-  "Сума оплати": "Payment amount",
+  "Вартість заняття": "Session price",
+  "Тривалість заняття": "Session duration",
   "Наприклад, 1200": "For example, 1200",
   "Короткий опис": "Short description",
   "Досвід, методи роботи, формат занять": "Experience, methods, session format",
@@ -3789,7 +3790,7 @@ function bindEvents() {
       return;
     }
     const autoDeleteDays = data.get("autoDeleteDays");
-    const paymentType = data.get("paymentType");
+    const durationMinutes = Number(data.get("durationMinutes") || 60);
     const rawPaymentAmount = String(data.get("paymentAmount") || "").trim();
     const paymentAmount = rawPaymentAmount ? `${Number(rawPaymentAmount).toLocaleString("uk-UA")} ₴` : "не вказано";
     const notes = [
@@ -3806,7 +3807,8 @@ function bindEvents() {
       `Райони у фахівця: ${specialistDistricts.length ? specialistDistricts.join(", ") : "не вказано"}`,
       `Райони у учня: ${studentDistricts.length ? studentDistricts.join(", ") : "не вказано"}`,
       `Автовидалення: ${autoDeleteDays} днів`,
-      `Оплата: ${paymentType}, ${paymentAmount}`
+      `Вартість заняття: ${paymentAmount}`,
+      `Тривалість заняття: ${durationMinutes} хв`
     ].join(" · ");
     const publishStatus = document.querySelector("#publishStatus");
     try {
@@ -3825,7 +3827,7 @@ function bindEvents() {
           phones,
           email,
           price: rawPaymentAmount || 0,
-          paymentType,
+          durationMinutes,
           autoDeleteDays,
           description: data.get("description")
         })
@@ -3851,6 +3853,8 @@ function bindEvents() {
       regionId,
       region: regionName,
       city: cityId,
+      price: Number(rawPaymentAmount || 0),
+      duration: durationMinutes,
       districts: allDistricts.join(", "),
       status: "pending",
       createdAt: today.toISOString().slice(0, 10),

@@ -1010,6 +1010,53 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
     throw new ApiError(401, 'Invalid email or password');
 }
 
+function city_display_name(string $city): string
+{
+    $city = trim($city);
+    if ($city === '' || !str_starts_with($city, 'UA')) {
+        return $city;
+    }
+
+    static $map = null;
+    static $mapUnavailable = false;
+    static $names = [];
+    if (array_key_exists($city, $names)) {
+        return $names[$city];
+    }
+    if ($mapUnavailable) {
+        return $city;
+    }
+
+    try {
+        if (!$map instanceof PDO) {
+            $path = env_value('MAP_DB_PATH', dirname(__DIR__) . '/database/map.sqlite');
+            if (!is_file($path) || !is_readable($path)) {
+                $mapUnavailable = true;
+                return $city;
+            }
+            $map = new PDO('sqlite:' . $path, null, null, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        }
+        $row = fetch_one($map, <<<'SQL'
+            SELECT name
+            FROM entries
+            WHERE type IN (2, 5, 7, 8) AND (l4_parent_id = ? OR l1_parent_id = ?)
+            ORDER BY type ASC
+            LIMIT 1
+            SQL, [$city, $city]);
+        $name = clean_text($row['name'] ?? '', 160);
+        $names[$city] = $name !== '' ? $name : $city;
+    } catch (Throwable $error) {
+        error_log('Cannot resolve city name: ' . $error->getMessage());
+        $names[$city] = $city;
+    }
+
+    return $names[$city];
+}
+
 function account_data(int $userId): array
 {
     $db = database();
@@ -1025,6 +1072,10 @@ function account_data(int $userId): array
         SELECT id, 'request' AS kind, title, status, created_at, NULL AS expires_at, city, budget AS amount
         FROM Requests WHERE user_id = ? ORDER BY created_at DESC, id DESC
         SQL, [$userId, $userId])->fetchAll();
+    foreach ($listings as &$listing) {
+        $listing['city'] = city_display_name((string) ($listing['city'] ?? ''));
+    }
+    unset($listing);
     $notifications = execute_sql($db, <<<'SQL'
         SELECT id, 'message' AS kind, body AS text, created_at,
           coalesce((SELECT name FROM Users WHERE id = m.sender_user_id), 'Системне повідомлення') AS author
@@ -1122,9 +1173,11 @@ function create_specialist_listing(int $userId, array $payload): array
     if ($email !== normalize_email($user['email'] ?? '')) throw new ApiError(400, 'Email must match the account email');
     if ($name === '' || $description === '' || $specialties === []) throw new ApiError(400, 'Profile name, description and at least one specialty are required');
     $price = max(0, (int) ((float) ($payload['price'] ?? 0)));
+    $durationMinutes = (int) ($payload['durationMinutes'] ?? 60);
+    if ($durationMinutes < 15 || $durationMinutes > 480) throw new ApiError(400, 'Invalid session duration');
     $days = (int) ($payload['autoDeleteDays'] ?? 30);
     if (!in_array($days, [30, 60, 90], true)) throw new ApiError(400, 'Invalid listing lifetime');
-    return transaction(function (PDO $db) use ($userId, $payload, $name, $description, $city, $specialties, $formats, $districts, $phones, $email, $price, $days): array {
+    return transaction(function (PDO $db) use ($userId, $name, $description, $city, $specialties, $formats, $districts, $phones, $email, $price, $durationMinutes, $days): array {
         $catalogIds = [];
         foreach (array_slice($specialties, 0, 20) as $title) {
             $row = fetch_one($db, 'SELECT id FROM Catalog_record WHERE enabled = 1 AND lower(title) = lower(?) ORDER BY id LIMIT 1', [$title]);
@@ -1137,7 +1190,7 @@ function create_specialist_listing(int $userId, array $payload): array
         foreach ($parts as $part) $initials .= function_exists('mb_substr') ? mb_substr($part, 0, 1) : substr($part, 0, 1);
         $initials = function_exists('mb_strtoupper') ? mb_strtoupper(mb_substr($initials, 0, 3)) : strtoupper(substr($initials, 0, 3));
         $notes = json_encode([
-            'paymentType' => clean_text($payload['paymentType'] ?? '', 80),
+            'durationMinutes' => $durationMinutes,
             'phones' => $phones,
             'email' => $email,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
@@ -1145,8 +1198,8 @@ function create_specialist_listing(int $userId, array $payload): array
             INSERT INTO Specialists (user_id, catalog_record_id, city, name, initials, price, duration_minutes,
               rating, reviews_count, district, formats_json, nosologies_json, schedule, response_time, bio,
               education, experience, created_at, expires_at, status, notes)
-            VALUES (?, ?, ?, ?, ?, ?, 60, 0, 0, ?, ?, '[]', '', '', ?, '', '', ?, ?, 'active', ?)
-            SQL, [$userId, $catalogIds[0] ?? null, $city, $name, $initials, $price, implode(', ', array_values(array_unique($districts))), json_encode($formats, JSON_UNESCAPED_UNICODE), $description, $now->format(DateTimeInterface::ATOM), $expires->format(DateTimeInterface::ATOM), $notes]);
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, '[]', '', '', ?, '', '', ?, ?, 'active', ?)
+            SQL, [$userId, $catalogIds[0] ?? null, $city, $name, $initials, $price, $durationMinutes, implode(', ', array_values(array_unique($districts))), json_encode($formats, JSON_UNESCAPED_UNICODE), $description, $now->format(DateTimeInterface::ATOM), $expires->format(DateTimeInterface::ATOM), $notes]);
         $specialistId = (int) $db->lastInsertId();
         foreach ($catalogIds as $index => $catalogId) {
             execute_sql($db, 'INSERT INTO SpecialistRecords (specialist_id, catalog_record_id, is_primary, sort_order) VALUES (?, ?, ?, ?)', [$specialistId, $catalogId, $index === 0 ? 1 : 0, $index + 1]);
