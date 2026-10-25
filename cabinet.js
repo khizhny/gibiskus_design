@@ -3,6 +3,10 @@ const accountElements = {
   formStatus: document.querySelector("#accountProfileStatus"),
   passwordForm: document.querySelector("#accountPasswordForm"),
   passwordStatus: document.querySelector("#accountPasswordStatus"),
+  passwordResult: document.querySelector("#accountPasswordResult"),
+  passwordDialog: document.querySelector("#passwordDialog"),
+  openPassword: document.querySelector("#openPasswordDialog"),
+  cancelPassword: document.querySelector("[data-close-password]"),
   currentPasswordField: document.querySelector("#currentPasswordField"),
   loadStatus: document.querySelector("#accountLoadStatus"),
   memberMeta: document.querySelector("#accountMemberMeta"),
@@ -238,6 +242,23 @@ accountElements.phoneDialog?.addEventListener("cancel", (event) => {
   if (accountElements.phoneDialog.getAttribute("aria-busy") === "true") event.preventDefault();
 });
 
+accountElements.openPassword?.addEventListener("click", () => {
+  accountElements.passwordForm.reset();
+  accountElements.passwordStatus.textContent = "";
+  accountElements.passwordResult.textContent = "";
+  accountElements.passwordDialog.showModal();
+  const firstVisibleInput = [...accountElements.passwordForm.elements].find(
+    (element) => element instanceof HTMLInputElement && !element.closest("[hidden]")
+  );
+  firstVisibleInput?.focus();
+});
+
+accountElements.cancelPassword?.addEventListener("click", () => accountElements.passwordDialog.close());
+
+accountElements.passwordDialog?.addEventListener("cancel", (event) => {
+  if (accountElements.passwordDialog.getAttribute("aria-busy") === "true") event.preventDefault();
+});
+
 accountElements.contactForms.forEach((form) => {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -332,6 +353,8 @@ accountElements.passwordForm?.addEventListener("submit", async (event) => {
   }
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
+  accountElements.cancelPassword.disabled = true;
+  accountElements.passwordDialog.setAttribute("aria-busy", "true");
   accountElements.passwordStatus.textContent = "Змінюємо пароль...";
   try {
     await accountRequest("/api/account/password.php", {
@@ -345,11 +368,14 @@ accountElements.passwordForm?.addEventListener("submit", async (event) => {
     form.reset();
     accountElements.currentPasswordField.hidden = false;
     form.elements.currentPassword.required = true;
-    accountElements.passwordStatus.textContent = "Пароль успішно змінено.";
+    accountElements.passwordDialog.close();
+    accountElements.passwordResult.textContent = "Пароль успішно змінено.";
   } catch (error) {
     accountElements.passwordStatus.textContent = error.message;
   } finally {
     submit.disabled = false;
+    accountElements.cancelPassword.disabled = false;
+    accountElements.passwordDialog.removeAttribute("aria-busy");
   }
 });
 

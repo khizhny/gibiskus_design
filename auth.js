@@ -4,7 +4,7 @@ const elements = {
   status: document.querySelector("#authStatus"),
   googleMount: document.querySelector("#googleAuthButton"),
   googleNote: document.querySelector("#googleAuthNote"),
-  emailToggle: document.querySelector("#emailLoginToggle"),
+  loginOptions: document.querySelector("#authLoginOptions"),
   emailForm: document.querySelector("#emailLoginForm"),
   forgotToggle: document.querySelector("#forgotPasswordToggle"),
   forgotForm: document.querySelector("#forgotPasswordForm"),
@@ -27,21 +27,10 @@ function setStatus(message, type = "info") {
   elements.status.dataset.status = type;
 }
 
-function toggleEmailLogin() {
-  if (!elements.emailForm || !elements.emailToggle) return;
-  const shouldOpen = elements.emailForm.hidden;
-  elements.emailForm.hidden = !shouldOpen;
-  elements.emailToggle.setAttribute("aria-expanded", String(shouldOpen));
-  elements.emailToggle.classList.toggle("is-active", shouldOpen);
-  setStatus("");
-  if (shouldOpen) elements.emailForm.elements.email?.focus();
-}
-
 function showForgotPassword() {
   const loginEmail = elements.emailForm?.elements.email?.value || "";
-  elements.emailForm.hidden = true;
+  elements.loginOptions.hidden = true;
   elements.forgotForm.hidden = false;
-  elements.emailToggle.hidden = true;
   elements.forgotForm.elements.email.value = loginEmail;
   elements.forgotForm.elements.email.focus();
   setStatus("");
@@ -49,9 +38,7 @@ function showForgotPassword() {
 
 function hideForgotPassword() {
   elements.forgotForm.hidden = true;
-  elements.emailForm.hidden = false;
-  elements.emailToggle.hidden = false;
-  elements.emailToggle.setAttribute("aria-expanded", "true");
+  elements.loginOptions.hidden = false;
   elements.emailForm.elements.email.focus();
   setStatus("");
 }
@@ -160,7 +147,6 @@ function initializeGoogleLogin() {
   googleInitialized = true;
 }
 
-elements.emailToggle?.addEventListener("click", toggleEmailLogin);
 elements.forgotToggle?.addEventListener("click", showForgotPassword);
 elements.forgotCancel?.addEventListener("click", hideForgotPassword);
 

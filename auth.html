@@ -6,7 +6,7 @@
     <meta name="referrer" content="no-referrer-when-downgrade" />
     <title>Пошук фахівця - вхід</title>
     <meta name="description" content="Вхід для зареєстрованих користувачів через Google або email." />
-    <link rel="stylesheet" href="styles.css?v=typography-20260920" />
+    <link rel="stylesheet" href="styles.css?v=email-first-auth-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -29,37 +29,25 @@
 
     <main>
       <section class="auth-layout login-layout" id="auth">
-        <div class="auth-intro">
-          <h1>Вхід до акаунта</h1>
-        </div>
-
         <section class="auth-panel" aria-label="Форма входу">
-          <div class="auth-login-methods" aria-label="Спосіб входу">
+          <div class="auth-login-options" id="authLoginOptions">
+            <form class="auth-email-login-form" id="emailLoginForm" aria-label="Вхід за email">
+              <label>
+                <span>Email</span>
+                <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
+              </label>
+              <label>
+                <span>Пароль</span>
+                <input type="password" name="password" autocomplete="current-password" minlength="8" maxlength="128" required />
+              </label>
+              <button class="primary-button" type="submit">Увійти</button>
+            </form>
+
+            <div class="auth-method-divider" aria-hidden="true"><span>або</span></div>
             <div class="google-auth-mount" id="googleAuthButton" aria-live="polite"></div>
             <p class="auth-provider-note" id="googleAuthNote"></p>
-            <button
-              class="secondary-button auth-email-toggle"
-              id="emailLoginToggle"
-              type="button"
-              aria-expanded="false"
-              aria-controls="emailLoginForm"
-            >
-              Вхід через email
-            </button>
-          </div>
-
-          <form class="auth-email-login-form" id="emailLoginForm" aria-label="Вхід за email" hidden>
-            <label>
-              <span>Email</span>
-              <input type="email" name="email" autocomplete="email" placeholder="name@example.com" required />
-            </label>
-            <label>
-              <span>Пароль</span>
-              <input type="password" name="password" autocomplete="current-password" minlength="8" maxlength="128" required />
-            </label>
-            <button class="primary-button" type="submit">Увійти</button>
             <button class="auth-forgot-toggle" id="forgotPasswordToggle" type="button">Забули пароль?</button>
-          </form>
+          </div>
 
           <form class="auth-forgot-form" id="forgotPasswordForm" aria-label="Відновлення пароля" hidden>
             <h2>Відновлення пароля</h2>
@@ -80,7 +68,7 @@
 
     <script src="auth-config.js?v=password-management-20260920"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="auth.js?v=service-offer-page-20260921"></script>
+    <script src="auth.js?v=email-first-auth-20261025"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

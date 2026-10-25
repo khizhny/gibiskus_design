@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Пошук фахівця - особистий кабінет</title>
     <meta name="description" content="Особистий кабінет користувача сайту Пошук фахівця." />
-    <link rel="stylesheet" href="styles.css?v=phone-dialog-20261025" />
+    <link rel="stylesheet" href="styles.css?v=password-dialog-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -68,24 +68,10 @@
             <h3>Зміна пароля</h3>
             <p>Використовуйте щонайменше 8 символів.</p>
           </div>
-          <form class="account-password-form" id="accountPasswordForm">
-            <label id="currentPasswordField">
-              <span>Поточний пароль</span>
-              <input type="password" name="currentPassword" autocomplete="current-password" minlength="8" maxlength="128" />
-            </label>
-            <div class="field-grid">
-              <label>
-                <span>Новий пароль</span>
-                <input type="password" name="newPassword" autocomplete="new-password" minlength="8" maxlength="128" required />
-              </label>
-              <label>
-                <span>Повторіть новий пароль</span>
-                <input type="password" name="newPasswordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
-              </label>
-            </div>
-            <button class="secondary-button" type="submit">Змінити пароль</button>
-            <p class="form-status" id="accountPasswordStatus" role="status"></p>
-          </form>
+          <div class="account-password-actions">
+            <button class="secondary-button" type="button" id="openPasswordDialog" aria-haspopup="dialog" aria-controls="passwordDialog">Змінити пароль</button>
+            <p class="form-status" id="accountPasswordResult" role="status"></p>
+          </div>
         </section>
         <section class="account-danger-zone">
           <div>
@@ -130,6 +116,30 @@
       </form>
     </dialog>
 
+    <dialog class="account-password-dialog" id="passwordDialog" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">Зміна пароля</h2>
+      <form class="account-password-form" id="accountPasswordForm">
+        <label id="currentPasswordField">
+          <span>Поточний пароль</span>
+          <input type="password" name="currentPassword" autocomplete="current-password" minlength="8" maxlength="128" />
+        </label>
+        <label>
+          <span>Новий пароль</span>
+          <input type="password" name="newPassword" autocomplete="new-password" minlength="8" maxlength="128" required />
+        </label>
+        <label>
+          <span>Повторіть новий пароль</span>
+          <input type="password" name="newPasswordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
+        </label>
+        <p class="account-password-hint">Використовуйте щонайменше 8 символів.</p>
+        <p class="form-status" id="accountPasswordStatus" role="status"></p>
+        <div class="dialog-actions">
+          <button class="ghost-button" type="button" data-close-password>Скасувати</button>
+          <button class="primary-button" type="submit">Змінити пароль</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="account-delete-dialog" id="deleteAccountDialog" aria-labelledby="deleteAccountTitle">
       <section data-delete-step="first">
         <h2 id="deleteAccountTitle">Підтвердьте видалення</h2>
@@ -150,7 +160,7 @@
       </section>
     </dialog>
 
-    <script src="cabinet.js?v=phone-dialog-20261025"></script>
+    <script src="cabinet.js?v=password-dialog-20261025"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>
