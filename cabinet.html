@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Пошук фахівця - особистий кабінет</title>
     <meta name="description" content="Особистий кабінет користувача сайту Пошук фахівця." />
-    <link rel="stylesheet" href="styles.css?v=service-offer-edit-20260921" />
+    <link rel="stylesheet" href="styles.css?v=phone-dialog-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -51,14 +51,10 @@
         </form>
         <div class="account-contact-columns">
           <section class="account-contact-manager">
-            <h3>Контактні номери</h3>
-            <form class="account-contact-add-form" data-contact-form="phone">
-              <label>
-                <span>Новий номер телефону</span>
-                <input type="tel" name="value" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" placeholder="+380XXXXXXXXX" title="Введіть номер у форматі +380XXXXXXXXX" required />
-              </label>
-              <button class="add-contact-button account-contact-add" type="submit" aria-label="Додати номер телефону" title="Додати номер телефону">+</button>
-            </form>
+            <div class="account-contact-heading">
+              <h3>Контактні номери</h3>
+              <button class="secondary-button" type="button" id="openAddPhone" aria-haspopup="dialog" aria-controls="addPhoneDialog">Додати номер телефону</button>
+            </div>
             <p class="form-status account-contact-status" data-contact-status="phone" role="status"></p>
             <div class="account-contact-list" id="accountPhones"></div>
           </section>
@@ -118,6 +114,22 @@
       <p class="account-load-status" id="accountLoadStatus" role="status">Завантаження...</p>
     </main>
 
+    <dialog class="account-contact-dialog" id="addPhoneDialog" aria-labelledby="addPhoneTitle">
+      <h2 id="addPhoneTitle">Додати номер телефону</h2>
+      <form class="account-contact-dialog-form" data-contact-form="phone">
+        <label>
+          <span>Новий номер телефону</span>
+          <input type="tel" name="value" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" maxlength="13" placeholder="+380XXXXXXXXX" title="Введіть номер у форматі +380XXXXXXXXX" aria-describedby="addPhoneHint" required autofocus />
+        </label>
+        <p id="addPhoneHint">Введіть номер у форматі +380XXXXXXXXX.</p>
+        <p class="form-status" id="addPhoneStatus" role="status"></p>
+        <div class="dialog-actions">
+          <button class="ghost-button" type="button" data-close-add-phone>Скасувати</button>
+          <button class="primary-button" type="submit">Додати</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="account-delete-dialog" id="deleteAccountDialog" aria-labelledby="deleteAccountTitle">
       <section data-delete-step="first">
         <h2 id="deleteAccountTitle">Підтвердьте видалення</h2>
@@ -138,7 +150,7 @@
       </section>
     </dialog>
 
-    <script src="cabinet.js?v=service-offer-edit-20260921"></script>
+    <script src="cabinet.js?v=phone-dialog-20261025"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

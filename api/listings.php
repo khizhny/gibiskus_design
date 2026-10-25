@@ -21,20 +21,10 @@ function decode_string_list(mixed $value): array
 function listing_region_id(string $cityId): string
 {
     if ($cityId === '' || !str_starts_with($cityId, 'UA')) return '';
-    static $map = null;
     static $cache = [];
     if (array_key_exists($cityId, $cache)) return $cache[$cityId];
     try {
-        if (!$map instanceof PDO) {
-            $path = env_value('MAP_DB_PATH', dirname(__DIR__) . '/database/map.sqlite');
-            if (!is_file($path) || !is_readable($path)) return $cache[$cityId] = '';
-            $map = new PDO('sqlite:' . $path, null, null, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-        }
-        $row = fetch_one($map, <<<'SQL'
+        $row = fetch_one(database(), <<<'SQL'
             SELECT l1_parent_id
             FROM entries
             WHERE type IN (2, 5, 7, 8) AND (l4_parent_id = ? OR l1_parent_id = ?)

@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
-// Copy this file to config.php on the server. Keep the SQLite database outside
-// the public web directory because nginx does not read .htaccess deny rules.
+// Copy this file to config.php on the server and keep database credentials private.
 return [
-    'SITE_DB_PATH' => dirname(__DIR__) . '/../private/site.sqlite',
+    'DB_HOST' => '127.0.0.1',
+    'DB_PORT' => '3306',
+    'DB_NAME' => 'website',
+    'DB_USER' => 'website',
+    'DB_PASSWORD' => 'replace-with-the-database-password',
     'GOOGLE_CLIENT_ID' => '151504652377-jn5pfpqgf7vc4k04ce9bkmph653d88ad.apps.googleusercontent.com',
     'SITE_NAME' => 'Пошук фахівця',
     'MAIL_FROM' => 'admin@dev.oop.net.ua',

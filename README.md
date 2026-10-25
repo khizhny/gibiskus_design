@@ -1,13 +1,14 @@
 # Пошук фахівця
 
-Каталог фахівців та заявок для людей з ООП із PHP 8 та SQLite.
+Каталог фахівців та заявок для людей з ООП із PHP 8 та MySQL 8.
 
 ## Вимоги
 
 - PHP 8.1 або новіший;
-- розширення `pdo_sqlite`, `curl`, `json`, `openssl` і `mbstring`;
+- MySQL 8;
+- розширення `pdo_mysql`, `curl`, `json`, `openssl` і `mbstring`;
 - Composer;
-- право PHP-процесу читати й записувати файл SQLite та його каталог.
+- MySQL-користувач із правами на базу застосунку.
 
 ## Встановлення
 
@@ -31,18 +32,16 @@
    cp config.example.php config.php
    ```
 
-3. Відредагуйте `config.php`. Вкажіть абсолютний шлях до SQLite, Google Client ID, адресу відправника `MAIL_FROM` і параметри SMTP. Для Mirohost використовуйте `mx1.mirohost.net`, порт `465` та шифрування `ssl`; `SMTP_USERNAME` і `SMTP_PASSWORD` мають відповідати поштовій скриньці відправника. Якщо `SMTP_HOST` порожній, застосунок використовує стандартну PHP-функцію `mail()`.
+3. Відредагуйте `config.php`. Вкажіть `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, Google Client ID, адресу відправника `MAIL_FROM` і параметри SMTP. Для Mirohost використовуйте `mx1.mirohost.net`, порт `465` та шифрування `ssl`; `SMTP_USERNAME` і `SMTP_PASSWORD` мають відповідати поштовій скриньці відправника. Якщо `SMTP_HOST` порожній, застосунок використовує стандартну PHP-функцію `mail()`.
 
-4. Перенесіть `site.sqlite` за межі публічного каталогу сайту. Це важливо для nginx, тому що nginx ігнорує правила `.htaccess`:
+4. Для першого перенесення наявних даних із SQLite запустіть міграцію. Вона створює базу, перебудовує її схему та переносить основні дані й довідник КАТОТТГ:
 
    ```bash
-   mkdir -p ~/private
-   cp database/site.sqlite ~/private/site.sqlite
-   chmod 660 ~/private/site.sqlite
-   chmod 770 ~/private
+   DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=website DB_USER=website DB_PASSWORD='your-password' \
+     MYSQL_BIN=mysql node database/migrate_sqlite_to_mysql.mjs
    ```
 
-   Користувач PHP-FPM повинен мати доступ до цього каталогу. Вкажіть фактичний абсолютний шлях у `config.php`.
+   Повторний запуск замінює дані в цільовій базі даними з `private/site.sqlite` та `database/map.sqlite`.
 
 5. Відкрийте `/register.php` або `/auth.php`. Саме PHP-сторінки надсилають заголовок `Cross-Origin-Opener-Policy: same-origin-allow-popups`, потрібний для Google popup.
 
@@ -57,7 +56,7 @@ php -S localhost:8000
 Актуальний каталог адміністративно-територіальних одиниць доступний на
 [сторінці КАТОТТГ Державної служби статистики України](https://stat.gov.ua/uk/codelists/SSSU:CL_KATOTTG%284.0.0%29).
 
-Завантажте XLSX-експорт як `database/map.xlsx`, після чого перебудуйте базу:
+Завантажте XLSX-експорт як `database/map.xlsx`, перебудуйте проміжний SQLite-файл, а потім повторно запустіть міграцію MySQL:
 
 ```bash
 python tools/update_map.py database/map.xlsx database/map.sqlite

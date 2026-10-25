@@ -148,107 +148,32 @@ function database(): PDO
     if ($connection instanceof PDO) {
         return $connection;
     }
-    if (!extension_loaded('pdo_sqlite')) {
-        throw new RuntimeException('PHP extension pdo_sqlite is required');
+    if (!extension_loaded('pdo_mysql')) {
+        throw new RuntimeException('PHP extension pdo_mysql is required');
     }
-    $path = env_value('SITE_DB_PATH', dirname(__DIR__) . '/database/site.sqlite');
-    if (!is_file($path)) {
-        error_log('SQLite database not found: ' . $path);
-        throw new ApiError(503, 'Database is unavailable. Check SITE_DB_PATH');
+    $host = env_value('DB_HOST', '127.0.0.1');
+    $port = env_value('DB_PORT', '3306');
+    $name = env_value('DB_NAME', 'website');
+    $user = env_value('DB_USER', 'website');
+    $password = env_value('DB_PASSWORD');
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $name) || !ctype_digit($port)) {
+        throw new RuntimeException('Invalid MySQL database configuration');
     }
-    $directory = dirname($path);
-    if (!is_readable($path) || !is_writable($path) || !is_writable($directory)) {
-        error_log('SQLite database or its directory is not readable and writable: ' . $path);
-        throw new ApiError(503, 'Database is unavailable or read-only. Check file and directory permissions');
-    }
-    $connection = new PDO('sqlite:' . $path, null, null, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 10,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-    $connection->exec('PRAGMA foreign_keys = ON');
-    $connection->exec('PRAGMA busy_timeout = 10000');
-    $connection->exec(<<<'SQL'
-        CREATE TABLE IF NOT EXISTS Admins (
-          user_id INTEGER PRIMARY KEY,
-          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-        )
-        SQL);
-    $connection->exec(<<<'SQL'
-        CREATE TABLE IF NOT EXISTS UserCredentials (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL UNIQUE,
-          password_hash TEXT NOT NULL,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-        )
-        SQL);
-    $connection->exec(<<<'SQL'
-        CREATE TABLE IF NOT EXISTS EmailVerifications (
-          user_id INTEGER PRIMARY KEY,
-          code_hash TEXT,
-          expires_at INTEGER,
-          attempt_count INTEGER NOT NULL DEFAULT 0,
-          last_sent_at INTEGER,
-          verified_at TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-        )
-        SQL);
-    $connection->exec(<<<'SQL'
-        CREATE TABLE IF NOT EXISTS AppSettings (
-          setting_key TEXT PRIMARY KEY,
-          setting_value TEXT NOT NULL,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-        SQL);
-    $connection->exec(<<<'SQL'
-        CREATE TABLE IF NOT EXISTS PasswordResetRequests (
-          user_id INTEGER PRIMARY KEY,
-          last_requested_at INTEGER NOT NULL,
-          FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
-        )
-        SQL);
-    $connection->beginTransaction();
     try {
-        $columns = $connection->query('PRAGMA table_info(Users)')->fetchAll();
-        $columnNames = array_column($columns, 'name');
-        if (in_array('role', $columnNames, true)) {
-            $connection->exec("INSERT OR IGNORE INTO Admins (user_id) SELECT id FROM Users WHERE role = 'admin'");
-            $connection->exec('ALTER TABLE Users DROP COLUMN role');
-        }
-        if (!in_array('first_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN first_name TEXT');
-        if (!in_array('last_name', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN last_name TEXT');
-        if (!in_array('email', $columnNames, true)) $connection->exec('ALTER TABLE Users ADD COLUMN email TEXT');
-
-        $hasEmailsTable = $connection->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'Emails'")->fetchColumn() !== false;
-        if ($hasEmailsTable) {
-            $connection->exec(<<<'SQL'
-                UPDATE Users
-                SET email = (
-                  SELECT e.email FROM Emails AS e
-                  WHERE e.user_id = Users.id
-                  ORDER BY e.is_primary DESC, e.id
-                  LIMIT 1
-                )
-                WHERE email IS NULL OR trim(email) = ''
-                SQL);
-            $connection->exec('DROP INDEX IF EXISTS uq_emails_email_nocase');
-            $connection->exec('DROP TABLE Emails');
-        }
-
-        $phoneColumns = array_column($connection->query('PRAGMA table_info(Phones)')->fetchAll(), 'name');
-        if (in_array('is_primary', $phoneColumns, true)) {
-            $connection->exec('ALTER TABLE Phones DROP COLUMN is_primary');
-        }
-        $connection->exec("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email_nocase ON Users(lower(email)) WHERE email IS NOT NULL AND trim(email) != ''");
-        $connection->commit();
-    } catch (Throwable $error) {
-        if ($connection->inTransaction()) $connection->rollBack();
-        throw $error;
+        $connection = new PDO(
+            "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
+            $user,
+            $password,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_STRINGIFY_FETCHES => false,
+            ]
+        );
+    } catch (PDOException $error) {
+        error_log('MySQL connection failed: ' . $error->getMessage());
+        throw new ApiError(503, 'Database is unavailable. Check MySQL settings');
     }
     return $connection;
 }
@@ -601,7 +526,7 @@ function register_email_user(array $payload): array
         execute_sql($db, <<<'SQL'
             INSERT INTO UserCredentials (user_id, password_hash)
             VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), updated_at = CURRENT_TIMESTAMP
             SQL, [$userId, $hash]);
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -612,11 +537,11 @@ function register_email_user(array $payload): array
         execute_sql($db, <<<'SQL'
             INSERT INTO EmailVerifications (user_id, code_hash, expires_at, attempt_count, last_sent_at, verified_at)
             VALUES (?, ?, ?, 0, ?, NULL)
-            ON CONFLICT(user_id) DO UPDATE SET
-              code_hash = excluded.code_hash,
-              expires_at = excluded.expires_at,
+            ON DUPLICATE KEY UPDATE
+              code_hash = VALUES(code_hash),
+              expires_at = VALUES(expires_at),
               attempt_count = 0,
-              last_sent_at = excluded.last_sent_at,
+              last_sent_at = VALUES(last_sent_at),
               verified_at = NULL,
               updated_at = CURRENT_TIMESTAMP
             SQL, [$userId, $codeHash, $nowTimestamp + EMAIL_ACTIVATION_TTL_SECONDS, $nowTimestamp]);
@@ -702,7 +627,7 @@ function change_account_password(int $userId, array $payload): array
         execute_sql($db, <<<'SQL'
             INSERT INTO UserCredentials (user_id, password_hash)
             VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), updated_at = CURRENT_TIMESTAMP
             SQL, [$userId, $hash]);
     });
     return ['message' => 'Password changed successfully'];
@@ -752,12 +677,12 @@ function request_password_reset(mixed $emailValue): array
         execute_sql($db, <<<'SQL'
             INSERT INTO UserCredentials (user_id, password_hash)
             VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+            ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), updated_at = CURRENT_TIMESTAMP
             SQL, [$userId, $hash]);
         execute_sql($db, <<<'SQL'
             INSERT INTO PasswordResetRequests (user_id, last_requested_at)
             VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET last_requested_at = excluded.last_requested_at
+            ON DUPLICATE KEY UPDATE last_requested_at = VALUES(last_requested_at)
             SQL, [$userId, time()]);
         return ['message' => $genericMessage];
     });
@@ -927,7 +852,7 @@ function save_smtp_settings(array $payload): array
             execute_sql($db, <<<'SQL'
                 INSERT INTO AppSettings (setting_key, setting_value)
                 VALUES (?, ?)
-                ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = CURRENT_TIMESTAMP
+                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = CURRENT_TIMESTAMP
                 SQL, [$key, $value]);
         }
     });
@@ -1017,30 +942,13 @@ function city_display_name(string $city): string
         return $city;
     }
 
-    static $map = null;
-    static $mapUnavailable = false;
     static $names = [];
     if (array_key_exists($city, $names)) {
         return $names[$city];
     }
-    if ($mapUnavailable) {
-        return $city;
-    }
 
     try {
-        if (!$map instanceof PDO) {
-            $path = env_value('MAP_DB_PATH', dirname(__DIR__) . '/database/map.sqlite');
-            if (!is_file($path) || !is_readable($path)) {
-                $mapUnavailable = true;
-                return $city;
-            }
-            $map = new PDO('sqlite:' . $path, null, null, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-        }
-        $row = fetch_one($map, <<<'SQL'
+        $row = fetch_one(database(), <<<'SQL'
             SELECT name
             FROM entries
             WHERE type IN (2, 5, 7, 8) AND (l4_parent_id = ? OR l1_parent_id = ?)

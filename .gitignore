@@ -7,3 +7,5 @@ tools/php/
 tools/php-*.zip
 private/
 tests/
+node_modules/
+test-results/

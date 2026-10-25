@@ -31,6 +31,6 @@ if ($hash === false) {
 execute_sql($db, <<<'SQL'
     INSERT INTO UserCredentials (user_id, password_hash, updated_at)
     VALUES (?, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = CURRENT_TIMESTAMP
+    ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), updated_at = CURRENT_TIMESTAMP
     SQL, [(int) $user['user_id'], $hash]);
 fwrite(STDOUT, "Password updated.\n");

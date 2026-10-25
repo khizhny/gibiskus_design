@@ -4,8 +4,6 @@ const lowRatingThreshold = 4.0;
 const negativeReviewThreshold = 3.0;
 const adminEmails = ["khizhny@gmail.com", "nadya.khizhnaya@gmail.com"];
 const adminVoteWeight = 100;
-const sqliteWasmUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm";
-const sqliteScriptUrl = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js";
 const pageMeta = {
   uk: {
     title: "Пошук фахівця - каталог фахівців для дітей з особливостями розвитку",
@@ -975,8 +973,6 @@ let messageDislikes = {};
 let activeChatMessages = [];
 const selectedPublishSpecialties = new Set();
 let catalogSuggestions = [];
-let mapDatabasePromise = null;
-let siteDatabasePromise = null;
 let searchCatalogTree = [];
 const cityNameCache = new Map();
 const serviceOfferEditId = Number(new URLSearchParams(window.location.search).get("edit")) || 0;
@@ -1544,17 +1540,8 @@ function activeCatalogGroupForSpecialties(specialties = []) {
 
 async function regionIdForCity(cityId) {
   if (!cityId) return "";
-  const db = await loadMapDatabase();
-  const value = quoteSqlValue(cityId);
-  const row = sqlRows(
-    db,
-    `SELECT l1_parent_id
-     FROM entries
-     WHERE type in (2, 5, 7, 8) and (l4_parent_id = ${value} or l1_parent_id = ${value})
-     ORDER BY type asc
-     LIMIT 1`
-  )[0];
-  return String(row?.l1_parent_id || "").trim();
+  const data = await fetchReference("city", { city: cityId });
+  return String(data.item?.region_id || "").trim();
 }
 
 async function populateServiceOfferEditForm(listing) {
@@ -2701,134 +2688,18 @@ function renderAdminUsers() {
   renderParentUsers();
 }
 
-function loadExternalScript(src, globalName) {
-  if (window[globalName]) return Promise.resolve(window[globalName]);
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => resolve(window[globalName]), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`Cannot load ${src}`)), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve(window[globalName]);
-    script.onerror = () => reject(new Error(`Cannot load ${src}`));
-    document.head.append(script);
-  });
-}
-
-async function loadSqlJs() {
-  const initSqlJs = await loadExternalScript(sqliteScriptUrl, "initSqlJs");
-  return initSqlJs({
-    locateFile: () => sqliteWasmUrl
-  });
-}
-
-function readFileAsArrayBuffer(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error("Cannot read file."));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-async function fetchArrayBuffer(url, fallbackFile, fallbackLabel) {
-  if (fallbackFile) return readFileAsArrayBuffer(fallbackFile);
-  const noCacheUrl = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
-  let lastError = null;
-  for (const requestUrl of [noCacheUrl, url]) {
-    try {
-      const response = await fetch(requestUrl, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.arrayBuffer();
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  throw new Error(`Cannot load ${fallbackLabel}. Select it manually with the file picker. Details: ${lastError?.message || "unknown error"}`);
-}
-
-function quoteSqlName(name) {
-  return `"${String(name).replace(/"/g, '""')}"`;
-}
-
-function quoteSqlValue(value) {
-  return `'${String(value).replace(/'/g, "''")}'`;
-}
-
-function resolveOblastId(db, oblastId) {
-  const regionValue = quoteSqlValue(oblastId);
-  try {
-    return (
-      sqlRows(
-        db,
-        `SELECT oblast_id FROM oblasti WHERE oblast_id = ${regionValue} or name = ${regionValue} LIMIT 1`
-      )[0]?.oblast_id || oblastId
-    );
-  } catch (error) {
-    console.warn("Cannot resolve oblast id from map.sqlite", error);
-    return oblastId;
-  }
-}
-
-function sqlRows(db, sql, params = []) {
-  const result = db.exec(sql, params)[0];
-  if (!result) return [];
-  return result.values.map((values) =>
-    Object.fromEntries(values.map((value, index) => [result.columns[index], value]))
-  );
-}
-
-async function loadMapDatabase() {
-  if (!mapDatabasePromise) {
-    mapDatabasePromise = (async () => {
-      const SQL = await loadSqlJs();
-      const buffer = await fetchArrayBuffer("database/map.sqlite", null, "database/map.sqlite");
-      return new SQL.Database(new Uint8Array(buffer));
-    })();
-  }
-  return mapDatabasePromise;
-}
-
-async function loadSiteDatabase() {
-  if (!siteDatabasePromise) {
-    siteDatabasePromise = (async () => {
-      const SQL = await loadSqlJs();
-      const buffer = await fetchArrayBuffer("database/site.sqlite", null, "database/site.sqlite");
-      return new SQL.Database(new Uint8Array(buffer));
-    })();
-  }
-  return siteDatabasePromise;
+async function fetchReference(resource, params = {}) {
+  const query = new URLSearchParams({ resource, ...params });
+  const response = await fetch(`api/reference.php?${query}`, { cache: "no-store" });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || "Не вдалося завантажити довідник.");
+  return data;
 }
 
 async function loadSearchCatalogTree() {
   if (!elements.specialistTree) return;
   try {
-    const db = await loadSiteDatabase();
-    const rows = sqlRows(
-      db,
-      `SELECT
-        g.id as group_id,
-        g.title as group_title,
-        g.sort_order as group_sort,
-        s.id as subgroup_id,
-        s.title as subgroup_title,
-        s.description as subgroup_description,
-        s.sort_order as subgroup_sort,
-        r.id as record_id,
-        r.title as record_title,
-        r.sort_order as record_sort
-      FROM Catalog_groups g
-      JOIN Catalog_subgroups s ON s.group_id = g.id AND s.enabled = 1
-      JOIN Catalog_record r ON r.subgroup_id = s.id AND r.enabled = 1
-      WHERE g.enabled = 1
-      ORDER BY g.sort_order, g.id, s.sort_order, s.id, r.sort_order, r.id`
-    );
+    const { items: rows = [] } = await fetchReference("catalog");
     const tree = buildCatalogTreeFromRows(rows);
     if (tree.length) {
       searchCatalogTree = tree;
@@ -2837,7 +2708,7 @@ async function loadSearchCatalogTree() {
       updatePublishSpecialtyOptions(false);
     }
   } catch (error) {
-    console.warn("Cannot load specialist catalog from site.sqlite", error);
+    console.warn("Cannot load specialist catalog", error);
     searchCatalogTree = fallbackCatalogTree();
     renderSpecialistTree();
     renderPublishCategoryTree(elements.publishCategory?.value);
@@ -2933,36 +2804,14 @@ function renderDistrictOptionsInto(select, districts, { selectedValue = "all", p
 
 async function loadCitiesForRegion(oblastId) {
   if (!oblastId || oblastId === "all") return [];
-  const db = await loadMapDatabase();
-  const regionValue = quoteSqlValue(resolveOblastId(db, oblastId));
-  return normalizeCityOptions(
-    sqlRows(
-      db,
-      `SELECT
-        name as city_name,
-        COALESCE(l4_parent_id, l1_parent_id) as city_id
-      FROM entries
-      WHERE type in (2, 5) and l1_parent_id = ${regionValue}
-      ORDER BY type asc, name`
-    )
-  );
+  const data = await fetchReference("cities", { region: oblastId });
+  return normalizeCityOptions(data.items || []);
 }
 
 async function loadDistrictsForCity(cityId) {
   if (!cityId || cityId === "all") return [];
-  const db = await loadMapDatabase();
-  const cityValue = quoteSqlValue(cityId);
-  return normalizeDistrictOptions(
-    sqlRows(
-      db,
-      `SELECT
-        name as district_name,
-        l5_parent_id as district_id
-      FROM entries
-      WHERE type = 9 and l4_parent_id = ${cityValue}
-      ORDER BY name`
-    )
-  );
+  const data = await fetchReference("districts", { city: cityId });
+  return normalizeDistrictOptions(data.items || []);
 }
 
 async function updateSearchCityOptions(selectedValue = "all") {
@@ -2984,7 +2833,7 @@ async function updateSearchCityOptions(selectedValue = "all") {
       allValue: "all"
     });
   } catch (error) {
-    console.warn("Cannot load cities from map.sqlite", error);
+    console.warn("Cannot load cities", error);
     renderCityOptionsInto(elements.cityFilter, [], {
       selectedValue: "all",
       placeholder: "Міста не завантажено",
@@ -3012,7 +2861,7 @@ async function updateSearchDistrictOptions(selectedValue = "all") {
       allValue: "all"
     });
   } catch (error) {
-    console.warn("Cannot load city districts from map.sqlite", error);
+    console.warn("Cannot load city districts", error);
     renderDistrictOptionsInto(elements.districtFilter, [], {
       selectedValue: "all",
       placeholder: "Райони не завантажено",
@@ -3040,7 +2889,7 @@ async function updatePublishCityOptions(selectedValue = "") {
       allValue: ""
     });
   } catch (error) {
-    console.warn("Cannot load publish cities from map.sqlite", error);
+    console.warn("Cannot load publish cities", error);
     renderCityOptionsInto(elements.publishCitySelect, [], {
       selectedValue: "",
       placeholder: "Міста не завантажено",
@@ -3063,19 +2912,11 @@ async function loadCityName(cityId) {
   const normalizedCityId = String(cityId || "").trim();
   if (!normalizedCityId || cityNameCache.has(normalizedCityId)) return;
   try {
-    const db = await loadMapDatabase();
-    const cityValue = quoteSqlValue(normalizedCityId);
-    const row = sqlRows(
-      db,
-      `SELECT name
-      FROM entries
-      WHERE type in (2, 5, 7, 8) and (l4_parent_id = ${cityValue} or l1_parent_id = ${cityValue})
-      ORDER BY type asc
-      LIMIT 1`
-    )[0];
+    const data = await fetchReference("city", { city: normalizedCityId });
+    const row = data.item;
     if (row?.name) cityNameCache.set(normalizedCityId, String(row.name));
   } catch (error) {
-    console.warn("Cannot resolve city name from map.sqlite", error);
+    console.warn("Cannot resolve city name", error);
   }
 }
 
@@ -3105,8 +2946,8 @@ async function loadRegionOptions() {
   const selectedPublishValue = elements.regionSelect?.value || "";
   const selectedSearchValue = elements.regionFilter?.value || "all";
   try {
-    const db = await loadMapDatabase();
-    const rows = sqlRows(db, "SELECT oblast_id, name FROM oblasti ORDER BY name");
+    const data = await fetchReference("regions");
+    const rows = data.items || [];
     if (rows.length) {
       renderRegionOptions(rows, selectedPublishValue);
       renderSearchRegionOptions(rows, selectedSearchValue);
@@ -3118,27 +2959,10 @@ async function loadRegionOptions() {
     renderListings();
     renderModeration();
   } catch (error) {
-    console.warn("Cannot load regions from map.sqlite", error);
+    console.warn("Cannot load regions", error);
     await updateSearchCityOptions("all");
     await updatePublishCityOptions("");
   }
-}
-
-function tableExists(db, tableName) {
-  return Boolean(
-    sqlRows(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [tableName]).length
-  );
-}
-
-function getUserTables(db) {
-  return sqlRows(
-    db,
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-  ).map((row) => row.name);
-}
-
-function getTableColumns(db, tableName) {
-  return sqlRows(db, `PRAGMA table_info(${quoteSqlName(tableName)})`);
 }
 
 function setAdminView(viewName) {

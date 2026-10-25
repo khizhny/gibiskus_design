@@ -13,6 +13,10 @@ const accountElements = {
   notifications: document.querySelector("#accountNotifications"),
   publishAction: document.querySelector("#accountPublishAction"),
   contactForms: document.querySelectorAll("[data-contact-form]"),
+  phoneDialog: document.querySelector("#addPhoneDialog"),
+  openAddPhone: document.querySelector("#openAddPhone"),
+  phoneStatus: document.querySelector("#addPhoneStatus"),
+  cancelAddPhone: document.querySelector("[data-close-add-phone]"),
   deleteDialog: document.querySelector("#deleteAccountDialog"),
   deleteFirstStep: document.querySelector('[data-delete-step="first"]'),
   deleteSecondStep: document.querySelector('[data-delete-step="second"]'),
@@ -221,6 +225,19 @@ async function loadAccount() {
 
 accountElements.tabs.forEach((tab) => tab.addEventListener("click", () => activateAccountView(tab.dataset.accountTab)));
 
+accountElements.openAddPhone?.addEventListener("click", () => {
+  accountElements.phoneDialog.querySelector("form").reset();
+  accountElements.phoneStatus.textContent = "";
+  contactStatus("phone").textContent = "";
+  accountElements.phoneDialog.showModal();
+});
+
+accountElements.cancelAddPhone?.addEventListener("click", () => accountElements.phoneDialog.close());
+
+accountElements.phoneDialog?.addEventListener("cancel", (event) => {
+  if (accountElements.phoneDialog.getAttribute("aria-busy") === "true") event.preventDefault();
+});
+
 accountElements.contactForms.forEach((form) => {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -230,9 +247,11 @@ accountElements.contactForms.forEach((form) => {
     }
     const type = form.dataset.contactForm;
     const value = String(new FormData(form).get("value") || "").trim();
-    const status = contactStatus(type);
+    const status = accountElements.phoneStatus;
     const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
+    accountElements.cancelAddPhone.disabled = true;
+    accountElements.phoneDialog.setAttribute("aria-busy", "true");
     status.textContent = "Додаємо...";
     try {
       const result = await accountRequest("/api/account/contacts.php", {
@@ -241,11 +260,14 @@ accountElements.contactForms.forEach((form) => {
       });
       renderContactData(result);
       form.reset();
-      status.textContent = "Номер телефону додано.";
+      accountElements.phoneDialog.close();
+      contactStatus(type).textContent = "Номер телефону додано.";
     } catch (error) {
       status.textContent = error.message;
     } finally {
       submit.disabled = false;
+      accountElements.cancelAddPhone.disabled = false;
+      accountElements.phoneDialog.removeAttribute("aria-busy");
     }
   });
 });
