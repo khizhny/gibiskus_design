@@ -6,9 +6,9 @@
     <title>Пошук фахівця - розмістити оголошення</title>
     <meta
       name="description"
-      content="Сторінка розміщення оголошення фахівця: анкета, документи та продовження публікації кожні 30 днів."
+      content="Сторінка розміщення оголошення фахівця: анкета, контакти та опис послуг."
     />
-    <link rel="stylesheet" href="styles.css?v=service-offer-edit-20260921" />
+    <link rel="stylesheet" href="styles.css?v=split-catalog-suggestions-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -39,12 +39,6 @@
         </div>
         <form class="publish-form" id="publishForm" aria-label="Чернетка оголошення фахівця" enctype="multipart/form-data">
           <div class="field-grid contact-fields">
-            <fieldset class="option-group publish-phone-options">
-              <legend>Номер телефону</legend>
-              <div class="publish-phone-list" id="publishPhoneOptions" aria-live="polite">
-                <p class="account-empty-inline">Завантаження контактних номерів...</p>
-              </div>
-            </fieldset>
             <label>
               <span>Email</span>
               <input type="email" name="email" placeholder="Автозаповнюється з акаунта" data-profile-email readonly aria-readonly="true" required />
@@ -52,7 +46,7 @@
           </div>
           <div class="field-grid">
             <div class="form-field publish-category-field">
-              <span class="field-label">Категорія</span>
+              <span class="field-label required-field-label">Категорія</span>
               <details class="multi-select publish-category-tree" id="publishCategoryTree">
                 <summary><span data-publish-category-summary>Оберіть підгрупу</span></summary>
                 <div class="multi-select-menu publish-category-menu" id="publishCategoryMenu"></div>
@@ -60,28 +54,13 @@
               <input type="hidden" name="specialtyCategory" id="publishCategory" />
             </div>
             <fieldset class="option-group specialty-picker">
-              <legend>Спеціальності</legend>
+              <legend class="required-field-label">Спеціальності</legend>
               <p class="specialty-picker-help">Оберіть одну або кілька спеціальностей з вибраної категорії.</p>
               <div class="specialty-check-list" id="publishSpecialty"></div>
               <div class="selected-specialties" data-selected-specialties aria-label="Обрані спеціальності"></div>
+              <a class="catalog-suggestion-link" href="#catalogSuggestionModal" data-open-catalog-suggestion aria-haspopup="dialog" aria-controls="catalogSuggestionModal">Не знайшли потрібну спеціальність?</a>
             </fieldset>
           </div>
-          <fieldset class="option-group catalog-suggestion-box">
-            <legend>Не знайшли потрібну спеціальність?</legend>
-            <p class="specialty-picker-help">Введіть нову категорію або спеціальність. Вона потрапить адміністратору на затвердження.</p>
-            <div class="field-grid">
-              <label>
-                <span>Нова категорія</span>
-                <input type="text" name="suggestedCategory" id="suggestedCategory" placeholder="Наприклад, ІТ та програмування" />
-              </label>
-              <label>
-                <span>Нова спеціальність</span>
-                <input type="text" name="suggestedSpecialty" id="suggestedSpecialty" placeholder="Наприклад, Викладач Scratch" />
-              </label>
-            </div>
-            <button class="secondary-button" type="button" id="addCatalogSuggestion">Запропонувати</button>
-            <p class="form-status" id="catalogSuggestionStatus" role="status"></p>
-          </fieldset>
           <label>
             <span>Область</span>
             <select name="region" id="regionSelect" required>
@@ -111,82 +90,16 @@
           </fieldset>
           <fieldset class="option-group district-options is-hidden" data-district-panel="specialist">
             <legend>Райони для занять у фахівця</legend>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Шевченківський" />
-              <span>Шевченківський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Галицький" />
-              <span>Галицький</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Приморський" />
-              <span>Приморський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Соборний" />
-              <span>Соборний</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Дарницький" />
-              <span>Дарницький</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Подільський" />
-              <span>Подільський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Оболонський" />
-              <span>Оболонський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="specialistDistricts" value="Сихівський" />
-              <span>Сихівський</span>
-            </label>
+            <div class="district-option-list" data-district-options="specialist" aria-live="polite">
+              <p class="district-options-status">Спочатку оберіть місто.</p>
+            </div>
           </fieldset>
           <fieldset class="option-group district-options is-hidden" data-district-panel="student">
             <legend>Райони для занять у учня</legend>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Шевченківський" />
-              <span>Шевченківський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Галицький" />
-              <span>Галицький</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Приморський" />
-              <span>Приморський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Соборний" />
-              <span>Соборний</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Дарницький" />
-              <span>Дарницький</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Подільський" />
-              <span>Подільський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Оболонський" />
-              <span>Оболонський</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="studentDistricts" value="Сихівський" />
-              <span>Сихівський</span>
-            </label>
+            <div class="district-option-list" data-district-options="student" aria-live="polite">
+              <p class="district-options-status">Спочатку оберіть місто.</p>
+            </div>
           </fieldset>
-          <label>
-            <span>Автовидалення оголошення через</span>
-            <select name="autoDeleteDays">
-              <option value="30">30 днів</option>
-              <option value="60">60 днів</option>
-              <option value="90">90 днів</option>
-            </select>
-          </label>
           <div class="field-grid">
             <label>
               <span>Вартість заняття</span>
@@ -201,6 +114,16 @@
             <span>Короткий опис</span>
             <textarea name="description" rows="3" placeholder="Досвід, методи роботи, формат занять" required></textarea>
           </label>
+          <div class="field-grid">
+            <label>
+              <span>Освіта</span>
+              <textarea name="education" rows="4" maxlength="1000" placeholder="Навчальний заклад, спеціальність, кваліфікація"></textarea>
+            </label>
+            <label>
+              <span>Досвід роботи</span>
+              <input type="number" name="experience" min="0" max="100" step="1" inputmode="numeric" placeholder="Кількість повних років" />
+            </label>
+          </div>
           <fieldset class="option-group consent-group">
             <legend>Підтвердження</legend>
             <label class="checkbox-row">
@@ -217,11 +140,43 @@
             <button class="primary-button" type="submit" disabled data-publish-submit>Опублікувати оголошення</button>
           </div>
           <p class="form-status" id="publishStatus" role="status"></p>
+          <div class="modal" id="catalogSuggestionModal" aria-hidden="true">
+            <section class="modal-panel catalog-suggestion-modal" role="dialog" aria-modal="true" aria-labelledby="catalogSuggestionTitle">
+              <button class="icon-button close-button" type="button" data-close-catalog-suggestion aria-label="Закрити">×</button>
+              <p class="section-note">Оновлення довідника</p>
+              <h2 id="catalogSuggestionTitle">Не знайшли потрібну спеціальність?</h2>
+              <p class="specialty-picker-help">Пропозиції потраплять адміністратору на затвердження.</p>
+              <section class="catalog-suggestion-section" aria-labelledby="suggestCategoryTitle">
+                <h3 id="suggestCategoryTitle">Нова категорія</h3>
+                <label>
+                  <span class="required-field-label">Назва категорії</span>
+                  <input type="text" name="suggestedCategory" id="suggestedCategory" placeholder="Наприклад, ІТ та програмування" />
+                </label>
+                <button class="secondary-button" type="button" id="addCatalogCategory">Запропонувати категорію</button>
+                <p class="form-status" id="catalogCategoryStatus" role="status"></p>
+              </section>
+              <section class="catalog-suggestion-section" aria-labelledby="suggestSpecialtyTitle">
+                <h3 id="suggestSpecialtyTitle">Нова спеціальність</h3>
+                <label>
+                  <span class="required-field-label">Категорія</span>
+                  <select id="suggestedSpecialtyCategory" name="suggestedSpecialtyCategory">
+                    <option value="">Завантаження категорій...</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="required-field-label">Назва спеціальності</span>
+                  <input type="text" name="suggestedSpecialty" id="suggestedSpecialty" placeholder="Наприклад, Викладач Scratch" />
+                </label>
+                <button class="secondary-button" type="button" id="addCatalogSpecialty">Запропонувати спеціальність</button>
+                <p class="form-status" id="catalogSpecialtyStatus" role="status"></p>
+              </section>
+            </section>
+          </div>
         </form>
       </section>
     </main>
 
-    <script src="script.js?v=service-offer-edit-20260921"></script>
+    <script src="script.js?v=service-offer-education-20261026"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

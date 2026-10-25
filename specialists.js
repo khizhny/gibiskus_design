@@ -33,8 +33,7 @@ const translations = {
     sortUrgent: "Термінові",
     forSpecialists: "Для фахівців",
     publishTitle: "Розмістіть анкету й отримуйте заявки від родин",
-    publishText:
-      "Після публікації анкета з'явиться в каталозі для людей, які шукають фахівця. Оголошення потрібно продовжувати кожні 30 днів.",
+    publishText: "Після публікації анкета з'явиться в каталозі для людей, які шукають фахівця.",
     profileDraft: "Анкета фахівця",
     nameLabel: "Ім'я або назва центру",
     namePlaceholder: "Наприклад, Анна Коваленко",
@@ -117,7 +116,7 @@ const translations = {
     sortUrgent: "Urgent",
     forSpecialists: "For specialists",
     publishTitle: "Post your profile and receive family requests",
-    publishText: "After publication, the profile appears in the catalog for people looking for a specialist. Listings must be renewed every 30 days.",
+    publishText: "After publication, the profile appears in the catalog for people looking for a specialist.",
     profileDraft: "Specialist profile",
     nameLabel: "Name or center",
     namePlaceholder: "For example, Anna Kovalenko",

@@ -31,10 +31,8 @@ function setStatus(message, type = "info") {
 }
 
 function syncRegistrationMethodVisibility() {
-  if (!elements.methodSection || !elements.privacyAccepted) return;
-  const accepted = elements.privacyAccepted.checked;
-  elements.methodSection.hidden = !accepted;
-  if (!accepted) setStatus("");
+  if (!elements.methodSection) return;
+  elements.methodSection.hidden = false;
 }
 
 function syncRegistrationState() {
@@ -47,13 +45,14 @@ function getRegistrationProfile({ report = false } = {}) {
   if (!elements.profileForm.checkValidity()) {
     if (report) {
       elements.profileForm.reportValidity();
-      setStatus("Заповніть ім'я, прізвище та прийміть політику конфіденційності.", "error");
+      setStatus("Заповніть нікнейм, ім'я, прізвище та прийміть політику конфіденційності.", "error");
     }
     return null;
   }
 
   const data = new FormData(elements.profileForm);
   return {
+    nickname: String(data.get("nickname") || "").trim(),
     firstName: String(data.get("firstName") || "").trim(),
     lastName: String(data.get("lastName") || "").trim(),
     privacyAccepted: data.get("privacyAccepted") === "on"
@@ -202,6 +201,7 @@ document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
 elements.profileForm?.addEventListener("submit", (event) => event.preventDefault());
 elements.profileForm?.addEventListener("input", syncRegistrationState);
 elements.profileForm?.addEventListener("change", syncRegistrationState);
+elements.privacyAccepted?.addEventListener("change", syncRegistrationState);
 
 elements.emailForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -259,7 +259,7 @@ elements.activationForm?.addEventListener("submit", async (event) => {
 
 elements.changeRegistrationEmail?.addEventListener("click", showRegistrationStep);
 
-const googleScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+const googleScript = document.querySelector('script[src^="https://accounts.google.com/gsi/client"]');
 googleScript?.addEventListener("load", initializeGoogleRegistration);
 window.addEventListener("load", initializeGoogleRegistration);
 syncRegistrationMethodVisibility();

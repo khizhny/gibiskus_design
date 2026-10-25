@@ -8,7 +8,7 @@
       name="description"
       content="Сайт пошуку спеціалістів для дітей з ООП"
     />
-    <link rel="stylesheet" href="styles.css?v=heading-align-20260920" />
+    <link rel="stylesheet" href="styles.css?v=required-field-markers-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -105,6 +105,11 @@
             </div>
           </div>
           <div class="listing-list" id="listingList"></div>
+          <nav class="listing-pagination" id="listingPagination" aria-label="Сторінки результатів" hidden>
+            <button class="secondary-button" type="button" data-listing-page="previous">Назад</button>
+            <span id="listingPageStatus"></span>
+            <button class="secondary-button" type="button" data-listing-page="next">Далі</button>
+          </nav>
         </section>
 
       </section>
@@ -134,7 +139,7 @@
       </div>
     </div>
 
-    <script src="script.js?v=listing-labels-20260921"></script>
+    <script src="script.js?v=listing-pagination-20261026"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

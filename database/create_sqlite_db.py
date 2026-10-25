@@ -1,4 +1,5 @@
 import json
+import re
 import sqlite3
 from pathlib import Path
 
@@ -18,6 +19,11 @@ def text_value(value, lang="uk"):
     if isinstance(value, dict):
         return value.get(lang) or value.get("en") or next(iter(value.values()), "")
     return value or ""
+
+
+def experience_years(value):
+    match = re.search(r"\d+", str(value or ""))
+    return min(int(match.group()), 100) if match else None
 
 
 def first_or_create(cursor, table, unique_column, value, extra=None):
@@ -47,7 +53,9 @@ DROP TABLE IF EXISTS Comments;
 DROP TABLE IF EXISTS Messages;
 DROP TABLE IF EXISTS Requests;
 DROP TABLE IF EXISTS SpecialistRecords;
+DROP TABLE IF EXISTS Districts;
 DROP TABLE IF EXISTS Specialists;
+DROP TABLE IF EXISTS CatalogSuggestions;
 DROP TABLE IF EXISTS Catalog_record;
 DROP TABLE IF EXISTS Catalog_subgroups;
 DROP TABLE IF EXISTS Catalog_groups;
@@ -76,17 +84,32 @@ CREATE TABLE Cities (
 
 CREATE TABLE Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  external_id TEXT UNIQUE,
-  email TEXT,
   name TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
   registered_at TEXT,
   last_active TEXT,
-  notes TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE Emails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  email TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX uq_emails_email_nocase ON Emails(lower(email));
+CREATE INDEX idx_emails_user_id ON Emails(user_id);
+
+CREATE TABLE GoogleId (
+  user_id INTEGER NOT NULL,
+  external_id TEXT NOT NULL UNIQUE,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_google_id_user_id ON GoogleId(user_id);
 
 CREATE TABLE Phones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,8 +122,6 @@ CREATE TABLE Admins (
   user_id INTEGER PRIMARY KEY,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
-
-CREATE UNIQUE INDEX uq_users_email_nocase ON Users(lower(email)) WHERE email IS NOT NULL AND trim(email) != '';
 
 CREATE TABLE UserCredentials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,32 +161,49 @@ CREATE TABLE Catalog_record (
   UNIQUE (subgroup_id, title)
 );
 
+CREATE TABLE CatalogSuggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL,
+  group_title TEXT NOT NULL,
+  record_title TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TEXT,
+  reviewed_by INTEGER,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES Catalog_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES Users(id) ON DELETE SET NULL
+);
+
 CREATE TABLE Specialists (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
-  catalog_record_id INTEGER,
   city TEXT,
-  name TEXT NOT NULL,
-  initials TEXT,
   price INTEGER,
   duration_minutes INTEGER,
   rating REAL,
   reviews_count INTEGER DEFAULT 0,
-  district TEXT,
-  formats_json TEXT,
-  nosologies_json TEXT,
-  schedule TEXT,
-  response_time TEXT,
+  online INTEGER NOT NULL DEFAULT 0 CHECK (online IN (0, 1)),
   bio TEXT,
   education TEXT,
-  experience TEXT,
+  experience INTEGER,
   created_at TEXT,
   expires_at TEXT,
   status TEXT DEFAULT 'active',
-  notes TEXT,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (catalog_record_id) REFERENCES Catalog_record(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE Districts (
+  specialist_id INTEGER NOT NULL,
+  district_id TEXT NOT NULL,
+  client_site INTEGER NOT NULL DEFAULT 0 CHECK (client_site IN (0, 1)),
+  PRIMARY KEY (specialist_id, district_id, client_site),
+  FOREIGN KEY (specialist_id) REFERENCES Specialists(id) ON DELETE CASCADE,
+  FOREIGN KEY (district_id) REFERENCES entries(l5_parent_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_districts_district_id ON Districts(district_id);
 
 CREATE TABLE SpecialistRecords (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -342,34 +380,44 @@ def main():
     for email in data["adminEmails"]:
         name = email.split("@")[0]
         cursor.execute(
-            "INSERT INTO Users (external_id, email, name, notes) VALUES (?, ?, ?, ?)",
-            (f"admin:{email}", email, name, "Адміністратор сайту"),
+            "INSERT INTO Users (name) VALUES (?)",
+            (name,),
         )
         user_id = cursor.lastrowid
+        cursor.execute("INSERT INTO GoogleId (user_id, external_id) VALUES (?, ?)", (user_id, f"admin:{email}"))
+        cursor.execute("INSERT INTO Emails (user_id, email) VALUES (?, ?)", (user_id, email))
         cursor.execute("INSERT INTO Admins (user_id) VALUES (?)", (user_id,))
         user_ids_by_name[name] = user_id
 
     for item in data["specialistUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, email, name, registered_at, last_active, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO Users (name, registered_at, last_active)
+            VALUES (?, ?, ?)
             """,
-            (item.get("id"), item.get("email"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
+            (item["name"], item.get("registeredAt"), item.get("lastActive")),
         )
         user_id = cursor.lastrowid
+        if item.get("id"):
+            cursor.execute("INSERT INTO GoogleId (user_id, external_id) VALUES (?, ?)", (user_id, item.get("id")))
+        if item.get("email"):
+            cursor.execute("INSERT OR IGNORE INTO Emails (user_id, email) VALUES (?, ?)", (user_id, item.get("email")))
         user_ids_by_name[item["name"]] = user_id
         cursor.execute("INSERT INTO Phones (user_id, phone) VALUES (?, ?)", (user_id, item.get("phone")))
 
     for item in data["parentUsers"]:
         cursor.execute(
             """
-            INSERT INTO Users (external_id, email, name, registered_at, last_active, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO Users (name, registered_at, last_active)
+            VALUES (?, ?, ?)
             """,
-            (item.get("id"), item.get("email"), item["name"], item.get("registeredAt"), item.get("lastActive"), item.get("notes")),
+            (item["name"], item.get("registeredAt"), item.get("lastActive")),
         )
         user_id = cursor.lastrowid
+        if item.get("id"):
+            cursor.execute("INSERT INTO GoogleId (user_id, external_id) VALUES (?, ?)", (user_id, item.get("id")))
+        if item.get("email"):
+            cursor.execute("INSERT OR IGNORE INTO Emails (user_id, email) VALUES (?, ?)", (user_id, item.get("email")))
         user_ids_by_name[item["name"]] = user_id
         cursor.execute("INSERT INTO Phones (user_id, phone) VALUES (?, ?)", (user_id, item.get("phone")))
 
@@ -383,33 +431,25 @@ def main():
         cursor.execute(
             """
             INSERT INTO Specialists (
-              user_id, catalog_record_id, city, name, initials, price, duration_minutes,
-              rating, reviews_count, district, formats_json, nosologies_json, schedule,
-              response_time, bio, education, experience, created_at, expires_at, status, notes
+              user_id, city, price, duration_minutes,
+              rating, reviews_count, online, bio, education, experience,
+              created_at, expires_at, status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
             """,
             (
                 user_id,
-                record_id,
                 city,
-                listing.get("name"),
-                listing.get("initials"),
                 listing.get("price"),
                 listing.get("duration"),
                 listing.get("rating"),
                 listing.get("reviews"),
-                listing.get("district"),
-                dumps(listing.get("formats")),
-                dumps(listing.get("nosologies")),
-                listing.get("schedule"),
-                listing.get("responseTime"),
+                int("Онлайн" in (listing.get("formats") or [])),
                 listing.get("bio"),
                 listing.get("education"),
-                listing.get("experience"),
+                experience_years(listing.get("experience")),
                 listing.get("createdAt"),
                 listing.get("expiresAt"),
-                listing.get("details"),
             ),
         )
         specialist_id = cursor.lastrowid
@@ -466,10 +506,14 @@ def main():
         user_id = user_ids_by_name.get(family_name)
         if not user_id:
             cursor.execute(
-                "INSERT INTO Users (external_id, name, notes) VALUES (?, ?, ?)",
-                (f"request-family:{request.get('id')}", family_name, "Створено з заявки родини"),
+                "INSERT INTO Users (name) VALUES (?)",
+                (family_name,),
             )
             user_id = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO GoogleId (user_id, external_id) VALUES (?, ?)",
+                (user_id, f"request-family:{request.get('id')}"),
+            )
             user_ids_by_name[family_name] = user_id
         city = request.get("city") or None
         record_id = catalog_record_ids.get(specialty_map.get(request.get("specialty"), "Інше"))

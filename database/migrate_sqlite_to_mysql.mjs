@@ -51,9 +51,29 @@ function sqlValue(value, column) {
 }
 
 function insertStatements(sqlite, table, batchSize = 500) {
-  const rows = sqlite.prepare(`SELECT * FROM \"${table.replaceAll('"', '""')}\"`).all();
+  const tableExists = sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(table);
+  let rows = table === "Emails" && !tableExists
+    ? sqlite.prepare("SELECT id AS user_id, email FROM Users WHERE email IS NOT NULL AND trim(email) != ''").all()
+    : table === "GoogleId" && !tableExists
+      ? sqlite.prepare("SELECT id AS user_id, external_id FROM Users WHERE external_id IS NOT NULL AND trim(external_id) != ''").all()
+    : tableExists ? sqlite.prepare(`SELECT * FROM \"${table.replaceAll('"', '""')}\"`).all() : [];
+  if (table === "Specialists") {
+    rows = rows.map((row) => {
+      let online = Number(row.online || 0) === 1 ? 1 : 0;
+      if (Object.hasOwn(row, "formats_json")) {
+        try { online = JSON.parse(row.formats_json || "[]").includes("Онлайн") ? 1 : 0; } catch { online = 0; }
+      }
+      const experienceMatch = String(row.experience ?? "").match(/\d+/);
+      return { ...row, online, experience: experienceMatch ? Math.min(Number(experienceMatch[0]), 100) : null };
+    });
+  }
   if (rows.length === 0) return [];
-  const columns = Object.keys(rows[0]);
+  const columns = Object.keys(rows[0]).filter(
+    (column) => !(
+      (table === "Specialists" && ["name", "initials", "district", "notes", "catalog_record_id", "formats_json", "nosologies_json", "schedule", "response_time"].includes(column)) ||
+      (table === "Users" && (column === "email" || column === "external_id" || column === "notes"))
+    )
+  );
   const columnList = columns.map((column) => `\`${column}\``).join(", ");
   const statements = [];
   for (let start = 0; start < rows.length; start += batchSize) {
@@ -66,9 +86,9 @@ function insertStatements(sqlite, table, batchSize = 500) {
 }
 
 const siteTables = [
-  "Users", "Phones", "Admins", "UserCredentials", "EmailVerifications", "AppSettings",
+  "Users", "Emails", "GoogleId", "Phones", "Admins", "UserCredentials", "EmailVerifications", "AppSettings",
   "PasswordResetRequests", "Catalog_groups", "Catalog_subgroups", "Catalog_record", "Specialists",
-  "SpecialistRecords", "Requests", "Messages", "Comments", "Abuses"
+  "Districts", "SpecialistRecords", "Requests", "Messages", "Comments", "Abuses"
 ];
 const mapTables = ["entry_types", "entries"];
 

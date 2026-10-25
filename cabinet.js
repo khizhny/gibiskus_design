@@ -3,10 +3,6 @@ const accountElements = {
   formStatus: document.querySelector("#accountProfileStatus"),
   passwordForm: document.querySelector("#accountPasswordForm"),
   passwordStatus: document.querySelector("#accountPasswordStatus"),
-  passwordResult: document.querySelector("#accountPasswordResult"),
-  passwordDialog: document.querySelector("#passwordDialog"),
-  openPassword: document.querySelector("#openPasswordDialog"),
-  cancelPassword: document.querySelector("[data-close-password]"),
   currentPasswordField: document.querySelector("#currentPasswordField"),
   loadStatus: document.querySelector("#accountLoadStatus"),
   memberMeta: document.querySelector("#accountMemberMeta"),
@@ -186,9 +182,8 @@ function renderAccount(data) {
   accountElements.form.elements.firstName.value = profile.firstName || "";
   accountElements.form.elements.lastName.value = profile.lastName || "";
   accountElements.form.elements.email.value = profile.email || "";
-  const googleAccount = Boolean(profile.externalId) && !/^(admin|specialist|parent|system):/.test(profile.externalId);
-  accountElements.form.elements.email.readOnly = googleAccount;
-  accountElements.form.elements.email.setAttribute("aria-readonly", String(googleAccount));
+  accountElements.form.elements.email.readOnly = true;
+  accountElements.form.elements.email.setAttribute("aria-readonly", "true");
   accountElements.memberMeta.textContent = `Реєстрація: ${formatAccountDate(profile.registeredAt)}`;
   if (accountElements.currentPasswordField) {
     accountElements.currentPasswordField.hidden = !profile.hasPassword;
@@ -219,6 +214,12 @@ function activateAccountView(name) {
   });
 }
 
+function activateRequestedAccountView() {
+  const requestedView = new URLSearchParams(window.location.search).get("tab");
+  const availableViews = new Set([...accountElements.tabs].map((tab) => tab.dataset.accountTab));
+  activateAccountView(availableViews.has(requestedView) ? requestedView : "profile");
+}
+
 async function loadAccount() {
   try {
     renderAccount(await accountRequest("/api/account/index.php"));
@@ -240,23 +241,6 @@ accountElements.cancelAddPhone?.addEventListener("click", () => accountElements.
 
 accountElements.phoneDialog?.addEventListener("cancel", (event) => {
   if (accountElements.phoneDialog.getAttribute("aria-busy") === "true") event.preventDefault();
-});
-
-accountElements.openPassword?.addEventListener("click", () => {
-  accountElements.passwordForm.reset();
-  accountElements.passwordStatus.textContent = "";
-  accountElements.passwordResult.textContent = "";
-  accountElements.passwordDialog.showModal();
-  const firstVisibleInput = [...accountElements.passwordForm.elements].find(
-    (element) => element instanceof HTMLInputElement && !element.closest("[hidden]")
-  );
-  firstVisibleInput?.focus();
-});
-
-accountElements.cancelPassword?.addEventListener("click", () => accountElements.passwordDialog.close());
-
-accountElements.passwordDialog?.addEventListener("cancel", (event) => {
-  if (accountElements.passwordDialog.getAttribute("aria-busy") === "true") event.preventDefault();
 });
 
 accountElements.contactForms.forEach((form) => {
@@ -323,8 +307,7 @@ accountElements.form?.addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({
         firstName: data.get("firstName"),
-        lastName: data.get("lastName"),
-        email: data.get("email")
+        lastName: data.get("lastName")
       })
     });
     renderAccount(result);
@@ -353,8 +336,7 @@ accountElements.passwordForm?.addEventListener("submit", async (event) => {
   }
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
-  accountElements.cancelPassword.disabled = true;
-  accountElements.passwordDialog.setAttribute("aria-busy", "true");
+  form.setAttribute("aria-busy", "true");
   accountElements.passwordStatus.textContent = "Змінюємо пароль...";
   try {
     await accountRequest("/api/account/password.php", {
@@ -368,14 +350,12 @@ accountElements.passwordForm?.addEventListener("submit", async (event) => {
     form.reset();
     accountElements.currentPasswordField.hidden = false;
     form.elements.currentPassword.required = true;
-    accountElements.passwordDialog.close();
-    accountElements.passwordResult.textContent = "Пароль успішно змінено.";
+    accountElements.passwordStatus.textContent = "Пароль успішно змінено.";
   } catch (error) {
     accountElements.passwordStatus.textContent = error.message;
   } finally {
     submit.disabled = false;
-    accountElements.cancelPassword.disabled = false;
-    accountElements.passwordDialog.removeAttribute("aria-busy");
+    form.removeAttribute("aria-busy");
   }
 });
 
@@ -415,4 +395,5 @@ document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
   document.querySelector(".site-header")?.classList.toggle("is-open");
 });
 
+activateRequestedAccountView();
 loadAccount();

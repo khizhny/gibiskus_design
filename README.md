@@ -74,7 +74,7 @@ http://localhost:8000
 https://dev.oop.net.ua
 ```
 
-Без завершального `/`. OAuth Client Secret у браузерні файли додавати не потрібно. PHP перевіряє Google ID-токен через офіційну бібліотеку `google/auth`, перевіряє audience/issuer/signature/expiration та зберігає Google `sub` у `Users.external_id`.
+Без завершального `/`. OAuth Client Secret у браузерні файли додавати не потрібно. PHP перевіряє Google ID-токен через офіційну бібліотеку `google/auth`, перевіряє audience/issuer/signature/expiration та зберігає Google `sub` у `GoogleId.external_id`.
 
 Frontend використовує endpoint `/api/auth/google.php`, тому nginx rewrite або reverse proxy не потрібні — потрібна лише стандартна підтримка `.php` на VPS.
 

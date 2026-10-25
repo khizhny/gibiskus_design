@@ -9,7 +9,7 @@
       name="description"
       content="Реєстрація нового користувача через Google або email."
     />
-    <link rel="stylesheet" href="styles.css?v=typography-20260920" />
+    <link rel="stylesheet" href="styles.css?v=required-field-markers-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -40,7 +40,11 @@
 
         <section class="auth-panel" aria-label="Форма реєстрації">
           <form class="registration-profile" id="registrationProfileForm">
-            <div class="field-grid">
+            <div class="field-grid registration-name-fields">
+              <label>
+                <span>Нікнейм</span>
+                <input type="text" name="nickname" autocomplete="username" maxlength="160" required />
+              </label>
               <label>
                 <span>Ім'я</span>
                 <input type="text" name="firstName" autocomplete="given-name" required />
@@ -50,10 +54,6 @@
                 <input type="text" name="lastName" autocomplete="family-name" required />
               </label>
             </div>
-            <label class="checkbox-row registration-consent">
-              <input type="checkbox" name="privacyAccepted" required />
-              <span>Погоджуюсь з <a href="privacy.html" target="_blank" rel="noopener">політикою конфіденційності</a>.</span>
-            </label>
           </form>
 
           <div class="registration-methods" id="registrationMethodSection" hidden>
@@ -73,6 +73,11 @@
                     <input type="password" name="passwordConfirm" autocomplete="new-password" minlength="8" maxlength="128" required />
                   </label>
                 </form>
+
+                <label class="checkbox-row registration-consent">
+                  <input type="checkbox" name="privacyAccepted" form="registrationProfileForm" required />
+                  <span>Погоджуюсь з <a href="privacy.html" target="_blank" rel="noopener">політикою конфіденційності</a>.</span>
+                </label>
 
                 <button
                   class="primary-button auth-email-submit"
@@ -115,14 +120,13 @@
           </form>
 
           <p class="auth-status" id="authStatus" role="status"></p>
-          <p class="auth-switch-link">Вже маєте акаунт? <a href="auth.php">Увійти</a></p>
         </section>
       </section>
     </main>
 
     <script src="auth-config.js?v=email-activation-20260920"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="register.js?v=service-offer-page-20260921"></script>
+    <script src="https://accounts.google.com/gsi/client?hl=uk" async defer></script>
+    <script src="register.js?v=registration-nickname-20261026"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

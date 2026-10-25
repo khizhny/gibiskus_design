@@ -6,9 +6,9 @@
     <title>Пошук фахівця - панель адміністратора</title>
     <meta
       name="description"
-      content="Панель адміністратора для керування оголошеннями, скаргами, відгуками і контролю автоматичного зняття публікацій."
+      content="Панель адміністратора для керування оголошеннями, скаргами та відгуками."
     />
-    <link rel="stylesheet" href="styles.css?v=typography-20260920" />
+    <link rel="stylesheet" href="styles.css?v=no-listing-expiration-20261025" />
   </head>
   <body>
     <header class="site-header">
@@ -63,16 +63,8 @@
                 <strong id="metricPending">0</strong>
               </article>
               <article>
-                <span>Завершуються за 3 дні</span>
-                <strong id="metricExpiring">0</strong>
-              </article>
-              <article>
                 <span>Скарги за тиждень</span>
                 <strong id="metricReports">0</strong>
-              </article>
-              <article>
-                <span>Зняті автоматично</span>
-                <strong id="metricArchived">0</strong>
               </article>
             </div>
             <div class="admin-grid">
@@ -82,7 +74,6 @@
                   <span>Спеціалізація</span>
                   <span>Місто</span>
                   <span>Статус</span>
-                  <span>До зняття</span>
                   <span>Дії</span>
                 </div>
                 <div id="moderationRows"></div>
@@ -225,7 +216,7 @@
       </section>
     </main>
 
-    <script src="script.js?v=roleless-users-20260920"></script>
+    <script src="script.js?v=catalog-suggestions-db-20261025"></script>
     <script src="session.js?v=service-offer-page-20260921"></script>
   </body>
 </html>

@@ -194,6 +194,6 @@ elements.forgotForm?.addEventListener("submit", async (event) => {
   }
 });
 
-const googleScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+const googleScript = document.querySelector('script[src^="https://accounts.google.com/gsi/client"]');
 googleScript?.addEventListener("load", initializeGoogleLogin);
 window.addEventListener("load", initializeGoogleLogin);

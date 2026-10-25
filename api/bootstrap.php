@@ -132,6 +132,16 @@ function normalize_optional_phone(mixed $value): string
     return normalize_phone($value);
 }
 
+function normalize_experience_years(mixed $value): ?int
+{
+    $text = clean_text($value, 3);
+    if ($text === '') return null;
+    if (!ctype_digit($text)) throw new ApiError(400, 'Досвід роботи має бути вказаний цілим числом років');
+    $years = (int) $text;
+    if ($years > 100) throw new ApiError(400, 'Досвід роботи не може перевищувати 100 років');
+    return $years;
+}
+
 function validate_password(mixed $value): string
 {
     $password = (string) ($value ?? '');
@@ -237,7 +247,10 @@ function landing_page_for_user(array $user): string
 function user_record(PDO $db, int $userId): array
 {
     $row = fetch_one($db, <<<'SQL'
-        SELECT u.id, u.external_id, u.name, u.first_name, u.last_name, u.email,
+        SELECT u.id,
+          (SELECT g.external_id FROM GoogleId AS g WHERE g.user_id = u.id LIMIT 1) AS external_id,
+          u.name, u.first_name, u.last_name,
+          (SELECT e.email FROM Emails AS e WHERE e.user_id = u.id ORDER BY e.id LIMIT 1) AS email,
           EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
           (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY id LIMIT 1) AS phone
         FROM Users AS u
@@ -291,7 +304,8 @@ function require_admin(): array
 function admin_users_data(): array
 {
     $rows = execute_sql(database(), <<<'SQL'
-        SELECT u.id, u.name, u.first_name, u.last_name, u.email, u.registered_at, u.last_active, u.created_at,
+        SELECT u.id, u.name, u.first_name, u.last_name, u.registered_at, u.last_active, u.created_at,
+          (SELECT e.email FROM Emails AS e WHERE e.user_id = u.id ORDER BY e.id LIMIT 1) AS email,
           EXISTS(SELECT 1 FROM Admins AS a WHERE a.user_id = u.id) AS is_admin,
           (SELECT phone FROM Phones WHERE user_id = u.id ORDER BY id LIMIT 1) AS phone,
           (SELECT count(*) FROM Specialists WHERE user_id = u.id) AS specialist_count,
@@ -372,11 +386,32 @@ function destroy_current_session(): void
 
 function set_user_email(PDO $db, int $userId, string $email): void
 {
-    $conflict = fetch_one($db, 'SELECT id FROM Users WHERE lower(email) = lower(?) AND id != ? LIMIT 1', [$email, $userId]);
+    $conflict = fetch_one($db, 'SELECT id FROM Emails WHERE lower(email) = lower(?) AND user_id != ? LIMIT 1', [$email, $userId]);
     if ($conflict !== null) {
         throw new ApiError(400, 'This email is already used by another account');
     }
-    execute_sql($db, 'UPDATE Users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$email, $userId]);
+    $stored = fetch_one($db, 'SELECT id FROM Emails WHERE user_id = ? ORDER BY id LIMIT 1', [$userId]);
+    if ($stored === null) {
+        execute_sql($db, 'INSERT INTO Emails (user_id, email) VALUES (?, ?)', [$userId, $email]);
+    } else {
+        execute_sql($db, 'UPDATE Emails SET email = ? WHERE id = ?', [$email, (int) $stored['id']]);
+    }
+    execute_sql($db, 'UPDATE Users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$userId]);
+}
+
+function set_user_google_id(PDO $db, int $userId, string $externalId): void
+{
+    $conflict = fetch_one($db, 'SELECT user_id FROM GoogleId WHERE external_id = ? AND user_id != ? LIMIT 1', [$externalId, $userId]);
+    if ($conflict !== null) {
+        throw new ApiError(400, 'This Google account is already linked to another account');
+    }
+    $stored = fetch_one($db, 'SELECT external_id FROM GoogleId WHERE user_id = ? LIMIT 1', [$userId]);
+    if ($stored === null) {
+        execute_sql($db, 'INSERT INTO GoogleId (user_id, external_id) VALUES (?, ?)', [$userId, $externalId]);
+    } else {
+        execute_sql($db, 'UPDATE GoogleId SET external_id = ? WHERE user_id = ? AND external_id = ?', [$externalId, $userId, (string) $stored['external_id']]);
+    }
+    execute_sql($db, 'UPDATE Users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$userId]);
 }
 
 function add_user_phone(PDO $db, int $userId, string $phone): void
@@ -384,6 +419,25 @@ function add_user_phone(PDO $db, int $userId, string $phone): void
     $stored = fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]);
     if ($stored === null) {
         execute_sql($db, 'INSERT INTO Phones (user_id, phone) VALUES (?, ?)', [$userId, $phone]);
+    }
+}
+
+function replace_specialist_districts(PDO $db, int $specialistId, string $cityId, array $specialistDistricts, array $studentDistricts): void
+{
+    execute_sql($db, 'DELETE FROM Districts WHERE specialist_id = ?', [$specialistId]);
+    foreach ([[0, $specialistDistricts], [1, $studentDistricts]] as [$clientSite, $districtNames]) {
+        foreach (array_values(array_unique($districtNames)) as $districtName) {
+            $district = fetch_one($db, <<<'SQL'
+                SELECT l5_parent_id AS district_id
+                FROM entries
+                WHERE type = 9 AND l4_parent_id = ? AND BINARY name = BINARY ?
+                LIMIT 1
+                SQL, [$cityId, $districtName]);
+            if ($district === null || clean_text($district['district_id'] ?? '', 80) === '') {
+                throw new ApiError(400, 'Selected district does not belong to the chosen city');
+            }
+            execute_sql($db, 'INSERT INTO Districts (specialist_id, district_id, client_site) VALUES (?, ?, ?)', [$specialistId, $district['district_id'], $clientSite]);
+        }
     }
 }
 
@@ -426,8 +480,21 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
         throw new ApiError(400, 'Google account must provide a verified email address');
     }
     return transaction(function (PDO $db) use ($registration, $googleProfile, $mode, $subject, $email): array {
-        $existing = fetch_one($db, 'SELECT id FROM Users WHERE external_id = ?', [$subject]);
-        $emailOwner = fetch_one($db, 'SELECT id, external_id FROM Users WHERE lower(email) = lower(?) LIMIT 1', [$email]);
+        $existing = fetch_one($db, <<<'SQL'
+            SELECT u.id
+            FROM GoogleId AS g
+            INNER JOIN Users AS u ON u.id = g.user_id
+            WHERE g.external_id = ?
+            LIMIT 1
+            SQL, [$subject]);
+        $emailOwner = fetch_one($db, <<<'SQL'
+            SELECT u.id,
+              (SELECT g.external_id FROM GoogleId AS g WHERE g.user_id = u.id LIMIT 1) AS external_id
+            FROM Emails AS e
+            INNER JOIN Users AS u ON u.id = e.user_id
+            WHERE lower(e.email) = lower(?)
+            LIMIT 1
+            SQL, [$email]);
         if ($existing !== null && $emailOwner !== null && (int) $existing['id'] !== (int) $emailOwner['id']) {
             throw new ApiError(400, 'Google email belongs to another account');
         }
@@ -437,7 +504,7 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
             if ($external !== '' && !$synthetic && $external !== $subject) {
                 throw new ApiError(400, 'Google email belongs to another account');
             }
-            execute_sql($db, 'UPDATE Users SET external_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$subject, (int) $emailOwner['id']]);
+            set_user_google_id($db, (int) $emailOwner['id'], $subject);
             $existing = fetch_one($db, 'SELECT id FROM Users WHERE id = ?', [(int) $emailOwner['id']]);
         }
         $now = gmdate('c');
@@ -453,19 +520,20 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
         if ($registration === null) {
             throw new ApiError(400, 'Registration profile is required');
         }
+        $nickname = clean_text($registration['nickname'] ?? '', 160);
         $firstName = clean_text($registration['firstName'] ?? '', 80);
         $lastName = clean_text($registration['lastName'] ?? '', 80);
         $phone = normalize_optional_phone($registration['phone'] ?? '');
-        if ($firstName === '' || $lastName === '') {
+        if ($nickname === '' || $firstName === '' || $lastName === '') {
             throw new ApiError(400, 'Missing or invalid registration data');
         }
-        $fullName = clean_text($firstName . ' ' . $lastName, 160);
         if ($existing !== null) {
             $userId = (int) $existing['id'];
-            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $now, $userId]);
+            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$nickname, $firstName, $lastName, $now, $userId]);
         } else {
-            execute_sql($db, 'INSERT INTO Users (external_id, name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?, ?)', [$subject, $fullName, $firstName, $lastName, $now, $now, 'Google Identity Services']);
+            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active) VALUES (?, ?, ?, ?, ?)', [$nickname, $firstName, $lastName, $now, $now]);
             $userId = (int) $db->lastInsertId();
+            set_user_google_id($db, $userId, $subject);
         }
         set_user_email($db, $userId, $email);
         if ($phone !== '') {
@@ -477,9 +545,10 @@ function save_google_user(?array $registration, array $googleProfile, string $mo
 
 function register_email_user(array $payload): array
 {
+    $nickname = clean_text($payload['nickname'] ?? '', 160);
     $firstName = clean_text($payload['firstName'] ?? '', 80);
     $lastName = clean_text($payload['lastName'] ?? '', 80);
-    if ($firstName === '' || $lastName === '') {
+    if ($nickname === '' || $firstName === '' || $lastName === '') {
         throw new ApiError(400, 'Missing or invalid registration data');
     }
     if (($payload['privacyAccepted'] ?? false) !== true) {
@@ -488,12 +557,13 @@ function register_email_user(array $payload): array
     $email = normalize_email($payload['email'] ?? '');
     $phone = normalize_optional_phone($payload['phone'] ?? '');
     $password = validate_password($payload['password'] ?? '');
-    return transaction(function (PDO $db) use ($firstName, $lastName, $email, $phone, $password): array {
+    return transaction(function (PDO $db) use ($nickname, $firstName, $lastName, $email, $phone, $password): array {
         $emailOwner = fetch_one($db, <<<'SQL'
             SELECT u.id AS user_id, v.verified_at, v.last_sent_at
-            FROM Users AS u
+            FROM Emails AS e
+            INNER JOIN Users AS u ON u.id = e.user_id
             LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
-            WHERE lower(u.email) = lower(?)
+            WHERE lower(e.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         $nowTimestamp = time();
@@ -507,15 +577,14 @@ function register_email_user(array $payload): array
             }
         }
         $now = gmdate('c');
-        $fullName = clean_text($firstName . ' ' . $lastName, 160);
         if ($emailOwner !== null) {
             $userId = (int) $emailOwner['user_id'];
-            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$fullName, $firstName, $lastName, $userId]);
+            execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$nickname, $firstName, $lastName, $userId]);
             if ($phone !== '') {
                 add_user_phone($db, $userId, $phone);
             }
         } else {
-            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active, notes) VALUES (?, ?, ?, ?, ?, ?)', [$fullName, $firstName, $lastName, $now, $now, 'Pending email activation']);
+            execute_sql($db, 'INSERT INTO Users (name, first_name, last_name, registered_at, last_active) VALUES (?, ?, ?, ?, ?)', [$nickname, $firstName, $lastName, $now, $now]);
             $userId = (int) $db->lastInsertId();
             set_user_email($db, $userId, $email);
             if ($phone !== '') {
@@ -546,7 +615,7 @@ function register_email_user(array $payload): array
               updated_at = CURRENT_TIMESTAMP
             SQL, [$userId, $codeHash, $nowTimestamp + EMAIL_ACTIVATION_TTL_SECONDS, $nowTimestamp]);
 
-        send_activation_email($email, $fullName, $code);
+        send_activation_email($email, $nickname, $code);
         return [
             'requiresActivation' => true,
             'email' => $email,
@@ -651,10 +720,11 @@ function request_password_reset(mixed $emailValue): array
     return transaction(function (PDO $db) use ($email, $genericMessage): array {
         $account = fetch_one($db, <<<'SQL'
             SELECT u.id, u.name, v.user_id AS verification_user_id, v.verified_at, r.last_requested_at
-            FROM Users AS u
+            FROM Emails AS e
+            INNER JOIN Users AS u ON u.id = e.user_id
             LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
             LEFT JOIN PasswordResetRequests AS r ON r.user_id = u.id
-            WHERE lower(u.email) = lower(?)
+            WHERE lower(e.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         if ($account === null || ($account['verification_user_id'] !== null && $account['verified_at'] === null)) {
@@ -870,9 +940,10 @@ function activate_email_user(mixed $emailValue, mixed $codeValue): array
     $result = transaction(function (PDO $db) use ($email, $code): array {
         $verification = fetch_one($db, <<<'SQL'
             SELECT u.id AS user_id, v.code_hash, v.expires_at, v.attempt_count, v.verified_at
-            FROM Users AS u
+            FROM Emails AS e
+            INNER JOIN Users AS u ON u.id = e.user_id
             JOIN EmailVerifications AS v ON v.user_id = u.id
-            WHERE lower(u.email) = lower(?)
+            WHERE lower(e.email) = lower(?)
             LIMIT 1
             SQL, [$email]);
         if ($verification === null) {
@@ -894,7 +965,7 @@ function activate_email_user(mixed $emailValue, mixed $codeValue): array
         }
         $now = gmdate('c');
         execute_sql($db, 'UPDATE EmailVerifications SET code_hash = NULL, expires_at = NULL, verified_at = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [$now, $userId]);
-        execute_sql($db, "UPDATE Users SET notes = 'Email registration', last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$now, $userId]);
+        execute_sql($db, 'UPDATE Users SET last_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$now, $userId]);
         return user_record($db, $userId);
     });
     if (isset($result['activationError'])) {
@@ -908,10 +979,12 @@ function authenticate_email_user(mixed $emailValue, mixed $passwordValue): array
     $email = normalize_email($emailValue);
     $password = validate_password($passwordValue);
     $statement = execute_sql(database(), <<<'SQL'
-        SELECT u.id, c.password_hash, v.verified_at, v.user_id AS verification_user_id FROM Users AS u
+        SELECT u.id, c.password_hash, v.verified_at, v.user_id AS verification_user_id
+        FROM Emails AS e
+        INNER JOIN Users AS u ON u.id = e.user_id
         JOIN UserCredentials AS c ON c.user_id = u.id
         LEFT JOIN EmailVerifications AS v ON v.user_id = u.id
-        WHERE lower(u.email) = lower(?) ORDER BY u.id
+        WHERE lower(e.email) = lower(?) ORDER BY u.id
         SQL, [$email]);
     $legacyHash = false;
     while (($row = $statement->fetch()) !== false) {
@@ -974,8 +1047,10 @@ function account_data(int $userId): array
     foreach ($phones as &$item) { $item['id'] = (int) $item['id']; }
     unset($item);
     $listings = execute_sql($db, <<<'SQL'
-        SELECT id, 'specialist' AS kind, name AS title, status, created_at, expires_at, city, price AS amount
-        FROM Specialists WHERE user_id = ?
+        SELECT s.id, 'specialist' AS kind, u.name AS title, s.status, s.created_at, NULL AS expires_at, s.city, s.price AS amount
+        FROM Specialists AS s
+        INNER JOIN Users AS u ON u.id = s.user_id
+        WHERE s.user_id = ?
         UNION ALL
         SELECT id, 'request' AS kind, title, status, created_at, NULL AS expires_at, city, budget AS amount
         FROM Requests WHERE user_id = ? ORDER BY created_at DESC, id DESC
@@ -986,12 +1061,10 @@ function account_data(int $userId): array
         $listing['editable'] = $listing['kind'] === 'specialist';
         if ($listing['kind'] === 'specialist') {
             $details = fetch_one($db, <<<'SQL'
-                SELECT bio, duration_minutes, formats_json, district, notes
+                SELECT bio, education, experience, duration_minutes, online
                 FROM Specialists
                 WHERE id = ? AND user_id = ?
                 SQL, [(int) $listing['id'], $userId]);
-            $formats = json_decode((string) ($details['formats_json'] ?? '[]'), true);
-            $notes = json_decode((string) ($details['notes'] ?? '{}'), true);
             $specialtyRows = execute_sql($db, <<<'SQL'
                 SELECT r.title
                 FROM SpecialistRecords AS sr
@@ -1000,22 +1073,40 @@ function account_data(int $userId): array
                 ORDER BY sr.is_primary DESC, sr.sort_order, sr.id
                 SQL, [(int) $listing['id']])->fetchAll();
             $listing['description'] = (string) ($details['bio'] ?? '');
+            $listing['education'] = (string) ($details['education'] ?? '');
+            $listing['experience'] = $details['experience'] === null ? '' : (int) $details['experience'];
             $listing['durationMinutes'] = (int) ($details['duration_minutes'] ?? 60);
-            $listing['formats'] = is_array($formats) ? array_values(array_filter(array_map('strval', $formats))) : [];
             $listing['specialties'] = array_values(array_filter(array_map(
                 fn(array $item): string => clean_text($item['title'] ?? '', 160),
                 $specialtyRows
             )));
-            $listing['districts'] = array_values(array_filter(array_map(
-                'trim',
-                explode(',', (string) ($details['district'] ?? ''))
-            )));
-            $listing['phones'] = is_array($notes) && isset($notes['phones']) && is_array($notes['phones'])
-                ? array_values(array_map('strval', $notes['phones']))
-                : [];
-            $listing['autoDeleteDays'] = is_array($notes) && in_array((int) ($notes['autoDeleteDays'] ?? 0), [30, 60, 90], true)
-                ? (int) $notes['autoDeleteDays']
-                : 30;
+            $districtRows = execute_sql($db, <<<'SQL'
+                SELECT d.client_site, e.name
+                FROM Districts AS d
+                INNER JOIN entries AS e ON e.l5_parent_id = d.district_id
+                WHERE d.specialist_id = ?
+                ORDER BY e.name
+                SQL, [(int) $listing['id']])->fetchAll();
+            $listing['specialistDistricts'] = [];
+            $listing['studentDistricts'] = [];
+            foreach ($districtRows as $districtRow) {
+                $districtName = clean_text($districtRow['name'] ?? '', 120);
+                if ($districtName === '') continue;
+                if ((int) $districtRow['client_site'] === 1) {
+                    $listing['studentDistricts'][] = $districtName;
+                } else {
+                    $listing['specialistDistricts'][] = $districtName;
+                }
+            }
+            $listing['districts'] = array_values(array_unique([...$listing['specialistDistricts'], ...$listing['studentDistricts']]));
+            $listing['formats'] = [];
+            if ((int) ($details['online'] ?? 0) === 1) $listing['formats'][] = 'Онлайн';
+            if ($listing['specialistDistricts'] !== []) $listing['formats'][] = 'У фахівця';
+            if ($listing['studentDistricts'] !== []) $listing['formats'][] = 'У учня';
+            $listing['phones'] = array_values(array_map(
+                fn(array $item): string => (string) $item['value'],
+                $phones
+            ));
         }
     }
     unset($listing);
@@ -1034,13 +1125,6 @@ function account_data(int $userId): array
     return ['profile' => $user, 'phones' => $phones, 'listings' => $listings, 'notifications' => $notifications];
 }
 
-function user_uses_google_identity(PDO $db, int $userId): bool
-{
-    $row = fetch_one($db, 'SELECT external_id FROM Users WHERE id = ?', [$userId]);
-    $externalId = clean_text($row['external_id'] ?? '', 255);
-    return $externalId !== '' && preg_match('/^(admin|specialist|parent|system):/', $externalId) !== 1;
-}
-
 function update_account_profile(int $userId, array $payload): array
 {
     $firstName = clean_text($payload['firstName'] ?? '', 80);
@@ -1048,14 +1132,8 @@ function update_account_profile(int $userId, array $payload): array
     if ($firstName === '' || $lastName === '') {
         throw new ApiError(400, 'First name and last name are required');
     }
-    $db = database();
-    $googleAccount = user_uses_google_identity($db, $userId);
-    $email = $googleAccount ? '' : normalize_email($payload['email'] ?? '');
-    transaction(function (PDO $db) use ($userId, $firstName, $lastName, $email, $googleAccount): void {
-        execute_sql($db, 'UPDATE Users SET name = ?, first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [clean_text($firstName . ' ' . $lastName, 160), $firstName, $lastName, $userId]);
-        if (!$googleAccount) {
-            set_user_email($db, $userId, $email);
-        }
+    transaction(function (PDO $db) use ($userId, $firstName, $lastName): void {
+        execute_sql($db, 'UPDATE Users SET first_name = ?, last_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [$firstName, $lastName, $userId]);
     });
     return account_data($userId);
 }
@@ -1098,6 +1176,8 @@ function create_specialist_listing(int $userId, array $payload): array
     $user = user_record($db, $userId);
     $name = clean_text($user['name'] ?? '', 160);
     $description = clean_text($payload['description'] ?? '', 2000);
+    $education = clean_text($payload['education'] ?? '', 1000);
+    $experience = normalize_experience_years($payload['experience'] ?? '');
     $city = clean_text($payload['city'] ?? '', 80);
     foreach (['specialties', 'formats', 'districts'] as $field) {
         if (!isset($payload[$field]) || !is_array($payload[$field])) throw new ApiError(400, 'Invalid listing collections');
@@ -1105,46 +1185,39 @@ function create_specialist_listing(int $userId, array $payload): array
     $specialties = array_values(array_filter(array_map(fn($v) => clean_text($v, 160), $payload['specialties'])));
     $formats = array_values(array_filter(array_map(fn($v) => clean_text($v, 80), $payload['formats'])));
     $districts = array_values(array_filter(array_map(fn($v) => clean_text($v, 120), $payload['districts'])));
-    if (!isset($payload['phones']) || !is_array($payload['phones'])) throw new ApiError(400, 'Invalid phone selection');
-    $phones = array_values(array_unique(array_filter(array_map(fn($v) => normalize_phone($v), $payload['phones']))));
-    foreach ($phones as $phone) {
-        if (fetch_one($db, 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]) === null) {
-            throw new ApiError(400, 'Selected phone number does not belong to this account');
-        }
-    }
+    $specialistDistricts = isset($payload['specialistDistricts']) && is_array($payload['specialistDistricts'])
+        ? array_values(array_unique(array_filter(array_map(fn($v) => clean_text($v, 120), $payload['specialistDistricts']))))
+        : (in_array('У фахівця', $formats, true) ? $districts : []);
+    $studentDistricts = isset($payload['studentDistricts']) && is_array($payload['studentDistricts'])
+        ? array_values(array_unique(array_filter(array_map(fn($v) => clean_text($v, 120), $payload['studentDistricts']))))
+        : (in_array('У учня', $formats, true) ? $districts : []);
+    if (!in_array('У фахівця', $formats, true)) $specialistDistricts = [];
+    if (!in_array('У учня', $formats, true)) $studentDistricts = [];
+    if (in_array('У фахівця', $formats, true) && $specialistDistricts === []) throw new ApiError(400, 'Оберіть район для занять у фахівця');
+    if (in_array('У учня', $formats, true) && $studentDistricts === []) throw new ApiError(400, 'Оберіть район для занять у учня');
+    $online = in_array('Онлайн', $formats, true) ? 1 : 0;
     $email = normalize_email($payload['email'] ?? '');
     if ($email !== normalize_email($user['email'] ?? '')) throw new ApiError(400, 'Email must match the account email');
     if ($name === '' || $description === '' || $specialties === []) throw new ApiError(400, 'Profile name, description and at least one specialty are required');
     $price = max(0, (int) ((float) ($payload['price'] ?? 0)));
     $durationMinutes = (int) ($payload['durationMinutes'] ?? 60);
     if ($durationMinutes < 15 || $durationMinutes > 480) throw new ApiError(400, 'Invalid session duration');
-    $days = (int) ($payload['autoDeleteDays'] ?? 30);
-    if (!in_array($days, [30, 60, 90], true)) throw new ApiError(400, 'Invalid listing lifetime');
-    return transaction(function (PDO $db) use ($userId, $name, $description, $city, $specialties, $formats, $districts, $phones, $email, $price, $durationMinutes, $days): array {
+    return transaction(function (PDO $db) use ($userId, $name, $description, $education, $experience, $city, $specialties, $online, $specialistDistricts, $studentDistricts, $price, $durationMinutes): array {
         $catalogIds = [];
         foreach (array_slice($specialties, 0, 20) as $title) {
             $row = fetch_one($db, 'SELECT id FROM Catalog_record WHERE enabled = 1 AND lower(title) = lower(?) ORDER BY id LIMIT 1', [$title]);
             if ($row !== null && !in_array((int) $row['id'], $catalogIds, true)) $catalogIds[] = (int) $row['id'];
         }
+        if ($catalogIds === []) throw new ApiError(400, 'Оберіть спеціальність із каталогу');
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        $expires = $now->modify('+' . $days . ' days');
-        $parts = preg_split('/\s+/u', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $initials = '';
-        foreach ($parts as $part) $initials .= function_exists('mb_substr') ? mb_substr($part, 0, 1) : substr($part, 0, 1);
-        $initials = function_exists('mb_strtoupper') ? mb_strtoupper(mb_substr($initials, 0, 3)) : strtoupper(substr($initials, 0, 3));
-        $notes = json_encode([
-            'durationMinutes' => $durationMinutes,
-            'autoDeleteDays' => $days,
-            'phones' => $phones,
-            'email' => $email,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
         execute_sql($db, <<<'SQL'
-            INSERT INTO Specialists (user_id, catalog_record_id, city, name, initials, price, duration_minutes,
-              rating, reviews_count, district, formats_json, nosologies_json, schedule, response_time, bio,
-              education, experience, created_at, expires_at, status, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, '[]', '', '', ?, '', '', ?, ?, 'active', ?)
-            SQL, [$userId, $catalogIds[0] ?? null, $city, $name, $initials, $price, $durationMinutes, implode(', ', array_values(array_unique($districts))), json_encode($formats, JSON_UNESCAPED_UNICODE), $description, $now->format(DateTimeInterface::ATOM), $expires->format(DateTimeInterface::ATOM), $notes]);
+            INSERT INTO Specialists (user_id, city, price, duration_minutes,
+              rating, reviews_count, online, bio,
+              education, experience, created_at, expires_at, status)
+            VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, NULL, 'active')
+            SQL, [$userId, $city, $price, $durationMinutes, $online, $description, $education, $experience, $now->format(DateTimeInterface::ATOM)]);
         $specialistId = (int) $db->lastInsertId();
+        replace_specialist_districts($db, $specialistId, $city, $specialistDistricts, $studentDistricts);
         foreach ($catalogIds as $index => $catalogId) {
             execute_sql($db, 'INSERT INTO SpecialistRecords (specialist_id, catalog_record_id, is_primary, sort_order) VALUES (?, ?, ?, ?)', [$specialistId, $catalogId, $index === 0 ? 1 : 0, $index + 1]);
         }
@@ -1157,8 +1230,9 @@ function update_specialist_listing(int $userId, array $payload): array
     $listingId = filter_var($payload['id'] ?? null, FILTER_VALIDATE_INT);
     if ($listingId === false || $listingId === null) throw new ApiError(400, 'Некоректне оголошення');
     $user = user_record(database(), $userId);
-    $name = clean_text($user['name'] ?? '', 160);
     $description = clean_text($payload['description'] ?? '', 2000);
+    $education = clean_text($payload['education'] ?? '', 1000);
+    $experience = normalize_experience_years($payload['experience'] ?? '');
     if ($description === '') throw new ApiError(400, 'Додайте короткий опис');
     $city = clean_text($payload['city'] ?? '', 80);
     if ($city === '') throw new ApiError(400, 'Оберіть місто');
@@ -1183,19 +1257,20 @@ function update_specialist_listing(int $userId, array $payload): array
         fn(mixed $value): string => clean_text($value, 120),
         $payload['districts']
     ))));
-    if (!isset($payload['phones']) || !is_array($payload['phones'])) throw new ApiError(400, 'Оберіть номер телефону');
-    $phones = array_values(array_unique(array_filter(array_map(fn(mixed $value): string => normalize_phone($value), $payload['phones']))));
-    foreach ($phones as $phone) {
-        if (fetch_one(database(), 'SELECT id FROM Phones WHERE user_id = ? AND phone = ? LIMIT 1', [$userId, $phone]) === null) {
-            throw new ApiError(400, 'Вибраний номер не належить цьому акаунту');
-        }
-    }
+    $specialistDistricts = isset($payload['specialistDistricts']) && is_array($payload['specialistDistricts'])
+        ? array_values(array_unique(array_filter(array_map(fn(mixed $value): string => clean_text($value, 120), $payload['specialistDistricts']))))
+        : (in_array('У фахівця', $formats, true) ? $districts : []);
+    $studentDistricts = isset($payload['studentDistricts']) && is_array($payload['studentDistricts'])
+        ? array_values(array_unique(array_filter(array_map(fn(mixed $value): string => clean_text($value, 120), $payload['studentDistricts']))))
+        : (in_array('У учня', $formats, true) ? $districts : []);
+    if (!in_array('У фахівця', $formats, true)) $specialistDistricts = [];
+    if (!in_array('У учня', $formats, true)) $studentDistricts = [];
+    if (in_array('У фахівця', $formats, true) && $specialistDistricts === []) throw new ApiError(400, 'Оберіть район для занять у фахівця');
+    if (in_array('У учня', $formats, true) && $studentDistricts === []) throw new ApiError(400, 'Оберіть район для занять у учня');
+    $online = in_array('Онлайн', $formats, true) ? 1 : 0;
     $email = normalize_email($payload['email'] ?? '');
     if ($email !== normalize_email($user['email'] ?? '')) throw new ApiError(400, 'Email не відповідає акаунту');
-    $days = (int) ($payload['autoDeleteDays'] ?? 30);
-    if (!in_array($days, [30, 60, 90], true)) throw new ApiError(400, 'Некоректний строк оголошення');
-
-    transaction(function (PDO $db) use ($userId, $listingId, $name, $description, $city, $specialties, $price, $durationMinutes, $formats, $districts, $phones, $email, $days): void {
+    transaction(function (PDO $db) use ($userId, $listingId, $description, $education, $experience, $city, $specialties, $price, $durationMinutes, $online, $specialistDistricts, $studentDistricts): void {
         $listing = fetch_one($db, 'SELECT id FROM Specialists WHERE id = ? AND user_id = ?', [(int) $listingId, $userId]);
         if ($listing === null) throw new ApiError(404, 'Оголошення не знайдено');
         $catalogIds = [];
@@ -1204,32 +1279,23 @@ function update_specialist_listing(int $userId, array $payload): array
             if ($row !== null && !in_array((int) $row['id'], $catalogIds, true)) $catalogIds[] = (int) $row['id'];
         }
         if ($catalogIds === []) throw new ApiError(400, 'Оберіть спеціальність із каталогу');
-        $expires = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->modify('+' . $days . ' days');
-        $notes = json_encode([
-            'durationMinutes' => $durationMinutes,
-            'autoDeleteDays' => $days,
-            'phones' => $phones,
-            'email' => $email,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
         execute_sql($db, <<<'SQL'
             UPDATE Specialists
-            SET name = ?, city = ?, catalog_record_id = ?, bio = ?, price = ?, duration_minutes = ?,
-                formats_json = ?, district = ?, expires_at = ?, status = 'active', notes = ?
+            SET city = ?, bio = ?, education = ?, experience = ?, price = ?, duration_minutes = ?,
+                online = ?, expires_at = NULL, status = 'active'
             WHERE id = ? AND user_id = ?
             SQL, [
-                $name,
                 $city,
-                $catalogIds[0],
                 $description,
+                $education,
+                $experience,
                 $price,
                 $durationMinutes,
-                json_encode($formats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                implode(', ', $districts),
-                $expires->format(DateTimeInterface::ATOM),
-                $notes,
+                $online,
                 (int) $listingId,
                 $userId,
             ]);
+        replace_specialist_districts($db, (int) $listingId, $city, $specialistDistricts, $studentDistricts);
         execute_sql($db, 'DELETE FROM SpecialistRecords WHERE specialist_id = ?', [(int) $listingId]);
         foreach ($catalogIds as $index => $catalogId) {
             execute_sql($db, 'INSERT INTO SpecialistRecords (specialist_id, catalog_record_id, is_primary, sort_order) VALUES (?, ?, ?, ?)', [(int) $listingId, $catalogId, $index === 0 ? 1 : 0, $index + 1]);

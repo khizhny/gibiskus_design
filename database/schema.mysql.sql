@@ -2,6 +2,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP VIEW IF EXISTS oblasti;
+DROP TABLE IF EXISTS Districts;
 DROP TABLE IF EXISTS entries;
 DROP TABLE IF EXISTS entry_types;
 DROP TABLE IF EXISTS Abuses;
@@ -10,6 +11,7 @@ DROP TABLE IF EXISTS Messages;
 DROP TABLE IF EXISTS Requests;
 DROP TABLE IF EXISTS SpecialistRecords;
 DROP TABLE IF EXISTS Specialists;
+DROP TABLE IF EXISTS CatalogSuggestions;
 DROP TABLE IF EXISTS Catalog_record;
 DROP TABLE IF EXISTS Catalog_subgroups;
 DROP TABLE IF EXISTS Catalog_groups;
@@ -18,24 +20,39 @@ DROP TABLE IF EXISTS EmailVerifications;
 DROP TABLE IF EXISTS AppSettings;
 DROP TABLE IF EXISTS PasswordResetRequests;
 DROP TABLE IF EXISTS Admins;
+DROP TABLE IF EXISTS GoogleId;
+DROP TABLE IF EXISTS Emails;
 DROP TABLE IF EXISTS Phones;
 DROP TABLE IF EXISTS Users;
 
 CREATE TABLE Users (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  external_id VARCHAR(255) NULL,
-  email VARCHAR(320) NULL,
   name VARCHAR(160) NOT NULL,
   first_name VARCHAR(80) NULL,
   last_name VARCHAR(80) NULL,
   registered_at DATETIME NULL,
   last_active DATETIME NULL,
-  notes TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE Emails (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  email VARCHAR(320) NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_users_external_id (external_id),
-  UNIQUE KEY uq_users_email (email)
+  UNIQUE KEY uq_emails_email (email),
+  KEY idx_emails_user_id (user_id),
+  CONSTRAINT fk_emails_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE GoogleId (
+  user_id BIGINT UNSIGNED NOT NULL,
+  external_id VARCHAR(255) NOT NULL,
+  UNIQUE KEY uq_google_id_external_id (external_id),
+  KEY idx_google_id_user_id (user_id),
+  CONSTRAINT fk_google_id_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE Phones (
@@ -124,34 +141,43 @@ CREATE TABLE Catalog_record (
   CONSTRAINT fk_catalog_record_subgroup FOREIGN KEY (subgroup_id) REFERENCES Catalog_subgroups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE CatalogSuggestions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  group_id BIGINT UNSIGNED NOT NULL,
+  group_title VARCHAR(255) NOT NULL,
+  record_title VARCHAR(255) NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at DATETIME NULL,
+  reviewed_by BIGINT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  KEY idx_catalog_suggestions_status (status, created_at),
+  KEY idx_catalog_suggestions_user (user_id),
+  KEY idx_catalog_suggestions_group (group_id),
+  CONSTRAINT fk_catalog_suggestions_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_catalog_suggestions_group FOREIGN KEY (group_id) REFERENCES Catalog_groups(id) ON DELETE CASCADE,
+  CONSTRAINT fk_catalog_suggestions_reviewer FOREIGN KEY (reviewed_by) REFERENCES Users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE Specialists (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NULL,
-  catalog_record_id BIGINT UNSIGNED NULL,
   city VARCHAR(80) NULL,
-  name VARCHAR(160) NOT NULL,
-  initials VARCHAR(20) NULL,
   price INT NULL,
   duration_minutes INT NULL,
   rating DECIMAL(4,2) NULL,
   reviews_count INT NOT NULL DEFAULT 0,
-  district VARCHAR(255) NULL,
-  formats_json TEXT NULL,
-  nosologies_json TEXT NULL,
-  schedule VARCHAR(255) NULL,
-  response_time VARCHAR(255) NULL,
+  online TINYINT(1) NOT NULL DEFAULT 0,
   bio TEXT NULL,
   education TEXT NULL,
-  experience TEXT NULL,
+  experience INT NULL,
   created_at DATETIME NULL,
   expires_at DATETIME NULL,
   status VARCHAR(40) NOT NULL DEFAULT 'active',
-  notes TEXT NULL,
   PRIMARY KEY (id),
   KEY idx_specialists_user_id (user_id),
-  KEY idx_specialists_catalog_record_id (catalog_record_id),
-  CONSTRAINT fk_specialists_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  CONSTRAINT fk_specialists_catalog_record FOREIGN KEY (catalog_record_id) REFERENCES Catalog_record(id) ON DELETE CASCADE
+  CONSTRAINT fk_specialists_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE SpecialistRecords (
@@ -270,10 +296,20 @@ CREATE TABLE entries (
   KEY idx_entries_l2_parent_id (l2_parent_id),
   KEY idx_entries_l3_parent_id (l3_parent_id),
   KEY idx_entries_l4_parent_id (l4_parent_id),
-  KEY idx_entries_l5_parent_id (l5_parent_id),
+  UNIQUE KEY uq_entries_l5_parent_id (l5_parent_id),
   KEY idx_entries_name (name),
   KEY idx_entries_type (type),
   CONSTRAINT fk_entries_type FOREIGN KEY (type) REFERENCES entry_types(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE Districts (
+  specialist_id BIGINT UNSIGNED NOT NULL,
+  district_id VARCHAR(80) NOT NULL,
+  client_site TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (specialist_id, district_id, client_site),
+  KEY idx_districts_district_id (district_id),
+  CONSTRAINT fk_districts_specialist FOREIGN KEY (specialist_id) REFERENCES Specialists(id) ON DELETE CASCADE,
+  CONSTRAINT fk_districts_district FOREIGN KEY (district_id) REFERENCES entries(l5_parent_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE VIEW oblasti AS

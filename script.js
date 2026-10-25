@@ -1,5 +1,4 @@
 const today = new Date("2026-06-12T12:00:00");
-const expirationDays = 30;
 const lowRatingThreshold = 4.0;
 const negativeReviewThreshold = 3.0;
 const adminEmails = ["khizhny@gmail.com", "nadya.khizhnaya@gmail.com"];
@@ -47,10 +46,6 @@ const ukToEn = {
     "This platform was created so everyone can quickly and easily find specialists who work with people with special educational needs: educators, coaches, teachers, psychologists, and other professionals. Clear, accessible, and without long searches.",
   "Сайт пошуку спеціалістів для дітей з ООП":
     "Specialist search site for children with special educational needs",
-  "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
-    "Search by city, format, and specialization. Parent reviews, in-service messaging, and listings that are automatically unpublished after 30 days unless renewed.",
-  "Пошук за містом, форматом і спеціалізацією. Відгуки батьків, повідомлення всередині сервісу\n            та оголошення, які автоматично знімаються з публікації через 30 днів без продовження.":
-    "Search by city, format, and specialization. Parent reviews, in-service messaging, and listings that are automatically unpublished after 30 days unless renewed.",
   "Пошук фахівця, на головну": "Specialist Search, home",
   "Пошук фахівця": "Specialist Search",
   "Відкрити меню": "Open menu",
@@ -79,9 +74,6 @@ const ukToEn = {
   "Каталог оголошень": "Listing directory",
   "Категорії": "Categories",
   "Увесь список": "Full list",
-  "30 днів": "30 days",
-  "Після публікації оголошення потрібно продовжити, інакше воно знімається з каталогу.":
-    "After publication, a listing must be renewed or it is removed from the directory.",
   "Знайдено": "Found",
   "фахівців": "specialists",
   "Знайдені фахівці": "Found specialists",
@@ -90,7 +82,6 @@ const ukToEn = {
   "від 4.8": "from 4.8",
   "від 4.7": "from 4.7",
   "Панель адміністратора": "Admin panel",
-  "Оголошення діє 30 днів і продовжується вручну": "A listing is active for 30 days and is renewed manually",
   "Чернетка оголошення фахівця": "Specialist listing draft",
   "Ім'я фахівця або назва центру": "Specialist or center name",
   "Наприклад, Анна Коваленко": "For example, Anna Kovalenko",
@@ -101,6 +92,19 @@ const ukToEn = {
   "Спеціальності": "Specialties",
   "Оберіть одну або кілька спеціальностей з вибраної категорії.": "Choose one or more specialties from the selected category.",
   "Обрані спеціальності": "Selected specialties",
+  "Не знайшли потрібну спеціальність?": "Can't find the specialty you need?",
+  "Оновлення довідника": "Directory update",
+  "Пропозиції потраплять адміністратору на затвердження.": "Suggestions will be sent to an administrator for approval.",
+  "Нова категорія": "New category",
+  "Назва категорії": "Category name",
+  "Наприклад, ІТ та програмування": "For example, IT and programming",
+  "Запропонувати категорію": "Suggest category",
+  "Нова спеціальність": "New specialty",
+  "Назва спеціальності": "Specialty name",
+  "Наприклад, Викладач Scratch": "For example, Scratch teacher",
+  "Запропонувати спеціальність": "Suggest specialty",
+  "Завантаження категорій...": "Loading categories...",
+  "Категорій немає": "No categories",
   "Прибрати спеціальність": "Remove specialty",
   "Оберіть хоча б одну спеціальність.": "Choose at least one specialty.",
   "Категорія спеціаліста": "Specialist category",
@@ -123,9 +127,6 @@ const ukToEn = {
   "Райони для занять у учня": "Districts for sessions at the student's place",
   "Готовий займатися на виїзді": "Ready for home visits",
   "Готовий займатися онлайн": "Ready to work online",
-  "Автовидалення оголошення через": "Auto-remove listing after",
-  "60 днів": "60 days",
-  "90 днів": "90 days",
   "Оплата": "Payment",
   "Помісячна": "Monthly",
   "Разова": "One-time",
@@ -134,6 +135,8 @@ const ukToEn = {
   "Тривалість заняття": "Session duration",
   "Наприклад, 1200": "For example, 1200",
   "Короткий опис": "Short description",
+  "Освіта": "Education",
+  "Досвід роботи": "Work experience",
   "Досвід, методи роботи, формат занять": "Experience, methods, session format",
   "Опублікувати оголошення": "Publish listing",
   "Довідник спеціалізацій": "Specialization guide",
@@ -210,14 +213,10 @@ const ukToEn = {
   "Пошук": "Search",
   "Ім'я, місто, скарга": "Name, city, report",
   "Активні": "Active",
-  "Завершується": "Expiring",
-  "Завершуються за 3 дні": "Expiring in 3 days",
   "Скарги за тиждень": "Reports this week",
-  "Зняті автоматично": "Auto-removed",
   "Черга оголошень": "Listing queue",
   "Фахівець": "Specialist",
   "Статус": "Status",
-  "До зняття": "Until removal",
   "Дії": "Actions",
   "Закрити": "Close",
   "Повідомлення": "Messages",
@@ -268,21 +267,18 @@ const ukToEn = {
   "Анкета фахівця": "Specialist profile",
   "Докладна анкета": "Detailed profile",
   "Детальніше": "Details",
-  "Графік:": "Schedule:",
   "Ціна:": "Price:",
   "Рейтинг:": "Rating:",
   "Формат роботи:": "Work format:",
-  "Термін оголошення:": "Listing term:",
+  "Райони занять у учня:": "Districts for sessions at the student's place:",
+  "Райони занять:": "Session districts:",
   "Освіта:": "Education:",
   "Досвід:": "Experience:",
   "Працює з:": "Works with:",
   "Для кого:": "For:",
   "Відповідає:": "Replies:",
   "Оголошення:": "Listing:",
-  "Буде знято": "Will be removed",
   "Написати": "Message",
-  "дн. до зняття": "days until removal",
-  "1 дн. до зняття": "1 day until removal",
   "дн.": "days",
   "1 дн.": "1 day",
   "хв": "min",
@@ -531,21 +527,15 @@ const ukToEn = {
   "Нові оголошення, скарги або низькі рейтинги з'являться тут.": "New listings, reports, or low ratings will appear here.",
   "Скаргу відхилено адміністратором. Оголошення залишено активним.":
     "The report was dismissed by the administrator. The listing remains active.",
-  "Продовжити на 30 днів": "Renew for 30 days",
   "Відкрити": "Open",
   "Схвалити": "Approve",
   "Відхилити": "Reject",
   "сьогодні": "today",
-  "днів до автоматичного зняття": "days until automatic removal",
-  "знімається автоматично": "removed automatically",
   "Додано диплом і сертифікат із запуску мовлення.": "Diploma and speech initiation certificate added.",
   "Є скарга на непідтверджену інформацію про досвід.": "There is a report about unverified experience information.",
-  "Строк публікації завершується, надіслано нагадування про продовження.":
-    "The publication term is ending; a renewal reminder was sent.",
   "Опис послуг для підлітків оновлено.": "Teen service description updated.",
   "Батьки запитують, чи працює фахівчиня з ехолалією.": "Parents ask whether the specialist works with echolalia.",
   "Адміністратор отримав уточнення щодо сертифіката BCBA/QBA.": "Administrator received clarification on the BCBA/QBA certificate.",
-  "Фахівчиня просить продовжити оголошення після оплати.": "The specialist asks to renew the listing after payment.",
   "Батьки уточнюють формат сімейної консультації.": "Parents are clarifying the family consultation format.",
   "Написати:": "Message:",
   "Добрий день. Підкажіть, будь ласка, чи працюєте ви із запитом:": "Hello. Please tell me whether you work with this request:",
@@ -568,209 +558,9 @@ const translatableAttributes = ["placeholder", "aria-label", "alt", "title"];
 const initialPageTitle = document.title;
 const initialPageDescription = document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
 
-const specialtyGroups = [
-  {
-    title: "Корекційно-педагогічні",
-    description: "Мовлення, навчання, адаптація середовища та спеціальні освітні маршрути.",
-    items: [
-      "Логопед",
-      "Логопед-дефектолог",
-      "Дефектолог",
-      "Олігофренопедагог",
-      "Сурдопедагог",
-      "Тифлопедагог",
-      "Спеціальний педагог",
-      "Педагог раннього розвитку",
-      "Тьютор",
-      "Фахівець AAC",
-      "Педагог з підготовки до школи",
-      "Інструктор адаптивної фізкультури"
-    ]
-  },
-  {
-    title: "Психологія і поведінка",
-    description: "Оцінка розвитку, поведінкова підтримка, емоції, родина та соціальні навички.",
-    items: [
-      "Дитячий психолог",
-      "Клінічний психолог",
-      "Нейропсихолог",
-      "Дитячий психіатр",
-      "Поведінковий аналітик",
-      "ABA-терапевт",
-      "Ігровий терапевт",
-      "Арт-терапевт",
-      "Сімейний психолог",
-      "Фахівець із соціальних навичок"
-    ]
-  },
-  {
-    title: "Реабілітація і навички",
-    description: "Самообслуговування, моторика, сенсорна регуляція, харчування та побутова самостійність.",
-    items: [
-      "Ерготерапевт",
-      "Фізичний терапевт",
-      "Інструктор ЛФК",
-      "Інструктор АФК",
-      "Фахівець із сенсорної інтеграції",
-      "Фахівець із харчування",
-      "Орально-моторний терапевт",
-      "Реабілітолог",
-      "Ортезист",
-      "Фахівець із технічних засобів реабілітації"
-    ]
-  },
-  {
-    title: "Медицина і діагностика",
-    description: "Діагностика, маршрутизація, супутні стани та медичне спостереження.",
-    items: [
-      "Педіатр розвитку",
-      "Педіатр",
-      "Дитячий невролог",
-      "Епілептолог",
-      "Генетик",
-      "Сурдолог",
-      "Аудіолог",
-      "Офтальмолог",
-      "Ортоптист",
-      "Лікар ФРМ",
-      "Ортопед",
-      "Гастроентеролог",
-      "Дієтолог",
-      "Лікар сну"
-    ]
-  },
-  {
-    title: "Підтримка родини й освіти",
-    description: "Навігація послугами, права родини, інклюзія та комунікація зі школою або садком.",
-    items: [
-      "Координатор раннього втручання",
-      "Центр раннього втручання",
-      "Кейс-менеджер",
-      "Соціальний працівник",
-      "Консультант з ІПРА",
-      "Консультант з IEP/IFSP",
-      "Фахівець з інклюзії",
-      "Юрист з освітніх прав",
-      "Батьківський консультант",
-      "Перекладач жестової мови",
-      "Фахівець з орієнтації та мобільності"
-    ]
-  }
-];
+let specialtySections = [];
+let allSpecialtyGroups = [];
 
-const trainerSpecialtyGroups = [
-  {
-    title: "Спорт",
-    description: "Індивідуальні та групові заняття для руху, координації, витривалості й командної взаємодії.",
-    items: [
-      "Тренер з роликів",
-      "Тренер з велосипеда",
-      "Тренер з футболу",
-      "Тренер з плавання",
-      "Тренер з гімнастики",
-      "Тренер з легкої атлетики",
-      "Тренер з танців",
-      "Тренер з йоги",
-      "Тренер з адаптивного фітнесу",
-      "Тренер з настільного тенісу"
-    ]
-  },
-  {
-    title: "Музика",
-    description: "Музичні заняття, інструменти, вокал, ритміка та творчий розвиток.",
-    items: [
-      "Викладач фортепіано",
-      "Викладач гітари",
-      "Викладач скрипки",
-      "Викладач барабанів",
-      "Викладач вокалу",
-      "Викладач сольфеджіо",
-      "Викладач музичної грамоти",
-      "Викладач ритміки",
-      "Викладач хору",
-      "Викладач музичної імпровізації"
-    ]
-  },
-  {
-    title: "Математика",
-    description: "Підтримка у шкільній математиці, логіці, підготовці до контрольних і поступовому засвоєнні тем.",
-    items: [
-      "Репетитор з математики",
-      "Репетитор з алгебри",
-      "Репетитор з геометрії",
-      "Репетитор з логіки",
-      "Репетитор з арифметики",
-      "Репетитор з підготовки до НМТ з математики",
-      "Репетитор з підготовки до ДПА з математики",
-      "Репетитор з ментальної арифметики",
-      "Репетитор з фінансової грамотності",
-      "Репетитор з математичних ігор"
-    ]
-  },
-  {
-    title: "Фізика",
-    description: "Пояснення природничих тем через приклади, досліди, задачі та зрозумілу практику.",
-    items: [
-      "Репетитор з фізики",
-      "Репетитор з астрономії",
-      "Репетитор з механіки",
-      "Репетитор з електрики",
-      "Репетитор з оптики",
-      "Репетитор з термодинаміки",
-      "Репетитор з підготовки до НМТ з фізики",
-      "Викладач STEM",
-      "Викладач робототехніки",
-      "Викладач наукових дослідів"
-    ]
-  },
-  {
-    title: "Творчість і мистецтво",
-    description: "Практичні творчі заняття для самовираження, уваги, дрібної моторики та впевненості.",
-    items: [
-      "Репетитор з малювання",
-      "Викладач живопису",
-      "Викладач ліплення",
-      "Викладач кераміки",
-      "Викладач аплікації",
-      "Викладач дизайну",
-      "Викладач анімації",
-      "Викладач фотографії",
-      "Викладач рукоділля",
-      "Викладач театральної майстерності"
-    ]
-  },
-  {
-    title: "Мови та комунікація",
-    description: "Мовні заняття, читання, письмо та розвиток комунікації у комфортному темпі.",
-    items: [
-      "Репетитор з української мови",
-      "Репетитор з англійської мови",
-      "Репетитор з польської мови",
-      "Репетитор з німецької мови",
-      "Репетитор з читання",
-      "Репетитор з письма",
-      "Викладач сторітелінгу",
-      "Викладач ораторської майстерності",
-      "Викладач підготовки до школи",
-      "Викладач літератури"
-    ]
-  }
-];
-
-const allSpecialtyGroups = [...specialtyGroups, ...trainerSpecialtyGroups];
-
-const specialtySections = [
-  {
-    title: "Корекційно-педагогічні",
-    description: "Фахівці з розвитку, корекційної педагогіки, психологічної, реабілітаційної, медичної та сімейної підтримки.",
-    groups: specialtyGroups
-  },
-  {
-    title: "Педагоги та тренери",
-    description: "Фахівці для навчання, спорту, творчості, музики, предметної підготовки та розвитку інтересів.",
-    groups: trainerSpecialtyGroups
-  }
-];
 
 
 const listings = [];
@@ -805,12 +595,12 @@ let moderationItems = [
     name: "Ольга Іванова",
     specialty: "Ерготерапевт",
     city: "UA51100270010076757",
-    status: "expiring",
+    status: "approved",
     createdAt: "2026-05-16",
     reports: 0,
     rating: 4.8,
-    notes: "Строк публікації завершується, надіслано нагадування про продовження.",
-    message: "Фахівчиня просить продовжити оголошення після оплати."
+    notes: "Документи перевірено, оголошення активне.",
+    message: "Додаткових звернень щодо оголошення немає."
   },
   {
     id: 104,
@@ -965,14 +755,19 @@ const parentUsers = [
   }
 ];
 
-let sortMode = "rating";
 let selectedCategory = "all";
+let listingPagination = { page: 1, perPage: 20, total: 0, totalPages: 1 };
+let listingCatalogTotal = 0;
+let listingCategoryCounts = {};
+let listingLoadRequestId = 0;
 let selectedModerationId = moderationItems[0].id;
 let reviewVotes = {};
 let messageDislikes = {};
 let activeChatMessages = [];
 const selectedPublishSpecialties = new Set();
 let catalogSuggestions = [];
+let legacyCatalogSuggestions = [];
+let suggestedCatalogCategories = [];
 let searchCatalogTree = [];
 const cityNameCache = new Map();
 const serviceOfferEditId = Number(new URLSearchParams(window.location.search).get("edit")) || 0;
@@ -991,13 +786,13 @@ try {
 }
 
 try {
-  catalogSuggestions = JSON.parse(localStorage.getItem("catalogSuggestions") || "[]");
+  legacyCatalogSuggestions = JSON.parse(localStorage.getItem("catalogSuggestions") || "[]");
 } catch {
-  catalogSuggestions = [];
+  legacyCatalogSuggestions = [];
 }
 
 function saveCatalogSuggestions() {
-  localStorage.setItem("catalogSuggestions", JSON.stringify(catalogSuggestions));
+  localStorage.removeItem("catalogSuggestions");
 }
 
 function getAllSpecialties() {
@@ -1011,6 +806,35 @@ function escapeAttribute(value) {
 function getListingSpecialties(item) {
   const values = Array.isArray(item?.specialties) ? item.specialties : [];
   return [...new Set([...values, item?.specialty].filter(Boolean))];
+}
+
+function getListingDistricts(item) {
+  const values = Array.isArray(item?.districts)
+    ? item.districts
+    : String(item?.district || "").split(",");
+  return [...new Set(values.map((value) => String(value).trim()).filter(Boolean))];
+}
+
+function listingWorkFormatMarkup(item) {
+  const formats = Array.isArray(item?.formats) ? item.formats.filter(Boolean) : [];
+  const fallbackDistricts = getListingDistricts(item);
+  const specialistDistricts = Array.isArray(item?.specialistDistricts)
+    ? getListingDistricts({ districts: item.specialistDistricts })
+    : formats.includes("У фахівця") ? fallbackDistricts : [];
+  const studentDistricts = Array.isArray(item?.studentDistricts)
+    ? getListingDistricts({ districts: item.studentDistricts })
+    : formats.includes("У учня") ? fallbackDistricts : [];
+  const lines = [];
+  if (formats.includes("У учня")) {
+    lines.push(`<span><strong>Райони занять у учня:</strong> ${studentDistricts.length ? studentDistricts.map(escapeHtml).join(", ") : "Не вказано"}</span>`);
+  }
+  if (formats.includes("У фахівця")) {
+    lines.push(`<span><strong>Райони занять:</strong> ${specialistDistricts.length ? specialistDistricts.map(escapeHtml).join(", ") : "Не вказано"}</span>`);
+  }
+  if (formats.includes("Онлайн")) {
+    lines.push("<span>Готовий займатися онлайн</span>");
+  }
+  return lines.length ? lines.join("<br>") : "Не вказано";
 }
 
 function listingHasSpecialty(item, specialty) {
@@ -1065,6 +889,7 @@ function buildCatalogTreeFromRows(rows) {
 
     if (!groupMap.has(groupTitle)) {
       groupMap.set(groupTitle, {
+        id: Number(row.group_id),
         title: groupTitle,
         groups: [],
         subgroupMap: new Map()
@@ -1074,9 +899,12 @@ function buildCatalogTreeFromRows(rows) {
     const group = groupMap.get(groupTitle);
     if (!group.subgroupMap.has(subgroupTitle)) {
       const subgroup = {
+        id: Number(row.subgroup_id),
         title: subgroupTitle,
         description: row.subgroup_description || "",
-        items: []
+        items: [],
+        recordIds: new Map(),
+        recordCounts: new Map()
       };
       group.subgroupMap.set(subgroupTitle, subgroup);
       group.groups.push(subgroup);
@@ -1086,6 +914,8 @@ function buildCatalogTreeFromRows(rows) {
     if (!subgroup.items.includes(recordTitle)) {
       subgroup.items.push(recordTitle);
     }
+    subgroup.recordIds.set(recordTitle, Number(row.record_id));
+    subgroup.recordCounts.set(recordTitle, Number(row.specialist_count || 0));
   });
 
   return [...groupMap.values()].map(({ subgroupMap, ...group }) => group);
@@ -1162,7 +992,7 @@ function renderSpecialistTree() {
       selectedCategory = "all";
       updateSpecialistSummary();
       renderCategories();
-      renderListings();
+      void loadListingsFromDatabase(1);
     });
   });
   updateSpecialistSummary();
@@ -1230,7 +1060,7 @@ function selectPublishCategory(groupTitle) {
   if (!found || !elements.publishCategory) return;
   elements.publishCategory.value = found.group.title;
   renderPublishCategoryTree(found.group.title);
-  updatePublishSpecialtyOptions(false);
+  updatePublishSpecialtyOptions();
   if (elements.publishCategoryTree) elements.publishCategoryTree.open = false;
 }
 
@@ -1257,89 +1087,213 @@ function defaultSuggestionSection() {
   return selected?.section || specialtySections.find((section) => section.title === "Педагоги та тренери") || specialtySections[0];
 }
 
-function setCatalogSuggestionStatus(message) {
-  if (!elements.catalogSuggestionStatus) return;
-  elements.catalogSuggestionStatus.textContent = message;
-  applyLanguage(elements.catalogSuggestionStatus);
+function setCatalogSuggestionStatus(target, message) {
+  if (!target) return;
+  target.textContent = message;
+  applyLanguage(target);
 }
 
 function pendingCatalogSuggestions() {
   return catalogSuggestions.filter((suggestion) => suggestion.status === "pending" && suggestion.enabled === false);
 }
 
-function suggestionMatches(suggestion, sectionTitle, groupTitle, recordTitle) {
-  return (
-    suggestion.status === "pending" &&
-    suggestion.sectionTitle === sectionTitle &&
-    suggestion.groupTitle.toLocaleLowerCase("uk-UA") === groupTitle.toLocaleLowerCase("uk-UA") &&
-    String(suggestion.recordTitle || "").toLocaleLowerCase("uk-UA") === String(recordTitle || "").toLocaleLowerCase("uk-UA")
-  );
+async function catalogSuggestionRequest(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
+    ...options
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Не вдалося зберегти пропозицію.");
+  return result;
 }
 
-function addCatalogSuggestionFromFields({ silent = false } = {}) {
-  const rawCategory = normalizeCatalogInput(elements.suggestedCategory?.value);
-  const rawSpecialty = normalizeCatalogInput(elements.suggestedSpecialty?.value);
-  if (!rawCategory && !rawSpecialty) {
-    if (!silent) setCatalogSuggestionStatus("Введіть нову категорію або спеціальність.");
+async function loadCatalogSuggestions() {
+  if (!elements.adminPanel) return;
+  try {
+    const result = await catalogSuggestionRequest("/api/admin/catalog-suggestions.php");
+    catalogSuggestions = Array.isArray(result.items) ? result.items : [];
+    renderCatalogUpdates();
+  } catch (error) {
+    console.warn("Cannot load catalog suggestions", error);
+    setCatalogStatus(error.message || "Не вдалося завантажити пропозиції каталогу.");
+  }
+}
+
+function catalogCategoryValue(groupId, groupTitle) {
+  return JSON.stringify({ groupId: Number(groupId), groupTitle: String(groupTitle || "") });
+}
+
+function selectedSuggestedSpecialtyCategory() {
+  try {
+    const value = JSON.parse(elements.suggestedSpecialtyCategory?.value || "{}");
+    return value.groupId && value.groupTitle ? value : null;
+  } catch {
     return null;
   }
+}
 
-  const selectedGroupTitle = elements.publishCategory?.value || allSpecialtyGroups[0]?.title || "";
-  const groupTitle = rawCategory || selectedGroupTitle;
-  const recordTitle = rawSpecialty;
-  const section = defaultSuggestionSection();
-  const existingGroup = findCatalogGroup(groupTitle);
-  const existingRecord = recordTitle ? findCatalogRecord(recordTitle) : null;
+function renderSuggestedSpecialtyCategories(preferredCategory = null) {
+  if (!elements.suggestedSpecialtyCategory) return;
+  const categories = [];
+  const seen = new Set();
+  specialtySections.forEach((section) => {
+    (section.groups || []).forEach((group) => {
+      const key = `${section.id}:${group.title.toLocaleLowerCase("uk-UA")}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      categories.push({ groupId: section.id, groupTitle: group.title, sectionTitle: section.title, pending: false });
+    });
+  });
+  suggestedCatalogCategories.forEach((category) => {
+    const key = `${category.groupId}:${category.groupTitle.toLocaleLowerCase("uk-UA")}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const section = specialtySections.find((item) => Number(item.id) === Number(category.groupId));
+    categories.push({ ...category, sectionTitle: section?.title || "", pending: category.pending !== false });
+  });
 
-  if (!rawCategory && recordTitle && existingRecord) {
-    selectedPublishSpecialties.add(existingRecord.group.items[existingRecord.index]);
-    renderSelectedPublishSpecialties();
-    if (!silent) setCatalogSuggestionStatus("Ця спеціальність уже є в каталозі та додана до анкети.");
-    return null;
+  const current = preferredCategory
+    ? catalogCategoryValue(preferredCategory.groupId, preferredCategory.groupTitle)
+    : elements.suggestedSpecialtyCategory.value;
+  elements.suggestedSpecialtyCategory.innerHTML = categories.length
+    ? categories
+        .map((category) => {
+          const value = catalogCategoryValue(category.groupId, category.groupTitle);
+          const suffix = category.pending
+            ? currentLang === "en" ? " (awaiting approval)" : " (очікує затвердження)"
+            : category.sectionTitle ? ` — ${category.sectionTitle}` : "";
+          return `<option value="${escapeAttribute(value)}">${escapeHtml(category.groupTitle + suffix)}</option>`;
+        })
+        .join("")
+    : '<option value="">Категорій немає</option>';
+
+  if ([...elements.suggestedSpecialtyCategory.options].some((option) => option.value === current)) {
+    elements.suggestedSpecialtyCategory.value = current;
+  } else {
+    const selected = findCatalogGroup(elements.publishCategory?.value);
+    if (selected) {
+      const selectedValue = catalogCategoryValue(selected.section.id, selected.group.title);
+      if ([...elements.suggestedSpecialtyCategory.options].some((option) => option.value === selectedValue)) {
+        elements.suggestedSpecialtyCategory.value = selectedValue;
+      }
+    }
   }
+  applyLanguage(elements.suggestedSpecialtyCategory);
+}
 
-  if (rawCategory && !recordTitle && existingGroup) {
-    if (!silent) setCatalogSuggestionStatus("Така категорія вже є в каталозі.");
-    return null;
+async function loadSuggestedCatalogCategories() {
+  if (!elements.suggestedSpecialtyCategory) return;
+  try {
+    const result = await catalogSuggestionRequest("/api/catalog-suggestions.php");
+    suggestedCatalogCategories = Array.isArray(result.categories) ? result.categories : [];
+  } catch (error) {
+    console.warn("Cannot load suggested catalog categories", error);
   }
+  renderSuggestedSpecialtyCategories();
+}
 
-  const duplicate = catalogSuggestions.find((suggestion) =>
-    suggestionMatches(suggestion, section.title, groupTitle, recordTitle)
-  );
+async function migrateLegacyCatalogSuggestions() {
+  const legacy = Array.isArray(legacyCatalogSuggestions)
+    ? legacyCatalogSuggestions.filter((item) => item && item.status !== "rejected")
+    : [];
+  if (!legacy.length || !specialtySections.length) return;
 
-  const suggestion =
-    duplicate ||
-    {
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      type: recordTitle ? "record" : "group",
-      sectionTitle: section.title,
-      groupTitle,
-      recordTitle,
-      suggestedBy: "Фахівець",
-      suggestedAt: today.toISOString().slice(0, 10),
-      status: "pending",
-      enabled: false
-    };
-
-  if (!duplicate) {
-    catalogSuggestions.unshift(suggestion);
+  let migrated = 0;
+  for (const suggestion of legacy) {
+    const section = specialtySections.find((item) => item.title === suggestion.sectionTitle) || specialtySections[0];
+    if (!section?.id || !suggestion.groupTitle) continue;
+    try {
+      const created = await catalogSuggestionRequest("/api/catalog-suggestions.php", {
+        method: "POST",
+        body: JSON.stringify({
+          groupId: section.id,
+          groupTitle: suggestion.groupTitle,
+          recordTitle: suggestion.recordTitle || ""
+        })
+      });
+      if (suggestion.status === "approved" && elements.adminPanel && created.id) {
+        await catalogSuggestionRequest("/api/admin/catalog-suggestions.php", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            id: created.id,
+            groupTitle: suggestion.groupTitle,
+            recordTitle: suggestion.recordTitle || ""
+          })
+        });
+      }
+      migrated += 1;
+    } catch (error) {
+      if (!/вже є в каталозі/i.test(error.message || "")) {
+        console.warn("Cannot migrate legacy catalog suggestion", error);
+        continue;
+      }
+      migrated += 1;
+    }
+  }
+  if (migrated === legacy.length) {
+    legacyCatalogSuggestions = [];
     saveCatalogSuggestions();
   }
+}
 
-  if (recordTitle) {
-    selectedPublishSpecialties.add(recordTitle);
-    renderSelectedPublishSpecialties();
+async function addCatalogCategory() {
+  const rawCategory = normalizeCatalogInput(elements.suggestedCategory?.value);
+  if (!rawCategory) {
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, "Введіть назву нової категорії.");
+    return;
+  }
+  const section = defaultSuggestionSection();
+  const existingGroup = section?.groups?.find((group) => group.title.toLocaleLowerCase("uk-UA") === rawCategory.toLocaleLowerCase("uk-UA"));
+  if (existingGroup) {
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, "Така категорія вже є в каталозі.");
+    return;
+  }
+  if (!section?.id) {
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, "Не вдалося визначити розділ каталогу.");
+    return;
   }
 
-  if (elements.suggestedCategory) elements.suggestedCategory.value = "";
-  if (elements.suggestedSpecialty) elements.suggestedSpecialty.value = "";
-  if (!silent) {
-    setCatalogSuggestionStatus(
-      duplicate ? "Така пропозиція вже очікує затвердження." : "Пропозицію додано. Адміністратор побачить її в оновленнях каталогу."
-    );
+  try {
+    const result = await catalogSuggestionRequest("/api/catalog-suggestions.php", {
+      method: "POST",
+      body: JSON.stringify({ groupId: section.id, groupTitle: rawCategory, recordTitle: "" })
+    });
+    if (elements.suggestedCategory) elements.suggestedCategory.value = "";
+    const category = result.category || { groupId: section.id, groupTitle: rawCategory, pending: true };
+    if (!suggestedCatalogCategories.some((item) => Number(item.groupId) === Number(category.groupId) && item.groupTitle.toLocaleLowerCase("uk-UA") === category.groupTitle.toLocaleLowerCase("uk-UA"))) {
+      suggestedCatalogCategories.push(category);
+    }
+    renderSuggestedSpecialtyCategories(category);
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, result.message || "Категорію надіслано адміністратору.");
+  } catch (error) {
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, error.message || "Не вдалося запропонувати категорію.");
   }
-  renderCatalogUpdates();
-  return suggestion;
+}
+
+async function addCatalogSpecialty() {
+  const category = selectedSuggestedSpecialtyCategory();
+  const recordTitle = normalizeCatalogInput(elements.suggestedSpecialty?.value);
+  if (!category) {
+    setCatalogSuggestionStatus(elements.catalogSpecialtyStatus, "Оберіть категорію.");
+    return;
+  }
+  if (!recordTitle) {
+    setCatalogSuggestionStatus(elements.catalogSpecialtyStatus, "Введіть назву нової спеціальності.");
+    return;
+  }
+
+  try {
+    const result = await catalogSuggestionRequest("/api/catalog-suggestions.php", {
+      method: "POST",
+      body: JSON.stringify({ groupId: category.groupId, groupTitle: category.groupTitle, recordTitle })
+    });
+    if (elements.suggestedSpecialty) elements.suggestedSpecialty.value = "";
+    setCatalogSuggestionStatus(elements.catalogSpecialtyStatus, result.message || "Спеціальність надіслано адміністратору.");
+  } catch (error) {
+    setCatalogSuggestionStatus(elements.catalogSpecialtyStatus, error.message || "Не вдалося запропонувати спеціальність.");
+  }
 }
 
 const elements = {
@@ -1363,11 +1317,17 @@ const elements = {
   publishCitySelect: document.querySelector("#publishCitySelect"),
   suggestedCategory: document.querySelector("#suggestedCategory"),
   suggestedSpecialty: document.querySelector("#suggestedSpecialty"),
-  addCatalogSuggestion: document.querySelector("#addCatalogSuggestion"),
-  catalogSuggestionStatus: document.querySelector("#catalogSuggestionStatus"),
+  suggestedSpecialtyCategory: document.querySelector("#suggestedSpecialtyCategory"),
+  addCatalogCategory: document.querySelector("#addCatalogCategory"),
+  addCatalogSpecialty: document.querySelector("#addCatalogSpecialty"),
+  catalogCategoryStatus: document.querySelector("#catalogCategoryStatus"),
+  catalogSpecialtyStatus: document.querySelector("#catalogSpecialtyStatus"),
+  catalogSuggestionModal: document.querySelector("#catalogSuggestionModal"),
   categoryList: document.querySelector("#categoryList"),
   listingList: document.querySelector("#listingList"),
   resultCount: document.querySelector("#resultCount"),
+  listingPagination: document.querySelector("#listingPagination"),
+  listingPageStatus: document.querySelector("#listingPageStatus"),
   specialtyGrid: document.querySelector("#specialtyGrid"),
   messageDrawer: document.querySelector("#messageDrawer"),
   chatThread: document.querySelector("#chatThread"),
@@ -1401,13 +1361,10 @@ const elements = {
   allUsersStatus: document.querySelector("#allUsersStatus"),
   allUsersSearch: document.querySelector("#allUsersSearch"),
   metricPending: document.querySelector("#metricPending"),
-  metricExpiring: document.querySelector("#metricExpiring"),
   metricReports: document.querySelector("#metricReports"),
-  metricArchived: document.querySelector("#metricArchived"),
   adminSearch: document.querySelector("#adminSearch"),
   adminContactForm: document.querySelector("#adminContactForm"),
   profileEmailFields: document.querySelectorAll("[data-profile-email]"),
-  publishPhoneOptions: document.querySelector("#publishPhoneOptions"),
   selectedSpecialties: document.querySelector("[data-selected-specialties]"),
   placeDistrictPanels: document.querySelectorAll("[data-district-panel]"),
   publishSubmit: document.querySelector("[data-publish-submit]"),
@@ -1417,15 +1374,6 @@ const elements = {
   serviceOfferCancel: document.querySelector("#serviceOfferCancel"),
   adminContactStatus: document.querySelector("#adminContactStatus")
 };
-
-function daysBetween(startDate, endDate = today) {
-  const start = new Date(`${startDate}T12:00:00`);
-  return Math.floor((endDate - start) / 86400000);
-}
-
-function daysLeft(item) {
-  return expirationDays - daysBetween(item.createdAt);
-}
 
 function formatReviewDate(date) {
   return new Date(`${date}T12:00:00`).toLocaleDateString(currentLang === "en" ? "en-US" : "uk-UA", {
@@ -1469,35 +1417,8 @@ function fillProfileEmail(email = currentProfileEmail()) {
   });
 }
 
-function renderPublishPhoneOptions(phones = [], selectedPhones = []) {
-  if (!elements.publishPhoneOptions) return;
-  const selected = new Set(selectedPhones.map((phone) => String(phone)));
-  elements.publishPhoneOptions.replaceChildren();
-  if (!phones.length) {
-    const empty = document.createElement("p");
-    empty.className = "account-empty-inline";
-    empty.textContent = "Додайте контактний номер в особистому кабінеті.";
-    elements.publishPhoneOptions.append(empty);
-    return;
-  }
-  phones.forEach((phone) => {
-    const label = document.createElement("label");
-    label.className = "checkbox-row publish-phone-option";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.name = "phones";
-    input.value = String(phone.value || "");
-    input.checked = selected.has(input.value);
-    const text = document.createElement("span");
-    text.textContent = input.value;
-    label.append(input, text);
-    elements.publishPhoneOptions.append(label);
-  });
-}
-
 async function loadPublishAccountContacts() {
   fillProfileEmail();
-  if (!elements.publishPhoneOptions) return;
   try {
     const response = await fetch("/api/account/index.php", {
       credentials: "same-origin",
@@ -1514,14 +1435,12 @@ async function loadPublishAccountContacts() {
       ? (data.listings || []).find((listing) => listing.kind === "specialist" && Number(listing.id) === serviceOfferEditId)
       : null;
     fillProfileEmail(data.profile?.email || "");
-    renderPublishPhoneOptions(Array.isArray(data.phones) ? data.phones : [], editListing?.phones || []);
     if (serviceOfferEditId) {
       if (!editListing) throw new Error("Оголошення не знайдено або воно належить іншому користувачу.");
       await serviceOfferDependenciesPromise;
       await populateServiceOfferEditForm(editListing);
     }
   } catch (error) {
-    renderPublishPhoneOptions([]);
     const status = document.querySelector("#publishStatus");
     if (status) status.textContent = error.message || "Не вдалося завантажити оголошення.";
     if (serviceOfferEditId && elements.publishSubmit) elements.publishSubmit.disabled = true;
@@ -1561,7 +1480,7 @@ async function populateServiceOfferEditForm(listing) {
     elements.publishCategory.value = group.title;
     renderPublishCategoryTree(group.title);
   }
-  updatePublishSpecialtyOptions(false);
+  updatePublishSpecialtyOptions();
 
   const cityId = String(listing.cityId || "");
   const regionId = await regionIdForCity(cityId);
@@ -1573,14 +1492,19 @@ async function populateServiceOfferEditForm(listing) {
     control.checked = selectedFormats.has(control.value);
   });
   updatePlaceDistrictPanel();
-  const selectedDistricts = new Set(listing.districts || []);
-  form.querySelectorAll('input[name="specialistDistricts"], input[name="studentDistricts"]').forEach((control) => {
-    control.checked = selectedDistricts.has(control.value) && !control.closest(".is-hidden");
+  const specialistDistricts = new Set(listing.specialistDistricts || listing.districts || []);
+  const studentDistricts = new Set(listing.studentDistricts || listing.districts || []);
+  form.querySelectorAll('input[name="specialistDistricts"]').forEach((control) => {
+    control.checked = specialistDistricts.has(control.value) && !control.closest(".is-hidden");
   });
-  form.elements.autoDeleteDays.value = String(listing.autoDeleteDays || 30);
+  form.querySelectorAll('input[name="studentDistricts"]').forEach((control) => {
+    control.checked = studentDistricts.has(control.value) && !control.closest(".is-hidden");
+  });
   form.elements.paymentAmount.value = String(listing.amount ?? 0);
   form.elements.durationMinutes.value = String(listing.durationMinutes || 60);
   form.elements.description.value = listing.description || "";
+  form.elements.education.value = listing.education || "";
+  form.elements.experience.value = listing.experience || "";
   elements.publishConsents.forEach((control) => {
     control.checked = true;
   });
@@ -1757,15 +1681,14 @@ function moderationStatusLabel(item) {
   return statusLabel(item.status);
 }
 
-function moderationStatusClass(item, remaining) {
+function moderationStatusClass(item) {
   if (hasReports(item) || hasLowRating(item)) return "danger";
   if (isNewModerationItem(item)) return "";
-  return statusClass(item.status, remaining);
+  return statusClass(item.status);
 }
 
-function statusClass(status, remaining) {
+function statusClass(status) {
   if (status === "reported" || status === "rejected" || status === "archived") return "danger";
-  if (status === "expiring" || remaining <= 3) return "warning";
   return "";
 }
 
@@ -1822,12 +1745,9 @@ function fillSelects() {
   updatePublishSpecialtyOptions();
 }
 
-function updatePublishSpecialtyOptions(ensureDefault = true) {
+function updatePublishSpecialtyOptions() {
   if (elements.publishSpecialty) {
     const selectedGroup = selectedPublishGroup();
-    if (ensureDefault && !selectedPublishSpecialties.size && selectedGroup?.items?.[0]) {
-      selectedPublishSpecialties.add(selectedGroup.items[0]);
-    }
     elements.publishSpecialty.innerHTML = (selectedGroup?.items || [])
       .map(
         (item) => `
@@ -1861,8 +1781,8 @@ function renderCategories() {
     .map((item) => {
       const count =
         item === "all"
-          ? listings.filter((listing) => listing.status !== "archived").length
-          : listings.filter((listing) => listingHasSpecialty(listing, item)).length;
+          ? listingCatalogTotal
+          : Number(listingCategoryCounts[item] || 0);
       const label = item === "all" ? "Усі фахівці" : item;
       return `
         <button class="category-item ${selectedCategory === item ? "is-active" : ""}" type="button" data-category="${item}">
@@ -1900,41 +1820,24 @@ function updatePublishSubmitState() {
   elements.publishSubmit.disabled = !consents.length || consents.some((control) => !control.checked);
 }
 
-function filteredListings() {
+async function loadListingsFromDatabase(page = 1) {
+  if (!elements.listingList) return;
+  const requestedPage = Math.max(1, Number(page) || 1);
+  const requestId = ++listingLoadRequestId;
+  const query = new URLSearchParams({ page: String(requestedPage) });
   const region = elements.regionFilter?.value || "all";
   const city = elements.cityFilter?.value || "all";
   const district = elements.districtFilter?.value || "all";
-  const selectedSpecialists = selectedSearchSpecialists();
-  const selectedFormats = selectedSearchFormats();
   const rating = elements.ratingFilter?.value || "all";
-
-  let result = listings.filter((listing) => {
-    if (listing.status === "archived") return false;
-    if (region !== "all" && listing.regionId !== region) return false;
-    if (city !== "all" && listing.city !== city) return false;
-    if (district !== "all" && listing.district !== district) return false;
-    if (selectedSpecialists.length && !selectedSpecialists.some((specialty) => listingHasSpecialty(listing, specialty))) return false;
-    if (selectedCategory !== "all" && !listingHasSpecialty(listing, selectedCategory)) return false;
-    if (selectedFormats.length && !selectedFormats.some((format) => listing.formats.includes(format))) return false;
-    if (rating !== "all" && listing.rating < Number(rating)) return false;
-    return true;
-  });
-
-  if (sortMode === "rating") {
-    result = result.sort((a, b) => b.rating - a.rating);
-  } else if (sortMode === "expires") {
-    result = result.sort((a, b) => daysLeft(a) - daysLeft(b));
-  } else {
-    result = result.sort((a, b) => Number(b.verified) - Number(a.verified) || b.reviews - a.reviews);
-  }
-
-  return result;
-}
-
-async function loadListingsFromDatabase() {
-  if (!elements.listingList) return;
+  if (region !== "all") query.set("region", region);
+  if (city !== "all") query.set("city", city);
+  if (district !== "all") query.set("district", district);
+  if (rating !== "all") query.set("rating", rating);
+  const specialties = selectedCategory !== "all" ? [selectedCategory] : selectedSearchSpecialists();
+  specialties.forEach((specialty) => query.append("specialty[]", specialty));
+  selectedSearchFormats().forEach((format) => query.append("format[]", format));
   try {
-    const response = await fetch("/api/listings.php", {
+    const response = await fetch(`/api/listings.php?${query}`, {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
       cache: "no-store"
@@ -1943,12 +1846,23 @@ async function loadListingsFromDatabase() {
     if (!response.ok || !Array.isArray(result.listings)) {
       throw new Error(result.message || "Не вдалося завантажити оголошення.");
     }
+    if (requestId !== listingLoadRequestId) return;
     listings.splice(0, listings.length, ...result.listings);
+    listingPagination = {
+      page: Number(result.pagination?.page || 1),
+      perPage: Number(result.pagination?.perPage || 20),
+      total: Number(result.pagination?.total || 0),
+      totalPages: Number(result.pagination?.totalPages || 1)
+    };
+    listingCatalogTotal = Number(result.catalogTotal || 0);
+    listingCategoryCounts = result.categoryCounts && typeof result.categoryCounts === "object" ? result.categoryCounts : {};
     await hydrateCityNames();
     renderCategories();
     renderListings();
   } catch (error) {
+    if (requestId !== listingLoadRequestId) return;
     listings.splice(0, listings.length);
+    listingPagination = { page: 1, perPage: 20, total: 0, totalPages: 1 };
     renderCategories();
     renderListings();
     console.warn("Cannot load listings from the database", error);
@@ -1957,8 +1871,9 @@ async function loadListingsFromDatabase() {
 
 function renderListings() {
   if (!elements.listingList || !elements.resultCount) return;
-  const data = filteredListings();
-  elements.resultCount.textContent = data.length;
+  const data = listings;
+  elements.resultCount.textContent = listingPagination.total;
+  renderListingPagination();
 
   if (!data.length) {
     elements.listingList.innerHTML = `
@@ -1975,20 +1890,12 @@ function renderListings() {
 
   elements.listingList.innerHTML = data
     .map((listing) => {
-      const remaining = daysLeft(listing);
-      const expiring = remaining <= 3;
-      const visibleNosologies = listing.nosologies.slice(0, 3).map(escapeHtml).join(", ");
-      const hiddenNosologyCount = listing.nosologies.length - 3;
-      const nosologyMarkup = visibleNosologies
-        ? `<span class="compact-nosologies">${visibleNosologies}${hiddenNosologyCount > 0 ? ` +${hiddenNosologyCount}` : ""}</span>`
-        : "";
       return `
-        <article class="listing-card listing-card-compact ${expiring ? "is-expiring" : ""}">
+        <article class="listing-card listing-card-compact">
           <div class="avatar" aria-hidden="true">${escapeHtml(listing.initials)}</div>
           <div class="listing-main">
             <h3>${escapeHtml(listing.name)}</h3>
             <div class="compact-stats">
-              ${nosologyMarkup}
               <span class="rating"><span class="star">★</span>${listing.rating.toFixed(1)} <small>(${listing.reviews})</small></span>
               <span class="price">${listing.price.toLocaleString("uk-UA")} ₴ / ${listing.duration} хв</span>
             </div>
@@ -2002,6 +1909,17 @@ function renderListings() {
     })
     .join("");
   applyLanguage(elements.listingList);
+}
+
+function renderListingPagination() {
+  if (!elements.listingPagination || !elements.listingPageStatus) return;
+  const { page, totalPages, total } = listingPagination;
+  elements.listingPagination.hidden = total === 0 || totalPages <= 1;
+  elements.listingPageStatus.textContent = `Сторінка ${page} з ${totalPages}`;
+  const previous = elements.listingPagination.querySelector('[data-listing-page="previous"]');
+  const next = elements.listingPagination.querySelector('[data-listing-page="next"]');
+  if (previous) previous.disabled = page <= 1;
+  if (next) next.disabled = page >= totalPages;
 }
 
 function renderSpecialtyGrid() {
@@ -2082,7 +2000,6 @@ function renderSpecialistReviews(listing) {
 function openSpecialistDetails(listingId) {
   const listing = listings.find((item) => item.id === Number(listingId));
   if (!listing || !elements.specialistModal || !elements.specialistDetail) return;
-  const remaining = daysLeft(listing);
   const listingSpecialties = getListingSpecialties(listing);
   elements.specialistDetail.dataset.listingId = listing.id;
   elements.specialistDetail.innerHTML = `
@@ -2091,24 +2008,23 @@ function openSpecialistDetails(listingId) {
       <div>
         <p class="section-note">Анкета фахівця</p>
         <h2 id="specialistDetailTitle">${escapeHtml(listing.name)}</h2>
-        <p>${escapeHtml(formatListingSpecialties(listing))} · ${escapeHtml(listingCityLabel(listing))} · ${listing.formats.map(escapeHtml).join(", ")}</p>
+        <p>${escapeHtml(listingCityLabel(listing))}</p>
       </div>
     </div>
     <div class="specialist-summary">
       <span><strong>Рейтинг:</strong> <span class="star">★</span>${listing.rating.toFixed(1)} (${listing.reviews})</span>
       <span><strong>Ціна:</strong> ${listing.price.toLocaleString("uk-UA")} ₴ / ${listing.duration} хв</span>
-      <span><strong>Графік:</strong> ${escapeHtml(listing.next)}</span>
-      <span><strong>Термін оголошення:</strong> ${remaining > 0 ? `${remaining} дн. до зняття` : "Буде знято"}</span>
     </div>
     <p class="listing-subtitle">${escapeHtml(listing.headline)}</p>
     <p>${escapeHtml(listing.about)}</p>
     <div class="listing-facts" aria-label="Деталі анкети">
       <span><strong>Освіта:</strong> ${escapeHtml(listing.education)}</span>
-      <span><strong>Досвід:</strong> ${escapeHtml(listing.experience)}</span>
-      <span><strong>Працює з:</strong> ${escapeHtml(listing.worksWith)}</span>
+      <span><strong>Досвід:</strong> ${listing.experience === null || listing.experience === "" ? "Не вказано" : `${escapeHtml(listing.experience)} років`}</span>
       <span><strong>Для кого:</strong> ${escapeHtml(listing.audience)}</span>
-      <span><strong>Відповідає:</strong> ${escapeHtml(listing.response)}</span>
-      <span><strong>Формат роботи:</strong> ${listing.formats.map(escapeHtml).join(", ")}</span>
+      <span><strong>Телефони:</strong> ${(listing.phones || []).length
+        ? listing.phones.map((phone) => `<a href="tel:${escapeHtml(String(phone).replace(/[^+\d]/g, ""))}">${escapeHtml(phone)}</a>`).join(", ")
+        : "Не вказано"}</span>
+      <span><strong>Формат роботи:</strong> ${listingWorkFormatMarkup(listing)}</span>
       <span><strong>Спеціальності:</strong> ${listingSpecialties.map(escapeHtml).join(", ")}</span>
     </div>
     <div class="listing-offer">
@@ -2116,11 +2032,6 @@ function openSpecialistDetails(listingId) {
       <span>${escapeHtml(listing.offer.title)}</span>
       <small>${escapeHtml(listing.offer.focus)} · ${escapeHtml(listing.offer.format)}</small>
     </div>
-    <section class="nosology-block">
-      <div class="tag-row">
-        ${listing.nosologies.map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join("")}
-      </div>
-    </section>
     ${renderSpecialistReviews(listing)}
     <div class="tag-row">
       ${listing.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
@@ -2232,7 +2143,6 @@ function renderModeration() {
 
   elements.moderationRows.innerHTML = data
     .map((item) => {
-      const remaining = daysLeft(item);
       const itemHasReports = hasReports(item);
       const primaryAction = itemHasReports
         ? `<button class="mini-button approve" type="button" data-action="dismiss-report" data-id="${item.id}">Відхилити скаргу</button>`
@@ -2242,8 +2152,7 @@ function renderModeration() {
           <span><strong>${item.name}</strong><small>${item.notes}</small></span>
           <span>${formatListingSpecialties(item)}</span>
           <span>${listingCityLabel(item)}</span>
-          <span><span class="status ${moderationStatusClass(item, remaining)}">${moderationStatusLabel(item)}</span></span>
-          <span>${remaining > 0 ? `${remaining} дн.` : "сьогодні"}</span>
+          <span><span class="status ${moderationStatusClass(item)}">${moderationStatusLabel(item)}</span></span>
           <span class="row-actions">
             ${primaryAction}
             <button class="mini-button reject delete-action" type="button" data-action="archived" data-id="${item.id}">Видалити</button>
@@ -2262,7 +2171,6 @@ function renderModeration() {
 function renderModerationDetail(item) {
   if (!elements.moderationDetail) return;
   selectedModerationId = item.id;
-  const remaining = daysLeft(item);
   const hasReports = item.reports > 0 || item.status === "reported";
   elements.moderationDetail.innerHTML = `
     <div>
@@ -2273,7 +2181,6 @@ function renderModerationDetail(item) {
       <div><dt>Спеціальності</dt><dd>${formatListingSpecialties(item)}</dd></div>
       <div><dt>Місто</dt><dd>${listingCityLabel(item)}</dd></div>
       <div><dt>Статус</dt><dd>${moderationStatusLabel(item)}</dd></div>
-      <div><dt>Строк</dt><dd>${remaining > 0 ? `${remaining} днів до автоматичного зняття` : "знімається автоматично"}</dd></div>
       <div><dt>Нотатка</dt><dd>${item.notes}</dd></div>
     </dl>
     <div class="message-card">
@@ -2286,7 +2193,6 @@ function renderModerationDetail(item) {
         : ""
     }
     <button class="ghost-button delete-action" type="button" data-action="archived" data-id="${item.id}">Видалити</button>
-    <button class="secondary-button" type="button" data-renew="${item.id}">Продовжити на 30 днів</button>
   `;
   applyLanguage(elements.moderationDetail);
 }
@@ -2332,7 +2238,11 @@ function renderAdminReviews() {
   applyLanguage(elements.adminReviewRows);
 }
 
-function catalogRecordCount(recordTitle) {
+function catalogRecordCount(recordTitle, catalogGroup = null) {
+  const group = catalogGroup || findCatalogRecord(recordTitle)?.group;
+  if (group?.recordCounts?.has(recordTitle)) {
+    return group.recordCounts.get(recordTitle);
+  }
   return listings.filter((listing) => listingHasSpecialty(listing, recordTitle)).length;
 }
 
@@ -2340,10 +2250,58 @@ function findCatalogRecord(recordTitle) {
   for (const section of specialtySections) {
     for (const group of section.groups) {
       const index = group.items.indexOf(recordTitle);
-      if (index !== -1) return { section, group, index };
+      if (index !== -1) {
+        return {
+          section,
+          group,
+          index,
+          recordId: Number(group.recordIds?.get(recordTitle) || 0)
+        };
+      }
     }
   }
   return null;
+}
+
+function findCatalogRecordById(recordId) {
+  const expectedId = Number(recordId);
+  if (!expectedId) return null;
+  for (const section of specialtySections) {
+    for (const group of section.groups) {
+      for (let index = 0; index < group.items.length; index += 1) {
+        const title = group.items[index];
+        if (Number(group.recordIds?.get(title)) === expectedId) {
+          return { section, group, index, recordId: expectedId, title };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function adminCatalogRequest(options = {}) {
+  const response = await fetch("/api/admin/catalog.php", {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
+    ...options
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Не вдалося завантажити довідник із бази даних.");
+  return result;
+}
+
+function applyDatabaseCatalogRows(rows) {
+  const tree = buildCatalogTreeFromRows(Array.isArray(rows) ? rows : []);
+  searchCatalogTree = tree;
+  specialtySections = tree;
+  allSpecialtyGroups = tree.flatMap((section) => section.groups || []);
+  fillSelects();
+  renderSpecialistTree();
+  renderPublishCategoryTree(elements.publishCategory?.value);
+  updatePublishSpecialtyOptions();
+  renderCategories();
+  renderSpecialtyGrid();
+  renderAdminCatalog();
 }
 
 function selectedCatalogSection() {
@@ -2372,9 +2330,19 @@ function resetCatalogEditor() {
 
 function updateCatalogSelectors() {
   if (!elements.catalogSectionSelect || !elements.catalogGroupSelect) return;
+  const hasCatalog = specialtySections.length > 0;
+  elements.catalogSectionSelect.disabled = !hasCatalog;
+  elements.catalogGroupSelect.disabled = !hasCatalog;
+  if (elements.catalogRecordTitle) elements.catalogRecordTitle.disabled = !hasCatalog;
+  if (elements.catalogSubmitButton) elements.catalogSubmitButton.disabled = !hasCatalog;
+  if (!hasCatalog) {
+    elements.catalogSectionSelect.innerHTML = '<option value="">Немає розділів</option>';
+    elements.catalogGroupSelect.innerHTML = '<option value="">Немає категорій</option>';
+    return;
+  }
   const currentSectionTitle = elements.catalogSectionSelect.value || specialtySections[0]?.title;
   elements.catalogSectionSelect.innerHTML = specialtySections
-    .map((section) => `<option value="${escapeAttribute(section.title)}">${section.title}</option>`)
+    .map((section) => `<option value="${escapeAttribute(section.title)}">${escapeHtml(section.title)}</option>`)
     .join("");
   elements.catalogSectionSelect.value = specialtySections.some((section) => section.title === currentSectionTitle)
     ? currentSectionTitle
@@ -2383,7 +2351,7 @@ function updateCatalogSelectors() {
   const section = selectedCatalogSection();
   const currentGroupTitle = elements.catalogGroupSelect.value || section?.groups[0]?.title;
   elements.catalogGroupSelect.innerHTML = (section?.groups || [])
-    .map((group) => `<option value="${escapeAttribute(group.title)}">${group.title}</option>`)
+    .map((group) => `<option value="${escapeAttribute(group.title)}">${escapeHtml(group.title)}</option>`)
     .join("");
   elements.catalogGroupSelect.value = section?.groups.some((group) => group.title === currentGroupTitle)
     ? currentGroupTitle
@@ -2423,33 +2391,35 @@ function refreshCatalogDependents() {
 
 function renderAdminCatalog() {
   if (!elements.adminCatalogRows) return;
-  elements.adminCatalogRows.innerHTML = specialtySections
+  elements.adminCatalogRows.innerHTML = specialtySections.length
+    ? specialtySections
     .map(
       (section) => `
         <section class="catalog-admin-section">
           <div class="catalog-admin-section-head">
-            <h2>${section.title}</h2>
-            <p>${section.description}</p>
+            <h2>${escapeHtml(section.title)}</h2>
+            <p>${escapeHtml(section.description || "")}</p>
           </div>
           ${section.groups
             .map(
               (group) => `
                 <article class="catalog-admin-group">
                   <div class="catalog-admin-group-head">
-                    <h3>${group.title}</h3>
-                    <p>${group.description}</p>
+                    <h3>${escapeHtml(group.title)}</h3>
+                    <p>${escapeHtml(group.description || "")}</p>
                   </div>
                   <div class="catalog-record-list">
                     ${group.items
                       .map((record) => {
-                        const count = catalogRecordCount(record);
+                        const count = catalogRecordCount(record, group);
+                        const recordId = Number(group.recordIds?.get(record) || 0);
                         return `
                           <div class="catalog-record-row">
-                            <span><strong>${record}</strong></span>
+                            <span><strong>${escapeHtml(record)}</strong></span>
                             <span><strong>${count}</strong> <span>фахівців</span></span>
                             <span class="row-actions">
-                              <button class="mini-button" type="button" data-edit-catalog-record="${escapeAttribute(record)}">Редагувати</button>
-                              <button class="mini-button reject delete-action" type="button" data-delete-catalog-record="${escapeAttribute(record)}" ${count > 0 ? "disabled" : ""}>Видалити</button>
+                              <button class="mini-button" type="button" data-edit-catalog-record="${recordId}">Редагувати</button>
+                              <button class="mini-button reject delete-action" type="button" data-delete-catalog-record="${recordId}" ${count > 0 ? "disabled" : ""}>Видалити</button>
                             </span>
                           </div>
                         `;
@@ -2463,7 +2433,8 @@ function renderAdminCatalog() {
         </section>
       `
     )
-    .join("");
+    .join("")
+    : '<article class="catalog-update-card catalog-update-empty"><strong>Довідник порожній</strong><p>У базі даних немає активних записів каталогу.</p><span></span></article>';
   applyLanguage(elements.adminCatalogRows);
 }
 
@@ -2472,48 +2443,37 @@ function updateCatalogUpdatesBadge() {
   elements.catalogUpdatesCount.textContent = pendingCatalogSuggestions().length;
 }
 
-function ensureCatalogGroup(sectionTitle, groupTitle) {
-  const existing = findCatalogGroup(groupTitle);
-  if (existing) return existing.group;
-
-  const section =
-    specialtySections.find((entry) => entry.title === sectionTitle) ||
-    specialtySections.find((entry) => entry.title === "Педагоги та тренери") ||
-    specialtySections[0];
-  const group = {
-    title: groupTitle,
-    description: "Запропоновано користувачем.",
-    items: []
-  };
-  section.groups.push(group);
-  if (!allSpecialtyGroups.includes(group)) allSpecialtyGroups.push(group);
-  return group;
-}
-
-function approveCatalogSuggestion(suggestion, card) {
+async function approveCatalogSuggestion(suggestion, card) {
   const groupTitle = normalizeCatalogInput(card?.querySelector('[data-update-field="groupTitle"]')?.value || suggestion.groupTitle);
   const recordTitle = normalizeCatalogInput(card?.querySelector('[data-update-field="recordTitle"]')?.value || suggestion.recordTitle);
-  if (!groupTitle && !recordTitle) return;
-
-  const group = ensureCatalogGroup(suggestion.sectionTitle, groupTitle || suggestion.groupTitle);
-  if (recordTitle && !group.items.includes(recordTitle)) {
-    group.items.push(recordTitle);
+  if (!groupTitle) return;
+  try {
+    const result = await catalogSuggestionRequest("/api/admin/catalog-suggestions.php", {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", id: suggestion.id, groupTitle, recordTitle })
+    });
+    catalogSuggestions = Array.isArray(result.items) ? result.items : [];
+    const catalog = await adminCatalogRequest();
+    applyDatabaseCatalogRows(catalog.items || []);
+    renderCatalogUpdates();
+    setCatalogStatus(result.message || "Каталог оновлено.");
+  } catch (error) {
+    setCatalogStatus(error.message || "Не вдалося затвердити пропозицію.");
   }
-
-  suggestion.groupTitle = group.title;
-  suggestion.recordTitle = recordTitle;
-  suggestion.status = "approved";
-  suggestion.enabled = true;
-  saveCatalogSuggestions();
-  refreshCatalogDependents();
-  renderCatalogUpdates();
 }
 
-function rejectCatalogSuggestion(suggestion) {
-  suggestion.status = "rejected";
-  suggestion.enabled = false;
-  saveCatalogSuggestions();
-  renderCatalogUpdates();
+async function rejectCatalogSuggestion(suggestion) {
+  try {
+    const result = await catalogSuggestionRequest("/api/admin/catalog-suggestions.php", {
+      method: "POST",
+      body: JSON.stringify({ action: "reject", id: suggestion.id })
+    });
+    catalogSuggestions = Array.isArray(result.items) ? result.items : [];
+    renderCatalogUpdates();
+    setCatalogStatus(result.message || "Пропозицію відхилено.");
+  } catch (error) {
+    setCatalogStatus(error.message || "Не вдалося відхилити пропозицію.");
+  }
 }
 
 function renderCatalogUpdates() {
@@ -2563,20 +2523,20 @@ function handleCatalogUpdateClick(event) {
   const card = event.target.closest("[data-suggestion-id]");
 
   if (approveButton) {
-    approveCatalogSuggestion(suggestion, card);
+    void approveCatalogSuggestion(suggestion, card);
   } else {
-    rejectCatalogSuggestion(suggestion);
+    void rejectCatalogSuggestion(suggestion);
   }
 }
 
-function beginCatalogEdit(recordTitle) {
-  const found = findCatalogRecord(recordTitle);
+function beginCatalogEdit(recordId) {
+  const found = findCatalogRecordById(recordId);
   if (!found) {
     setCatalogStatus("Оберіть запис для редагування.");
     return;
   }
-  if (elements.catalogOriginalRecord) elements.catalogOriginalRecord.value = recordTitle;
-  if (elements.catalogRecordTitle) elements.catalogRecordTitle.value = recordTitle;
+  if (elements.catalogOriginalRecord) elements.catalogOriginalRecord.value = String(found.recordId);
+  if (elements.catalogRecordTitle) elements.catalogRecordTitle.value = found.title;
   if (elements.catalogSectionSelect) elements.catalogSectionSelect.value = found.section.title;
   updateCatalogSelectors();
   if (elements.catalogGroupSelect) elements.catalogGroupSelect.value = found.group.title;
@@ -2587,51 +2547,72 @@ function beginCatalogEdit(recordTitle) {
   elements.catalogRecordTitle?.focus();
 }
 
-function submitCatalogRecord(event) {
+async function submitCatalogRecord(event) {
   event.preventDefault();
+  if (!event.currentTarget.checkValidity()) {
+    event.currentTarget.reportValidity();
+    return;
+  }
   const formData = new FormData(event.currentTarget);
-  const originalTitle = String(formData.get("originalRecord") || "").trim();
+  const recordId = Number(formData.get("originalRecord")) || 0;
   const newTitle = String(formData.get("recordTitle") || "").trim();
   const group = selectedCatalogGroup();
-  if (!group || !newTitle) return;
-
-  const existing = findCatalogRecord(newTitle);
-  if (existing && newTitle !== originalTitle) {
-    setCatalogStatus("Такий запис уже є в цій категорії.");
+  if (!group?.id || !newTitle) {
+    setCatalogStatus("Оберіть категорію та вкажіть назву запису.");
     return;
   }
 
-  if (originalTitle) {
-    const original = findCatalogRecord(originalTitle);
-    if (!original) {
-      setCatalogStatus("Оберіть запис для редагування.");
-      return;
-    }
-    original.group.items.splice(original.index, 1);
-    group.items.push(newTitle);
-    updateSpecialtyReferences(originalTitle, newTitle);
-    setCatalogStatus("Запис оновлено.");
-  } else {
-    group.items.push(newTitle);
-    setCatalogStatus("Запис додано.");
+  const original = recordId ? findCatalogRecordById(recordId) : null;
+  if (recordId && !original) {
+    setCatalogStatus("Оберіть запис для редагування.");
+    return;
   }
 
-  resetCatalogEditor();
-  refreshCatalogDependents();
+  const submitButton = elements.catalogSubmitButton;
+  if (submitButton) submitButton.disabled = true;
+  setCatalogStatus("Зберігаємо...");
+  try {
+    const result = await adminCatalogRequest({
+      method: "POST",
+      body: JSON.stringify({
+        action: recordId ? "update" : "create",
+        recordId: recordId || undefined,
+        subgroupId: group.id,
+        title: newTitle
+      })
+    });
+    if (original && original.title !== newTitle) updateSpecialtyReferences(original.title, newTitle);
+    applyDatabaseCatalogRows(result.items);
+    resetCatalogEditor();
+    setCatalogStatus(result.message || (recordId ? "Запис оновлено." : "Запис додано."));
+  } catch (error) {
+    setCatalogStatus(error.message || "Не вдалося зберегти запис у базі даних.");
+  } finally {
+    if (submitButton && specialtySections.length) submitButton.disabled = false;
+  }
 }
 
-function deleteCatalogRecord(recordTitle) {
-  const count = catalogRecordCount(recordTitle);
+async function deleteCatalogRecord(recordId) {
+  const found = findCatalogRecordById(recordId);
+  if (!found) return;
+  const count = catalogRecordCount(found.title, found.group);
   if (count > 0) {
     setCatalogStatus("Неможливо видалити: до цього напрямку прив'язані фахівці.");
     return;
   }
-  const found = findCatalogRecord(recordTitle);
-  if (!found) return;
-  found.group.items.splice(found.index, 1);
-  resetCatalogEditor();
-  refreshCatalogDependents();
-  setCatalogStatus("Запис видалено.");
+  if (!window.confirm(`Видалити запис «${found.title}» із довідника?`)) return;
+  setCatalogStatus("Видаляємо...");
+  try {
+    const result = await adminCatalogRequest({
+      method: "POST",
+      body: JSON.stringify({ action: "delete", recordId: found.recordId })
+    });
+    applyDatabaseCatalogRows(result.items);
+    resetCatalogEditor();
+    setCatalogStatus(result.message || "Запис видалено.");
+  } catch (error) {
+    setCatalogStatus(error.message || "Не вдалося видалити запис із бази даних.");
+  }
 }
 
 function userContactMarkup(user) {
@@ -2697,22 +2678,33 @@ async function fetchReference(resource, params = {}) {
 }
 
 async function loadSearchCatalogTree() {
-  if (!elements.specialistTree) return;
   try {
-    const { items: rows = [] } = await fetchReference("catalog");
+    const { items: rows = [] } = elements.adminPanel
+      ? await adminCatalogRequest()
+      : await fetchReference("catalog");
     const tree = buildCatalogTreeFromRows(rows);
-    if (tree.length) {
-      searchCatalogTree = tree;
-      renderSpecialistTree();
-      renderPublishCategoryTree(elements.publishCategory?.value);
-      updatePublishSpecialtyOptions(false);
-    }
-  } catch (error) {
-    console.warn("Cannot load specialist catalog", error);
-    searchCatalogTree = fallbackCatalogTree();
+    searchCatalogTree = tree;
+    specialtySections = tree;
+    allSpecialtyGroups = tree.flatMap((section) => section.groups || []);
+    fillSelects();
     renderSpecialistTree();
     renderPublishCategoryTree(elements.publishCategory?.value);
-    updatePublishSpecialtyOptions(false);
+    updatePublishSpecialtyOptions();
+    renderCategories();
+    renderSpecialtyGrid();
+    renderCatalogSelectors();
+  } catch (error) {
+    console.warn("Cannot load specialist catalog", error);
+    searchCatalogTree = [];
+    specialtySections = [];
+    allSpecialtyGroups = [];
+    renderSpecialistTree();
+    renderPublishCategoryTree(elements.publishCategory?.value);
+    updatePublishSpecialtyOptions();
+    renderCategories();
+    renderSpecialtyGrid();
+    renderCatalogSelectors();
+    setCatalogStatus(error.message || "Не вдалося завантажити довідник із бази даних.");
   }
 }
 
@@ -2814,6 +2806,53 @@ async function loadDistrictsForCity(cityId) {
   return normalizeDistrictOptions(data.items || []);
 }
 
+function renderPublishDistrictOptions(districts, message = "") {
+  const uniqueDistricts = normalizeDistrictOptions(districts);
+  elements.placeDistrictPanels.forEach((panel) => {
+    const target = panel.dataset.districtPanel;
+    const container = panel.querySelector("[data-district-options]");
+    if (!container) return;
+
+    if (message || !uniqueDistricts.length) {
+      container.innerHTML = `<p class="district-options-status">${escapeHtml(message || "Для цього міста районів не знайдено.")}</p>`;
+      applyLanguage(container);
+      return;
+    }
+
+    const fieldName = target === "student" ? "studentDistricts" : "specialistDistricts";
+    container.innerHTML = uniqueDistricts
+      .map(
+        (district) => `
+          <label class="checkbox-row">
+            <input type="checkbox" name="${fieldName}" value="${escapeAttribute(district.name)}" data-district-id="${escapeAttribute(district.districtId)}" />
+            <span>${escapeHtml(district.name)}</span>
+          </label>`
+      )
+      .join("");
+    applyLanguage(container);
+  });
+}
+
+async function updatePublishDistrictOptions() {
+  if (!elements.publishCitySelect || !elements.placeDistrictPanels.length) return;
+  const cityId = elements.publishCitySelect.value || "";
+  if (!cityId) {
+    renderPublishDistrictOptions([], "Спочатку оберіть місто.");
+    return;
+  }
+
+  renderPublishDistrictOptions([], "Завантаження районів...");
+  try {
+    const districts = await loadDistrictsForCity(cityId);
+    if (elements.publishCitySelect.value !== cityId) return;
+    renderPublishDistrictOptions(districts);
+  } catch (error) {
+    if (elements.publishCitySelect.value !== cityId) return;
+    console.warn("Cannot load publish districts", error);
+    renderPublishDistrictOptions([], "Райони не завантажено.");
+  }
+}
+
 async function updateSearchCityOptions(selectedValue = "all") {
   if (!elements.cityFilter) return;
   const oblastId = elements.regionFilter?.value || "all";
@@ -2879,6 +2918,7 @@ async function updatePublishCityOptions(selectedValue = "") {
       placeholder: "Спочатку оберіть область",
       allValue: ""
     });
+    await updatePublishDistrictOptions();
     return;
   }
   try {
@@ -2888,6 +2928,7 @@ async function updatePublishCityOptions(selectedValue = "") {
       placeholder: "Оберіть місто",
       allValue: ""
     });
+    await updatePublishDistrictOptions();
   } catch (error) {
     console.warn("Cannot load publish cities", error);
     renderCityOptionsInto(elements.publishCitySelect, [], {
@@ -2895,6 +2936,7 @@ async function updatePublishCityOptions(selectedValue = "") {
       placeholder: "Міста не завантажено",
       allValue: ""
     });
+    await updatePublishDistrictOptions();
   }
 }
 
@@ -3151,32 +3193,9 @@ function renderMetrics() {
   if (elements.metricPending) {
     elements.metricPending.textContent = moderationItems.filter((item) => item.status !== "archived").length;
   }
-  if (elements.metricExpiring) {
-    elements.metricExpiring.textContent = moderationItems.filter((item) => daysLeft(item) <= 3 && item.status !== "archived").length;
-  }
   if (elements.metricReports) {
     elements.metricReports.textContent = reportsCount;
   }
-  if (elements.metricArchived) {
-    elements.metricArchived.textContent = moderationItems.filter((item) => item.status === "archived").length;
-  }
-}
-
-function runExpirationSweep() {
-  moderationItems = moderationItems.map((item) => {
-    if (daysLeft(item) < 0 && item.status !== "archived") {
-      return { ...item, status: "archived" };
-    }
-    return item;
-  });
-}
-
-function renewItem(id) {
-  const isoDate = today.toISOString().slice(0, 10);
-  moderationItems = moderationItems.map((item) =>
-    item.id === Number(id) ? { ...item, createdAt: isoDate, status: item.status === "archived" ? "pending" : item.status } : item
-  );
-  renderModeration();
 }
 
 function bindEvents() {
@@ -3188,7 +3207,7 @@ function bindEvents() {
     event.preventDefault();
     selectedCategory = "all";
     renderCategories();
-    renderListings();
+    void loadListingsFromDatabase(1);
   });
 
   elements.regionFilter?.addEventListener("change", async () => {
@@ -3196,25 +3215,29 @@ function bindEvents() {
     await updateSearchCityOptions("all");
     await updateSearchDistrictOptions("all");
     renderCategories();
-    renderListings();
+    await loadListingsFromDatabase(1);
   });
 
   elements.regionSelect?.addEventListener("change", async () => {
     await updatePublishCityOptions("");
   });
 
+  elements.publishCitySelect?.addEventListener("change", async () => {
+    await updatePublishDistrictOptions();
+  });
+
   elements.cityFilter?.addEventListener("change", async () => {
     selectedCategory = "all";
     await updateSearchDistrictOptions("all");
     renderCategories();
-    renderListings();
+    await loadListingsFromDatabase(1);
   });
 
   [elements.districtFilter, elements.ratingFilter].forEach((control) => {
     control?.addEventListener("change", () => {
       selectedCategory = "all";
       renderCategories();
-      renderListings();
+      void loadListingsFromDatabase(1);
     });
   });
 
@@ -3223,7 +3246,7 @@ function bindEvents() {
       selectedCategory = "all";
       updateFormatSummary();
       renderCategories();
-      renderListings();
+      void loadListingsFromDatabase(1);
     });
   });
 
@@ -3259,7 +3282,19 @@ function bindEvents() {
     }
     renderSelectedPublishSpecialties();
   });
-  elements.addCatalogSuggestion?.addEventListener("click", () => addCatalogSuggestionFromFields());
+  elements.addCatalogCategory?.addEventListener("click", () => void addCatalogCategory());
+  elements.addCatalogSpecialty?.addEventListener("click", () => void addCatalogSpecialty());
+  document.querySelector("[data-open-catalog-suggestion]")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    setCatalogSuggestionStatus(elements.catalogCategoryStatus, "");
+    setCatalogSuggestionStatus(elements.catalogSpecialtyStatus, "");
+    renderSuggestedSpecialtyCategories();
+    openModal(elements.catalogSuggestionModal);
+    elements.suggestedCategory?.focus();
+  });
+  document.querySelector("[data-close-catalog-suggestion]")?.addEventListener("click", () => {
+    closeModal(elements.catalogSuggestionModal);
+  });
 
   elements.categoryList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
@@ -3267,7 +3302,18 @@ function bindEvents() {
     selectedCategory = button.dataset.category;
     clearSearchSpecialists();
     renderCategories();
-    renderListings();
+    void loadListingsFromDatabase(1);
+  });
+
+  elements.listingPagination?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-listing-page]");
+    if (!button || button.disabled) return;
+    const nextPage = button.dataset.listingPage === "previous"
+      ? listingPagination.page - 1
+      : listingPagination.page + 1;
+    void loadListingsFromDatabase(nextPage).then(() => {
+      elements.listingList?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   });
 
   elements.listingList?.addEventListener("click", (event) => {
@@ -3348,10 +3394,16 @@ function bindEvents() {
   });
   document.querySelector("[data-close-guide]")?.addEventListener("click", () => closeModal(elements.guideModal));
 
-  [elements.adminModal, elements.guideModal, elements.specialistModal].forEach((modal) => {
+  [elements.adminModal, elements.guideModal, elements.specialistModal, elements.catalogSuggestionModal].forEach((modal) => {
     modal?.addEventListener("click", (event) => {
       if (event.target === modal) closeModal(modal);
     });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && elements.catalogSuggestionModal?.classList.contains("is-open")) {
+      closeModal(elements.catalogSuggestionModal);
+    }
   });
 
   elements.adminSearch?.addEventListener("input", renderModeration);
@@ -3396,7 +3448,7 @@ function bindEvents() {
     const removeSpecialtyButton = event.target.closest("[data-remove-specialty]");
     if (removeSpecialtyButton) {
       selectedPublishSpecialties.delete(removeSpecialtyButton.dataset.removeSpecialty);
-      updatePublishSpecialtyOptions(false);
+      updatePublishSpecialtyOptions();
       return;
     }
   });
@@ -3424,20 +3476,13 @@ function bindEvents() {
 
   document.querySelector("#publishForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    addCatalogSuggestionFromFields({ silent: true });
     const data = new FormData(event.currentTarget);
     const formats = data.getAll("formats");
-    const phones = data.getAll("phones").map((value) => String(value).trim()).filter(Boolean);
     const email = normalizeEmail(data.get("email"));
     const specialistDistricts = data.getAll("specialistDistricts").map((value) => String(value).trim()).filter(Boolean);
     const studentDistricts = data.getAll("studentDistricts").map((value) => String(value).trim()).filter(Boolean);
     const allDistricts = [...new Set([...specialistDistricts, ...studentDistricts])];
-    const regionId = String(data.get("region") || "").trim();
-    const selectedRegionOption = elements.regionSelect?.selectedOptions?.[0];
-    const regionName = String(selectedRegionOption?.dataset.regionName || selectedRegionOption?.textContent || regionId).trim();
     const cityId = String(data.get("city") || "").trim();
-    const cityName = cityDisplayName(cityId);
-    const specialtyCategory = data.get("specialtyCategory");
     const selectedSpecialties = data.getAll("specialties").map((value) => String(value).trim()).filter(Boolean);
     const primarySpecialty = selectedSpecialties[0];
     if (!primarySpecialty) {
@@ -3448,27 +3493,8 @@ function bindEvents() {
       }
       return;
     }
-    const autoDeleteDays = data.get("autoDeleteDays");
     const durationMinutes = Number(data.get("durationMinutes") || 60);
     const rawPaymentAmount = String(data.get("paymentAmount") || "").trim();
-    const paymentAmount = rawPaymentAmount ? `${Number(rawPaymentAmount).toLocaleString("uk-UA")} ₴` : "не вказано";
-    const notes = [
-      `Опис: ${data.get("description")}`,
-      `Категорія: ${specialtyCategory}`,
-      `Спеціальності: ${selectedSpecialties.join(", ")}`,
-      `Телефони: ${phones.length ? phones.join(", ") : "не вказано"}`,
-      `Email: ${email || "не вказано"}`,
-      `Область: ${regionName || "не вказано"}`,
-      `ID області: ${regionId || "не вказано"}`,
-      `Місто: ${cityName || "не вказано"}`,
-      `ID міста: ${cityId || "не вказано"}`,
-      `Місце занять: ${formats.length ? formats.join(", ") : "не вказано"}`,
-      `Райони у фахівця: ${specialistDistricts.length ? specialistDistricts.join(", ") : "не вказано"}`,
-      `Райони у учня: ${studentDistricts.length ? studentDistricts.join(", ") : "не вказано"}`,
-      `Автовидалення: ${autoDeleteDays} днів`,
-      `Вартість заняття: ${paymentAmount}`,
-      `Тривалість заняття: ${durationMinutes} хв`
-    ].join(" · ");
     const publishStatus = document.querySelector("#publishStatus");
     try {
       const endpoint = serviceOfferEditId ? "/api/account/update-listing.php" : "/api/account/listings.php";
@@ -3485,12 +3511,14 @@ function bindEvents() {
           specialties: selectedSpecialties,
           formats,
           districts: allDistricts,
-          phones,
+          specialistDistricts,
+          studentDistricts,
           email,
           price: rawPaymentAmount || 0,
           durationMinutes,
-          autoDeleteDays,
-          description: data.get("description")
+          description: data.get("description"),
+          education: data.get("education"),
+          experience: data.get("experience")
         })
       });
       const result = await response.json().catch(() => ({}));
@@ -3514,37 +3542,7 @@ function bindEvents() {
       }
       return;
     }
-    moderationItems.unshift({
-      id: Date.now(),
-      name: localStorage.getItem("siteUserName") || "Фахівець",
-      specialty: primarySpecialty,
-      specialties: selectedSpecialties,
-      regionId,
-      region: regionName,
-      city: cityId,
-      price: Number(rawPaymentAmount || 0),
-      duration: durationMinutes,
-      districts: allDistricts.join(", "),
-      status: "pending",
-      createdAt: today.toISOString().slice(0, 10),
-      reports: 0,
-      rating: null,
-      notes,
-      message: "Нове оголошення опубліковане фахівцем."
-    });
-    if (publishStatus) {
-      publishStatus.textContent = "Оголошення опубліковано та додано до особистого кабінету.";
-      applyLanguage(publishStatus);
-    }
-    event.currentTarget.reset();
-    selectedPublishSpecialties.clear();
-    updatePublishSpecialtyOptions();
-    updatePublishCityOptions("");
-    updatePlaceDistrictPanel();
-    loadPublishAccountContacts();
-    updatePublishSubmitState();
-    setCatalogSuggestionStatus("");
-    renderModeration();
+    window.location.href = "cabinet.html?tab=listings";
   });
 
   document.querySelector("#reviewForm")?.addEventListener("submit", (event) => {
@@ -3561,7 +3559,6 @@ function bindEvents() {
 function handleModerationClick(event) {
   const detailButton = event.target.closest("[data-detail]");
   const actionButton = event.target.closest("[data-action]");
-  const renewButton = event.target.closest("[data-renew]");
 
   if (detailButton) {
     const item = moderationItems.find((entry) => entry.id === Number(detailButton.dataset.detail));
@@ -3589,15 +3586,16 @@ function handleModerationClick(event) {
     return;
   }
 
-  if (renewButton) {
-    renewItem(renewButton.dataset.renew);
-  }
 }
 
 function init() {
   fillSelects();
-  serviceOfferDependenciesPromise = Promise.all([loadSearchCatalogTree(), loadRegionOptions()]);
-  runExpirationSweep();
+  serviceOfferDependenciesPromise = Promise.all([loadSearchCatalogTree(), loadRegionOptions()]).then(async () => {
+    await migrateLegacyCatalogSuggestions();
+    await loadSuggestedCatalogCategories();
+    await loadCatalogSuggestions();
+    if (elements.adminPanel && !legacyCatalogSuggestions.length) await loadSearchCatalogTree();
+  });
   renderCategories();
   updateFormatSummary();
   updatePublishSubmitState();
@@ -3612,10 +3610,6 @@ function init() {
   setAdminView("listings");
   bindEvents();
   setLanguage(currentLang);
-  setInterval(() => {
-    runExpirationSweep();
-    renderModeration();
-  }, 60000);
 }
 
 init();
